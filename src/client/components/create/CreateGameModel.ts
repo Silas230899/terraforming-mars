@@ -40,6 +40,7 @@ export type CreateGameModel = {
   pathfindersExpansion: boolean;
   players: Array<NewPlayerModel>;
   playersCount: number;
+  aiOpponentsCount: number;
   politicalAgendasExtension: AgendaStyle;
   prelude: boolean;
   preludeDraftVariant: boolean | undefined;

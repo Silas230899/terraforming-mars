@@ -21,6 +21,16 @@
                         </div>
 
                         <div class="create-game-page-column">
+                          <h4 v-i18n>№ of AI Opponents</h4>
+                          <div v-for="aiCount in [1,2,3]" v-bind:key="aiCount">
+                            <input type="radio" :value="aiCount" name="aiOpponentsCount" v-model="aiOpponentsCount" :id="aiCount+'-radio'">
+                            <label :for="aiCount+'-radio'">
+                              {{ aiCount }}
+                            </label>
+                          </div>
+                        </div>
+
+                        <div class="create-game-page-column">
                             <h4 v-i18n>Expansions</h4>
 
                             <input type="checkbox" name="allOfficialExpansions" id="allOfficialExpansions-checkbox" v-model="allOfficialExpansions">
@@ -579,6 +589,7 @@ export default (Vue as WithRefs<Refs>).extend({
     return {
       firstIndex: 1,
       playersCount: 1,
+      aiOpponentsCount: 1,
       players: [
         {name: '', color: Color.RED, beginner: false, handicap: 0, first: false},
         {name: '', color: Color.GREEN, beginner: false, handicap: 0, first: false},
