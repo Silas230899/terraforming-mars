@@ -165,17 +165,87 @@ def create_game():
     response = connection.getresponse()
     return json.loads(response.read().decode())
 
-def send_request(json_body):
+
+def send_request(json_body, player_id):
     connection = http.client.HTTPConnection("localhost", 8080)
     connection.request("POST", "/player/input?id=" + player_id, body=json_body)
     response = connection.getresponse()
     return json.loads(response.read().decode())
 
+
+def get_game(run_id):
+    connection = http.client.HTTPConnection("localhost", 8080)
+    connection.request("GET", "/api/player?id=" + run_id)
+    response = connection.getresponse()
+    return json.loads(response.read().decode())
+
+class Player:
+    def __init__(self, color, id, name):
+        self.color = color
+        self.id = id
+        self.name = name
+
+
 new_game = create_game()
-player_id = ""
-for player in new_game["players"]:
-    if player["name"] == "ki":
-        player_id = player["id"]
+print(new_game)
+player1 = Player(new_game["players"][0]["color"], new_game["players"][0]["id"], new_game["players"][0]["name"])
+player2 = Player(new_game["players"][1]["color"], new_game["players"][1]["id"], new_game["players"][1]["name"])
+player3 = Player(new_game["players"][2]["color"], new_game["players"][2]["id"], new_game["players"][2]["name"])
+turn = new_game["activePlayer"]
+print("turn: " + turn)
+
+def waiting_for(game_age, undo_count, player_id):
+    connection = http.client.HTTPConnection("localhost", 8080)
+    connection.request("GET", "/api/waitingfor?id=" + player_id + "&gameAge=" + str(game_age) + "&undoCount=" + str(undo_count))
+    response = connection.getresponse()
+    return json.loads(response.read().decode())
+
+# research phase
+def research_phase(player_id):
+    game = get_game(player_id)
+    run_id = game["runId"]
+    buy_initial_cards = {
+        "runId": run_id,
+        "type": "initialCards",
+        "responses": [
+            {
+                "type": "card",
+                "cards": [game["dealtCorporationCards"][0]["name"]]
+            }, {
+                "type": "card",
+                "cards": [game["dealtProjectCards"][0]["name"], game["dealtProjectCards"][3]["name"],
+                          game["dealtProjectCards"][9]["name"]]
+            }]
+    }
+
+    buy_initial_cards_json = json.dumps(buy_initial_cards)
+    res = send_request(buy_initial_cards_json, player_id)
+    print(res)
+    game_age = res["game"]["gameAge"]
+    undo_count = res["game"]["undoCount"]
+    is_waiting = waiting_for(game_age, undo_count, player_id)
+    print(is_waiting)
+
+
+research_phase(player1.id)
+research_phase(player2.id)
+research_phase(player3.id)
+
+
+is_waiting = waiting_for(0, 0, player1.id)
+print(is_waiting)
+
+
+
+
+exit(0)
+
+
+is_waiting = waiting_for(game_age, undo_count)
+print(is_waiting)
+
+
+exit(0)
 
 
 json_payload = json.dumps(data)
