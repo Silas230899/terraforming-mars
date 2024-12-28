@@ -20,6 +20,7 @@
                             </div>
                         </div>
 
+                        <!--
                         <div class="create-game-page-column">
                           <h4 v-i18n>№ of AI Opponents</h4>
                           <div v-for="aiCount in [1,2,3]" v-bind:key="aiCount">
@@ -29,6 +30,7 @@
                             </label>
                           </div>
                         </div>
+                        -->
 
                         <div class="create-game-page-column">
                             <h4 v-i18n>Expansions</h4>
@@ -727,6 +729,9 @@ export default (Vue as WithRefs<Refs>).extend({
       if (value === 1) {
         this.corporateEra = true;
       }
+    },
+    aiOpponentsCount(value: number) {
+      console.log('mollo ', value);
     },
   },
   computed: {
