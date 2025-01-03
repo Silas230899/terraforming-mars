@@ -167,7 +167,7 @@ def create_game():
     return json.loads(response.read().decode())
 
 
-def send_input(json_body, player_id):
+def send_player_input(json_body, player_id):
     connection = http.client.HTTPConnection("localhost", 8080)
     connection.request("POST", "/player/input?id=" + player_id, body=json_body)
     response = connection.getresponse()
@@ -183,27 +183,6 @@ class Player:
         self.color = color
         self.id = id
         self.name = name
-
-
-new_game = create_game()
-print(new_game)
-player1 = Player(new_game["players"][0]["color"], new_game["players"][0]["id"], new_game["players"][0]["name"])
-player2 = Player(new_game["players"][1]["color"], new_game["players"][1]["id"], new_game["players"][1]["name"])
-player3 = Player(new_game["players"][2]["color"], new_game["players"][2]["id"], new_game["players"][2]["name"])
-
-print("turn: " + new_game["activePlayer"])
-
-def waiting_for(player):
-    connection = http.client.HTTPConnection("localhost", 8080)
-    connection.request("GET", "/api/waitingfor?id=" + player.id + "&gameAge=" + str(player.game_age) + "&undoCount=" + str(player.undo_count))
-    response = connection.getresponse()
-    return json.loads(response.read().decode())
-
-def get_game(player_id):
-    connection = http.client.HTTPConnection("localhost", 8080)
-    connection.request("GET", "/api/player?id=" + player_id)
-    response = connection.getresponse()
-    return json.loads(response.read().decode())
 
 # research phase
 def initial_research_phase(player):
@@ -254,18 +233,26 @@ def initial_research_phase(player):
     print("player " + player.name + " chose corporation " + game["dealtCorporationCards"][corporation]["name"] + " and drew these cards: " + str(card_names_selection))
 
     buy_initial_cards_json = json.dumps(buy_initial_cards)
-    res = send_input(buy_initial_cards_json, player.id)
+    res = send_player_input(buy_initial_cards_json, player.id)
     print(res)
     print("phase: " + res["game"]["phase"])
     player.game_age = res["game"]["gameAge"]
     player.undo_count = res["game"]["undoCount"]
     #is_waiting = waiting_for(player)
     #print(is_waiting)
+    return res
 
-# order among these 3 is arbitrary
-initial_research_phase(player1)
-initial_research_phase(player2)
-initial_research_phase(player3)
+def waiting_for(player):
+    connection = http.client.HTTPConnection("localhost", 8080)
+    connection.request("GET", "/api/waitingfor?id=" + player.id + "&gameAge=" + str(player.game_age) + "&undoCount=" + str(player.undo_count))
+    response = connection.getresponse()
+    return json.loads(response.read().decode())
+
+def get_game(player_id):
+    connection = http.client.HTTPConnection("localhost", 8080)
+    connection.request("GET", "/api/player?id=" + player_id)
+    response = connection.getresponse()
+    return json.loads(response.read().decode())
 
 def turn(player):
     print("turn of " + player.name)
@@ -286,7 +273,9 @@ def turn(player):
                 "type": "option"
             }
         }
-        res = send_input(json.dumps(pass_data), player.id)
+        print("passed")
+        res = send_player_input(json.dumps(pass_data), player.id)
+        return res
     elif which_option["title"] == "Play project card":
         print("play project card")
     elif which_option["title"] == "Standard projects":
@@ -300,7 +289,7 @@ def turn(player):
             "type": "space",
             "spaceId": "48"
         }
-        res = send_input(json.dumps(place_tile_data), player.id)
+        res = send_player_input(json.dumps(place_tile_data), player.id)
         print(res)
     elif which_option["title"]["message"].startswith("Fund an award"):
         print("fund award")
@@ -329,7 +318,7 @@ def turn(player):
                 "type": "space",
                 "spaceId": "48"
             }
-            res = send_input(json.dumps(place_tile_data), player.id)
+            res = send_player_input(json.dumps(place_tile_data), player.id)
             print(res)
         elif option["title"]["message"].startswith("Fund an award"):
             print("fund award")
@@ -353,7 +342,7 @@ def turn(player):
                     "type": "option"
                 }
             }
-            res = send_input(json.dumps(pass_data), player.id)
+            res = send_player_input(json.dumps(pass_data), player.id)
             print(res)
             print("phase: " + res["game"]["phase"])
 
@@ -371,7 +360,7 @@ def draft(player):
             #waiting_for["cards"][which_card]["name"],
         ]
     }
-    res = send_input(json.dumps(draw_data), player.id)
+    res = send_player_input(json.dumps(draw_data), player.id)
     print(res)
     print("phase: " + res["game"]["phase"])
 
@@ -388,9 +377,10 @@ def research_phase(player):
         "cards": card_selection
         #"cards": [game["waitingFor"]["cards"][0]["name"], game["waitingFor"]["cards"][1]["name"]]
     }
-    res = send_input(json.dumps(buy_cards_data), player.id)
+    res = send_player_input(json.dumps(buy_cards_data), player.id)
     # TODO could be too expensive
     print(res)
+    return res
 
 
 def generation(first_player, second_player, third_player):
@@ -426,48 +416,25 @@ def rotation():
     generation(player2, player3, player1)
     generation(player3, player1, player2)
 
-for _ in range(10):
-    rotation()
+if __name__ == '__main__':
+    new_game = create_game()
+    print(new_game)
+    player1 = Player(new_game["players"][0]["color"], new_game["players"][0]["id"], new_game["players"][0]["name"])
+    player2 = Player(new_game["players"][1]["color"], new_game["players"][1]["id"], new_game["players"][1]["name"])
+    player3 = Player(new_game["players"][2]["color"], new_game["players"][2]["id"], new_game["players"][2]["name"])
 
-exit(0)
+    print("turn: " + new_game["activePlayer"])
 
+    # order among these 3 is arbitrary
+    initial_research_phase(player1)
+    initial_research_phase(player2)
+    initial_research_phase(player3)
 
+    for _ in range(10):
+        rotation()
 
-
-
-
-
-
-
-
-is_waiting = waiting_for(game_age, undo_count)
-print(is_waiting)
-
-
-exit(0)
-
-
-json_payload = json.dumps(data)
-parsed = send_input(json_payload)
+    exit(0)
 
 
-print(parsed)
-print(parsed["runId"])
-print(parsed["waitingFor"]["type"])
-print(parsed["waitingFor"])
 
-if parsed["waitingFor"]["type"] == "card":
-    card_names = parsed["waitingFor"]["cards"]
-    first_card = card_names[0]
-    card_name = first_card["name"]
-    buy_card = {
-        "runId": parsed["runId"],
-        "type": "card",
-        "cards": [
-            card_name
-        ]
-    }
-    print("buy card " + card_name)
-    res = send_input(buy_card)
-    print(res)
-#elif parsed["waitingFor"]["type"] == "or":
+
