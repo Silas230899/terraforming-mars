@@ -26,6 +26,11 @@ def generation(res):
     print("Generation " + str(res["game"]["generation"]))
     current_player = get_next_player(res["players"])
 
+    if res["game"]["phase"] != "action":
+        print("phase should be 'action' but is " + str(res["game"]["phase"]))
+        print(res)
+        exit(-1)
+
     while res["game"]["phase"] == "action":
         if "waitingFor" in res:
             print("waiting for something")
@@ -33,6 +38,11 @@ def generation(res):
             print("not waiting for something")
 
         res = turn(current_player)
+        if "players" not in res:
+            print("Players not in res:")
+            print(res)
+            exit(-1)
+
         current_player = get_next_player(res["players"])
 
     if res["game"]["phase"] == "drafting":
@@ -46,18 +56,24 @@ def generation(res):
 
         draft(player1)
         draft(player2)
-        draft(player3)
+        res = draft(player3)
+    else:
+        print("phase should be 'drafting' but is " + str(res["game"]["phase"]))
+        exit(-1)
 
     if res["game"]["phase"] == "research":
         research_phase(player1)
         research_phase(player2)
         res = research_phase(player3)
         #current_player = get_next_player(res["players"])
+    else:
+        print("phase should be 'research' but is " + str(res["game"]["phase"]))
+        exit(-1)
+
     return res
 
-
-res = generation(res)
-generation(res)
+while True:
+    res = generation(res)
 
 
 
