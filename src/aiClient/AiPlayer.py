@@ -1,4 +1,5 @@
 # passen
+import math
 import random
 
 data = {
@@ -258,6 +259,10 @@ def turn(player):
     print("turn of " + player.name)
     game = get_game(player.id)
     print("generation: " + str(game["game"]["generation"]))
+    if "waitingFor" not in game:
+        print("waiting for not in game warum auch immer")
+        print(game)
+        exit(-1)
     waiting_for = game["waitingFor"]
     dumped_waiting_for = json.dumps(waiting_for, indent=2)
     #print("waiting for options: " + dumped_waiting_for)
@@ -287,10 +292,190 @@ def turn(player):
                 print("selected player " + selected_player + " to decrease")
                 res = send_player_input(json.dumps(pass_data), player.id)
                 return res
-            elif waiting_for["title"]["message"].startswith("Select how to pay") and waiting_for["title"]["message"].endswith("standard project"):
-                print("Select how to pay for standard project not yet implemented")
-                print(waiting_for)
-                exit(-1)
+            elif waiting_for["title"]["message"].startswith("Select card to add"):
+                available_cards = waiting_for["cards"]
+                max = waiting_for["max"]
+                min = waiting_for["min"]
+                if min != 1 or max != 1:
+                    print(waiting_for)
+                    print("problem 024029sdbvfsbb5f48z")
+                    exit(-1)
+
+                sample = random.sample(available_cards, random.randint(min, max))
+                card_names_selection = list(
+                    map(
+                        lambda card: card["name"], sample))
+                select_card_data = {
+                    "runId": player.run_id,
+                    "type": "card",
+                    "cards": card_names_selection
+                }
+                res = send_player_input(json.dumps(select_card_data), player.id)
+                print("selected card to add resources" + str(card_names_selection))
+                return res
+            elif waiting_for["title"]["message"].startswith("Select how to pay for") and waiting_for["title"]["message"].endswith("standard project"):
+                cost = waiting_for["amount"]
+                available_heat = game["thisPlayer"]["heat"]
+                pay_heat = cost
+                pay_mc = 0
+                if cost > available_heat:
+                    pay_heat = available_heat
+                    pay_mc = cost - pay_heat
+
+                select_payment_data = {
+                    "runId": player.run_id,
+                    "type": "payment",
+                    "payment": {
+                        "heat": pay_heat,
+                        "megaCredits": pay_mc,
+                        "steel": 0,
+                        "titanium": 0,
+                        "plants": 0,
+                        "microbes": 0,
+                        "floaters": 0,
+                        "lunaArchivesScience": 0,
+                        "spireScience": 0,
+                        "seeds": 0,
+                        "auroraiData": 0,
+                        "graphene": 0,
+                        "kuiperAsteroids": 0,
+                        "corruption": 0
+                    }
+                }
+                res = send_player_input(json.dumps(select_payment_data), player.id)
+                print("payed for standard project with heat/megacredits")
+                return res
+            elif waiting_for["title"]["message"].startswith("Select how to pay for") and waiting_for["title"]["message"].endswith("milestone"):
+                cost = waiting_for["amount"]
+                available_heat = game["thisPlayer"]["heat"]
+                pay_heat = cost
+                pay_mc = 0
+                if cost > available_heat:
+                    pay_heat = available_heat
+                    pay_mc = cost - pay_heat
+
+                select_payment_data = {
+                    "runId": player.run_id,
+                    "type": "payment",
+                    "payment": {
+                        "heat": pay_heat,
+                        "megaCredits": pay_mc,
+                        "steel": 0,
+                        "titanium": 0,
+                        "plants": 0,
+                        "microbes": 0,
+                        "floaters": 0,
+                        "lunaArchivesScience": 0,
+                        "spireScience": 0,
+                        "seeds": 0,
+                        "auroraiData": 0,
+                        "graphene": 0,
+                        "kuiperAsteroids": 0,
+                        "corruption": 0
+                    }
+                }
+                res = send_player_input(json.dumps(select_payment_data), player.id)
+                print("payed for milestone with heat/megacredits")
+                return res
+            elif waiting_for["title"]["message"].startswith("Select how to spend") and waiting_for["title"]["message"].endswidth("cards"):
+                cost = waiting_for["amount"]
+                available_heat = game["thisPlayer"]["heat"]
+                pay_heat = cost
+                pay_mc = 0
+                if cost > available_heat:
+                    pay_heat = available_heat
+                    pay_mc = cost - pay_heat
+
+                select_payment_data = {
+                    "runId": player.run_id,
+                    "type": "payment",
+                    "payment": {
+                        "heat": pay_heat,
+                        "megaCredits": pay_mc,
+                        "steel": 0,
+                        "titanium": 0,
+                        "plants": 0,
+                        "microbes": 0,
+                        "floaters": 0,
+                        "lunaArchivesScience": 0,
+                        "spireScience": 0,
+                        "seeds": 0,
+                        "auroraiData": 0,
+                        "graphene": 0,
+                        "kuiperAsteroids": 0,
+                        "corruption": 0
+                    }
+                }
+                res = send_player_input(json.dumps(select_payment_data), player.id)
+                print("spent for card heat/megacredits")
+                return res
+            elif waiting_for["title"]["message"].startswith("Select how to pay for") and waiting_for["title"]["message"].endswith("action"):
+                cost = waiting_for["amount"]
+
+                can_pay_with_heat = waiting_for["paymentOptions"]["heat"]
+                can_pay_with_titanium = waiting_for["paymentOptions"]["titanium"]
+                can_pay_with_steel = waiting_for["paymentOptions"]["steel"]
+
+                available_heat = game["thisPlayer"]["heat"]
+                available_mc = game["thisPlayer"]["megaCredits"]
+                available_steel = game["thisPlayer"]["steel"]
+                steel_value = game["thisPlayer"]["steelValue"]
+                available_titanium = game["thisPlayer"]["titanium"]
+                titanium_value = game["thisPlayer"]["titaniumValue"]
+                available_plants = game["thisPlayer"]["plants"]
+
+                pay_mc = 0
+                pay_heat = 0
+                pay_steel = 0
+                pay_titanium = 0
+
+                if can_pay_with_heat:
+                    pay_heat = cost
+                    if cost > available_heat:
+                        pay_heat = available_heat
+                        pay_mc = cost - pay_heat
+                elif can_pay_with_titanium:
+                    necessary_titanium = math.ceil(cost / titanium_value)
+                    pay_titanium = necessary_titanium
+                    titanium_worth = available_titanium * titanium_value
+                    if cost > titanium_worth:
+                        pay_mc = cost - titanium_worth
+                        pay_titanium = available_titanium
+                elif can_pay_with_steel:
+                    necessary_steel = math.ceil(cost / steel_value)
+                    pay_steel = necessary_steel
+                    steel_worth = available_steel * steel_value
+                    if cost > steel_worth:
+                        pay_mc = cost - steel_worth
+                        pay_steel = available_steel
+                else:
+                    print("can pay something else VPÖva8wv98z6v")
+                    exit(-1)
+
+                select_payment_data = {
+                    "runId": player.run_id,
+                    "type": "payment",
+                    "payment": {
+                        "heat": pay_heat,
+                        "megaCredits": pay_mc,
+                        "steel": pay_steel,
+                        "titanium": pay_titanium,
+                        "plants": 0,
+                        "microbes": 0,
+                        "floaters": 0,
+                        "lunaArchivesScience": 0,
+                        "spireScience": 0,
+                        "seeds": 0,
+                        "auroraiData": 0,
+                        "graphene": 0,
+                        "kuiperAsteroids": 0,
+                        "corruption": 0
+                    }
+                }
+
+                res = send_player_input(json.dumps(select_payment_data), player.id)
+                print("payed for action with heat/megacredits/steel/titanium")
+                return res
             else:
                 print("LOOK HERE options message not yet implemented")
                 print(waiting_for)
@@ -316,9 +501,72 @@ def turn(player):
             print("Select space reserved for ocean to place greenery tile")
             return res
         elif waiting_for["title"].startswith("Select how to pay for award"):
-            print("Select how to pay for award not yet implemented")
-            print(waiting_for)
-            exit(-1)
+            cost = waiting_for["amount"]
+
+            can_pay_with_heat = waiting_for["paymentOptions"]["heat"]
+            can_pay_with_titanium = waiting_for["paymentOptions"]["titanium"]
+            can_pay_with_steel = waiting_for["paymentOptions"]["steel"]
+
+            available_heat = game["thisPlayer"]["heat"]
+            available_mc = game["thisPlayer"]["megaCredits"]
+            available_steel = game["thisPlayer"]["steel"]
+            steel_value = game["thisPlayer"]["steelValue"]
+            available_titanium = game["thisPlayer"]["titanium"]
+            titanium_value = game["thisPlayer"]["titaniumValue"]
+            available_plants = game["thisPlayer"]["plants"]
+
+            pay_mc = 0
+            pay_heat = 0
+            pay_steel = 0
+            pay_titanium = 0
+
+            if can_pay_with_heat:
+                pay_heat = cost
+                if cost > available_heat:
+                    pay_heat = available_heat
+                    pay_mc = cost - pay_heat
+            elif can_pay_with_titanium:
+                necessary_titanium = math.ceil(cost / titanium_value)
+                pay_titanium = necessary_titanium
+                titanium_worth = available_titanium * titanium_value
+                if cost > titanium_worth:
+                    pay_mc = cost - titanium_worth
+                    pay_titanium = available_titanium
+            elif can_pay_with_steel:
+                necessary_steel = math.ceil(cost / steel_value)
+                pay_steel = necessary_steel
+                steel_worth = available_steel * steel_value
+                if cost > steel_worth:
+                    pay_mc = cost - steel_worth
+                    pay_steel = available_steel
+            else:
+                print("can pay with something else vö03vv430vöv4aq2tbz")
+                exit(-1)
+
+            select_payment_data = {
+                "runId": player.run_id,
+                "type": "payment",
+                "payment": {
+                    "heat": pay_heat,
+                    "megaCredits": pay_mc,
+                    "steel": pay_steel,
+                    "titanium": pay_titanium,
+                    "plants": 0,
+                    "microbes": 0,
+                    "floaters": 0,
+                    "lunaArchivesScience": 0,
+                    "spireScience": 0,
+                    "seeds": 0,
+                    "auroraiData": 0,
+                    "graphene": 0,
+                    "kuiperAsteroids": 0,
+                    "corruption": 0
+                }
+            }
+
+            res = send_player_input(json.dumps(select_payment_data), player.id)
+            print("payed for award project with heat/megacredits/steel/titanium")
+            return res
         elif waiting_for["title"] == "Select a space with a steel or titanium bonus":
             available_spaces = waiting_for["spaces"]
             select_space_data = {
@@ -416,6 +664,208 @@ def turn(player):
             print("Selected a space with a steel or titanium bonus adjacent to one of your tiles (" + str(
                 select_space_data["spaceId"]) + ")")
             return res
+        elif waiting_for["title"] == "Select space next to at least 2 other city tiles":
+            available_spaces = waiting_for["spaces"]
+            select_space_data = {
+                "runId": player.run_id,
+                "type": "space",
+                "spaceId": random.choice(available_spaces)
+            }
+            res = send_player_input(json.dumps(select_space_data), player.id)
+            print("Select space next to at least 2 other city tiles (" + str(
+                select_space_data["spaceId"]) + ")")
+            return res
+        elif waiting_for["title"] == "Select a land space to place an ocean tile":
+            available_spaces = waiting_for["spaces"]
+            select_space_data = {
+                "runId": player.run_id,
+                "type": "space",
+                "spaceId": random.choice(available_spaces)
+            }
+            res = send_player_input(json.dumps(select_space_data), player.id)
+            print("Selected a land space to place an ocean tile (" + str(
+                select_space_data["spaceId"]) + ")")
+            return res
+        elif waiting_for["title"] == "Select amount of heat production to decrease":
+            max = waiting_for["max"]
+            min = waiting_for["min"]
+            decrease_amount = random.randint(min, max)
+            select_decrease_amount_data = {
+                "runId": player.run_id,
+                "type": "amount",
+                "amount": decrease_amount
+            }
+            res = send_player_input(json.dumps(select_decrease_amount_data), player.id)
+            print("decreased heat production by " + str(decrease_amount))
+            return res
+        elif waiting_for["title"] == "Select amount of energy to spend":
+            max = waiting_for["max"]
+            min = waiting_for["min"]
+            spend_amount = random.randint(min, max)
+            select_spend_amount_data = {
+                "runId": player.run_id,
+                "type": "amount",
+                "amount": spend_amount
+            }
+            res = send_player_input(json.dumps(select_spend_amount_data), player.id)
+            print("spent amount of energy " + str(spend_amount))
+            return res
+        elif waiting_for["title"] == "Select card(s) to buy":
+            available_cards = waiting_for["cards"]
+            max = waiting_for["max"]
+            min = waiting_for["min"]
+            if min != 0 or max != 1:
+                print(waiting_for)
+                print("problem 87wzv89w489v4ö09")
+                exit(-1)
+
+            sample = random.sample(available_cards, random.randint(min, max))
+            card_names_selection = list(
+                map(
+                    lambda card: card["name"], sample))
+            select_card_data = {
+                "runId": player.run_id,
+                "type": "card",
+                "cards": card_names_selection
+            }
+            res = send_player_input(json.dumps(select_card_data), player.id)
+            print("selected card to buy" + str(card_names_selection))
+            return res
+        elif waiting_for["title"] == "Select card to remove 1 Microbe(s)":
+            available_cards = waiting_for["cards"]
+            max = waiting_for["max"]
+            min = waiting_for["min"]
+            if min != 1 or max != 1:
+                print(waiting_for)
+                print("problem vwn097v40wvap84ut")
+                exit(-1)
+
+            sample = random.sample(available_cards, random.randint(min, max))
+            card_names_selection = list(
+                map(
+                    lambda card: card["name"], sample))
+            select_card_data = {
+                "runId": player.run_id,
+                "type": "card",
+                "cards": card_names_selection
+            }
+            res = send_player_input(json.dumps(select_card_data), player.id)
+            print("selected card to remove microbe" + str(card_names_selection))
+            return res
+        elif waiting_for["title"] == "Select how to pay for action":
+            cost = waiting_for["amount"]
+
+            can_pay_with_heat = waiting_for["paymentOptions"]["heat"]
+            can_pay_with_titanium = waiting_for["paymentOptions"]["titanium"]
+            can_pay_with_steel = waiting_for["paymentOptions"]["steel"]
+
+            available_heat = game["thisPlayer"]["heat"]
+            available_mc = game["thisPlayer"]["megaCredits"]
+            available_steel = game["thisPlayer"]["steel"]
+            steel_value = game["thisPlayer"]["steelValue"]
+            available_titanium = game["thisPlayer"]["titanium"]
+            titanium_value = game["thisPlayer"]["titaniumValue"]
+            available_plants = game["thisPlayer"]["plants"]
+
+            pay_mc = 0
+            pay_heat = 0
+            pay_steel = 0
+            pay_titanium = 0
+
+            if can_pay_with_heat:
+                pay_heat = cost
+                if cost > available_heat:
+                    pay_heat = available_heat
+                    pay_mc = cost - pay_heat
+            elif can_pay_with_titanium:
+                necessary_titanium = math.ceil(cost / titanium_value)
+                pay_titanium = necessary_titanium
+                titanium_worth = available_titanium * titanium_value
+                if cost > titanium_worth:
+                    pay_mc = cost - titanium_worth
+                    pay_titanium = available_titanium
+            elif can_pay_with_steel:
+                necessary_steel = math.ceil(cost / steel_value)
+                pay_steel = necessary_steel
+                steel_worth = available_steel * steel_value
+                if cost > steel_worth:
+                    pay_mc = cost - steel_worth
+                    pay_steel = available_steel
+            else:
+                print("can pay with something else qv2vwn897vnw04v")
+                exit(-1)
+
+            select_payment_data = {
+                "runId": player.run_id,
+                "type": "payment",
+                "payment": {
+                    "heat": pay_heat,
+                    "megaCredits": pay_mc,
+                    "steel": pay_steel,
+                    "titanium": pay_titanium,
+                    "plants": 0,
+                    "microbes": 0,
+                    "floaters": 0,
+                    "lunaArchivesScience": 0,
+                    "spireScience": 0,
+                    "seeds": 0,
+                    "auroraiData": 0,
+                    "graphene": 0,
+                    "kuiperAsteroids": 0,
+                    "corruption": 0
+                }
+            }
+            res = send_player_input(json.dumps(select_payment_data), player.id)
+            print("payed for action with heat or titanium or steel")
+            return res
+        elif waiting_for["title"] == "Select how to pay for milestone":
+            cost = waiting_for["amount"]
+            available_heat = game["thisPlayer"]["heat"]
+            pay_heat = cost
+            pay_mc = 0
+            if cost > available_heat:
+                pay_heat = available_heat
+                pay_mc = cost - pay_heat
+
+            select_payment_data = {
+                "runId": player.run_id,
+                "type": "payment",
+                "payment": {
+                    "heat": pay_heat,
+                    "megaCredits": pay_mc,
+                    "steel": 0,
+                    "titanium": 0,
+                    "plants": 0,
+                    "microbes": 0,
+                    "floaters": 0,
+                    "lunaArchivesScience": 0,
+                    "spireScience": 0,
+                    "seeds": 0,
+                    "auroraiData": 0,
+                    "graphene": 0,
+                    "kuiperAsteroids": 0,
+                    "corruption": 0
+                }
+            }
+            res = send_player_input(json.dumps(select_payment_data), player.id)
+            print("payed for milestone with heat/megacredits")
+            return res
+        elif waiting_for["title"] == "You cannot afford any cards":
+            max = waiting_for["max"]
+            min = waiting_for["min"]
+            if min != 0 or max != 0:
+                print(waiting_for)
+                print("problem z09z0<9zf0szfe09zs")
+                exit(-1)
+
+            select_card_data = {
+                "runId": player.run_id,
+                "type": "card",
+                "cards": []
+            }
+            res = send_player_input(json.dumps(select_card_data), player.id)
+            print("couldnt afford any cards")
+            return res
         else:
             print("LOOK HERE options title not yet implemented")
             print(waiting_for)
@@ -436,8 +886,51 @@ def turn(player):
         res = send_player_input(json.dumps(pass_data), player.id)
         return res
     elif which_option["title"] == "Play project card":
+        availableHeat = game["thisPlayer"]["heat"]
+        availableMC = game["thisPlayer"]["megaCredits"]
+        availableSteel = game["thisPlayer"]["steel"]
+        steelValue = game["thisPlayer"]["steelValue"]
+        availableTitanium = game["thisPlayer"]["titanium"]
+        titaniumValue = game["thisPlayer"]["titaniumValue"]
+        availablePlants = game["thisPlayer"]["plants"]
+
         project_cards = game["cardsInHand"]
         random_card = random.choice(project_cards)
+        card_costs = random_card["calculatedCost"]
+
+        use_heat = 0
+        use_MC = 0
+        use_steel = 0
+        use_titanium = 0
+        use_plants = 0
+        if card_costs > availableMC:
+            use_MC = availableMC
+            remaining_card_costs = card_costs - availableMC
+            necessary_steel = math.ceil(remaining_card_costs/steelValue)
+            if necessary_steel > availableSteel:
+                use_steel = steelValue
+                remaining_card_costs -= availableSteel * steelValue
+                necessary_titanium = math.ceil(remaining_card_costs/titaniumValue)
+                if necessary_titanium > availableTitanium:
+                    use_titanium = availableTitanium
+                    if availableMC + availableSteel * steelValue + availableTitanium * titaniumValue > card_costs:
+                       print("grad so gerettet")
+                    else:
+                        print("max av:" + str(availableMC + availableSteel * steelValue + availableTitanium * titaniumValue))
+                        print("card" + random_card["name"])
+                        print("cost: " + str(card_costs))
+                        print(game["thisPlayer"])
+                        print("not enough mc nor steel nor titanium a93uhjr")
+                        # will trigger a retry
+                        #exit(-1)
+                else:
+                    use_titanium = titaniumValue
+            else:
+                use_steel = necessary_steel
+        else:
+            use_MC = card_costs
+
+
         pass_data = {
             "runId": player.run_id,
             "type": "or",
@@ -446,11 +939,11 @@ def turn(player):
                 "type": "projectCard",
                 "card": random_card["name"],
                 "payment": {
-                    "heat":0,
-                    "megaCredits": random_card["calculatedCost"],
-                    "steel":0,
-                    "titanium":0,
-                    "plants":0,
+                    "heat":use_heat,
+                    "megaCredits": use_MC,
+                    "steel":use_steel,
+                    "titanium":use_titanium,
+                    "plants":use_plants,
                     "microbes":0,
                     "floaters":0,
                     "lunaArchivesScience":0,
@@ -475,6 +968,17 @@ def turn(player):
         elif "message" in res and res["message"] == "You do not have that many resources to spend":
             print(res["message"])
             print("Card costs: " + str(random_card["calculatedCost"]))
+            print(game["thisPlayer"])
+            exit(-1)
+        elif "message" in res and res["message"] == "Did not spend enough to pay for card":
+            # TODO when a card is selected the player cannot afford
+            # has to be done another way but for now just retry
+            return turn(player)
+        elif "message" in res and str(res["message"]).find("units of") != -1 and str(res["message"]).find("must be reserved for"): # such as "0 units of steel must be reserved for Security Fleet"
+            # maybe an error idk
+            return turn(player)
+        elif "message" in res:
+            print("other message juhf984zt9e8th9e84t: " + res["message"])
             print(game["thisPlayer"])
             exit(-1)
         print("play project card")
@@ -565,13 +1069,24 @@ def turn(player):
         print("Convert plants into greenery")
         return res
     elif which_option["title"] == "Perform an action from a played card":
+        #perform_card_action_data = {
+        #    "runId": player.run_id,
+        #    "type": "or",
+        #    "index": action_index,
+        #    "response": {
+        #        "type": "option"
+        #    }
+        #}
+
+        which_card = random.choice(which_option["cards"])["name"]
         perform_card_action_data = {
-            "runId": player.run_id,
-            "type": "or",
-            "index": action_index,
+           "runId": player.run_id,
+           "type": "or",
+           "index": action_index,
             "response": {
-                "type": "option"
-            }
+                "type": "card",
+                "cards": [which_card]
+           }
         }
         res = send_player_input(json.dumps(perform_card_action_data), player.id)
         print("Performing card action")
@@ -594,16 +1109,22 @@ def turn(player):
         res = send_player_input(json.dumps(do_nothing_data), player.id)
         return res
     elif which_option["title"] == "Claim a milestone":
-        do_nothing_data = {
+        available_milestones = which_option["options"]
+        which_milestone = random.randint(0, len(available_milestones) - 1)
+        claim_milestone_data = {
             "runId": player.run_id,
             "type": "or",
             "index": action_index,
             "response": {
-                "type": "option"
+                "type": "or",
+                "index": which_milestone,
+                "response": {
+                    "type": "option"
+                }
             }
         }
         print("Claim a milestone")
-        res = send_player_input(json.dumps(do_nothing_data), player.id)
+        res = send_player_input(json.dumps(claim_milestone_data), player.id)
         if "message" in res:
             print(res["message"])
             print(which_option)
@@ -699,6 +1220,165 @@ def turn(player):
         print("Increased energy production 2 steps")
         res = send_player_input(json.dumps(increase_energy_production_data), player.id)
         return res
+    elif which_option["title"] == "Do not steal":
+        dont_steal_data = {
+            "runId": player.run_id,
+            "type": "or",
+            "index": action_index,
+            "response": {
+                "type": "option"
+            }
+        }
+        print("Didn't steal")
+        res = send_player_input(json.dumps(dont_steal_data), player.id)
+        return res
+    elif which_option["title"] == "Remove 2 microbes to raise oxygen level 1 step":
+        remove_microbes_data = {
+            "runId": player.run_id,
+            "type": "or",
+            "index": action_index,
+            "response": {
+                "type": "option"
+            }
+        }
+        print("Removed 2 microbes to raise oxygen level 1 step")
+        res = send_player_input(json.dumps(remove_microbes_data), player.id)
+        return res
+    elif which_option["title"] == "Add 1 microbe to this card":
+        add_microbe_data = {
+            "runId": player.run_id,
+            "type": "or",
+            "index": action_index,
+            "response": {
+                "type": "option"
+            }
+        }
+        print("Added 1 microbe to this card")
+        res = send_player_input(json.dumps(add_microbe_data), player.id)
+        return res
+    elif which_option["title"] == "Remove 3 microbes to increase your terraform rating 1 step":
+        remove_microbes_data = {
+            "runId": player.run_id,
+            "type": "or",
+            "index": action_index,
+            "response": {
+                "type": "option"
+            }
+        }
+        print("Removed 3 microbes to increase your terraform rating 1 step")
+        res = send_player_input(json.dumps(remove_microbes_data), player.id)
+        return res
+    elif which_option["title"] == "Select space for greenery tile":
+        available_spaces = which_option["spaces"]
+        selected_space = random.choice(available_spaces)
+        select_space_data = {
+            "runId": player.run_id,
+            "type": "or",
+            "index": action_index,
+            "response": {
+                "type": "space",
+                "spaceId": selected_space
+            }
+        }
+        res = send_player_input(json.dumps(select_space_data), player.id)
+        print("Selected space to place greenery (" + selected_space + ")")
+        return res
+    elif which_option["title"] == "Don't place a greenery":
+        dont_place_greenery_data = {
+            "runId": player.run_id,
+            "type": "or",
+            "index": action_index,
+            "response": {
+                "type": "option"
+            }
+        }
+        print("Didnt place a greenery")
+        res = send_player_input(json.dumps(dont_place_greenery_data), player.id)
+        return res
+    elif which_option["title"] == "Remove a science resource from this card to draw a card":
+        remove_science_data = {
+            "runId": player.run_id,
+            "type": "or",
+            "index": action_index,
+            "response": {
+                "type": "option"
+            }
+        }
+        print("Removed a science resource from this card to draw a card")
+        res = send_player_input(json.dumps(remove_science_data), player.id)
+        return res
+    elif which_option["title"] == "Spend 1 steel to gain 7 M€.":
+        spend_steel_data = {
+            "runId": player.run_id,
+            "type": "or",
+            "index": action_index,
+            "response": {
+                "type": "option"
+            }
+        }
+        print("Spent 1 steel to gain 7 M€")
+        res = send_player_input(json.dumps(spend_steel_data), player.id)
+        return res
+    elif which_option["title"] == "Remove 2 microbes to raise temperature 1 step":
+        remove_microbes_data = {
+            "runId": player.run_id,
+            "type": "or",
+            "index": action_index,
+            "response": {
+                "type": "option"
+            }
+        }
+        print("Removed 2 microbes to raise temperature 1 step")
+        res = send_player_input(json.dumps(remove_microbes_data), player.id)
+        return res
+    elif which_option["title"] == "Gain 4 plants":
+        gain_4_plants_data = {
+            "runId": player.run_id,
+            "type": "or",
+            "index": action_index,
+            "response": {
+                "type": "option"
+            }
+        }
+        print("Gained 4 plants")
+        res = send_player_input(json.dumps(gain_4_plants_data), player.id)
+        return res
+    elif which_option["title"] == "Spend 1 plant to gain 7 M€.":
+        spent_plant_for_mc_data = {
+            "runId": player.run_id,
+            "type": "or",
+            "index": action_index,
+            "response": {
+                "type": "option"
+            }
+        }
+        print("Spent 1 plant to gain 7 M€")
+        res = send_player_input(json.dumps(spent_plant_for_mc_data), player.id)
+        return res
+    elif which_option["title"] == "Gain 1 plant":
+        gain_1_plant_data = {
+            "runId": player.run_id,
+            "type": "or",
+            "index": action_index,
+            "response": {
+                "type": "option"
+            }
+        }
+        print("Gained 1 plant")
+        res = send_player_input(json.dumps(gain_1_plant_data), player.id)
+        return res
+    elif which_option["title"] == "Gain 3 plants":
+        gain_3_plants_data = {
+            "runId": player.run_id,
+            "type": "or",
+            "index": action_index,
+            "response": {
+                "type": "option"
+            }
+        }
+        print("Gained 3 plant")
+        res = send_player_input(json.dumps(gain_3_plants_data), player.id)
+        return res
     elif "message" not in which_option["title"]:
         print("bdsg LOOK HERE: " + which_option["title"] + " is not yet implemented")
         print(game)
@@ -781,10 +1461,46 @@ def turn(player):
         res = send_player_input(json.dumps(steal_data), player.id)
         print("stole megacredits: " + which_option["title"]["message"])
         return res
+    elif which_option["title"]["message"] == "Steal ${0} steel from ${1}":
+        steal_steel_data = {
+            "runId": player.run_id,
+            "type": "or",
+            "index": action_index,
+            "response": {
+                "type": "option"
+            }
+        }
+        res = send_player_input(json.dumps(steal_steel_data), player.id)
+        print("stole steel: " + which_option["title"]["message"])
+        return res
+    elif which_option["title"]["message"] == "Add ${0} microbes to ${1}":
+        add_microbes_data = {
+            "runId": player.run_id,
+            "type": "or",
+            "index": action_index,
+            "response": {
+                "type": "option"
+            }
+        }
+        res = send_player_input(json.dumps(add_microbes_data), player.id)
+        print("added microbes: " + which_option["title"]["message"])
+        return res
+    elif which_option["title"]["message"] == "Add resource to card ${0}":
+        add_resource_data = {
+            "runId": player.run_id,
+            "type": "or",
+            "index": action_index,
+            "response": {
+                "type": "option"
+            }
+        }
+        res = send_player_input(json.dumps(add_resource_data), player.id)
+        print("added resource to card: " + which_option["title"]["message"])
+        return res
     else:
         print("LOOK HERE 1234 not implemented")
         print(which_option)
-        exit(0)
+        exit(-1)
 '''
     exit(0)
 
@@ -852,6 +1568,7 @@ def draft(player):
 
 def research_phase(player):
     game = get_game(player.id)
+    #print(game)
     print("generation: " + str(game["game"]["generation"]))
     card_selection = list(
         map(
@@ -866,12 +1583,60 @@ def research_phase(player):
     # TODO could be too expensive
     print(res)
 
-    if "waitingFor" in res and "title" in res["waitingFor"] and "message" in res["waitingFor"]["title"]:
-        if res["waitingFor"]["title"]["message"].startswith("Select how to spend"):
-            print("select how to spend in research phase is not yet implemented")
+    while "waitingFor" in res and res["game"]["phase"] == "research":
+        if "title" in res["waitingFor"] and "message" in res["waitingFor"]["title"]:
+            if res["waitingFor"]["title"]["message"].startswith("Select how to spend"):
+                if res["waitingFor"]["paymentOptions"]["heat"]:
+                    cost = res["waitingFor"]["amount"]
+                    available_heat = game["thisPlayer"]["heat"]
+                    #available_mc = game["thisPlayer"]["megaCredits"]
+                    pay_heat = cost
+                    pay_mc = 0
+                    if cost > available_heat:
+                        pay_heat = available_heat
+                        pay_mc = cost - pay_heat
+                        #print("not enough heat. other options: " + str(res["waitingFor"]["paymentOptions"]))
+
+
+                    select_payment_data = {
+                        "runId": player.run_id,
+                        "type": "payment",
+                        "payment": {
+                            "heat": pay_heat,
+                            "megaCredits": pay_mc,
+                            "steel": 0,
+                            "titanium": 0,
+                            "plants": 0,
+                            "microbes": 0,
+                            "floaters": 0,
+                            "lunaArchivesScience": 0,
+                            "spireScience": 0,
+                            "seeds": 0,
+                            "auroraiData": 0,
+                            "graphene": 0,
+                            "kuiperAsteroids": 0,
+                            "corruption": 0
+                        }
+                    }
+                    res = send_player_input(json.dumps(select_payment_data), player.id)
+                    print("payed with heat")
+                    print(res)
+                #print("select how to spend in research phase is not yet implemented")
+                #print(card_selection)
+                #print(res["waitingFor"])
+                #exit(-1)
+                else:
+                    print("not heat")
+                    print(res["waitingFor"])
+                    exit(-1)
+            else:
+                print("different problem v9n(Q§ZV)$(Z")
+                print(res["waitingFor"])
+                exit(-1)
+        else:
+            print("different problem sk0ö03a4h6")
             print(res["waitingFor"])
             exit(-1)
-
     return res
 
 

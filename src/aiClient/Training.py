@@ -31,15 +31,18 @@ def generation(res):
         print(res)
         exit(-1)
 
-    while res["game"]["phase"] == "action":
+    while res["game"]["phase"] == "action" or res["game"]["phase"] == "production":
         if "waitingFor" in res:
             print("waiting for something")
         else:
             print("not waiting for something")
 
+        old_res = res
         res = turn(current_player)
         if "players" not in res:
             print("Players not in res:")
+            print("old res:")
+            print(old_res)
             print(res)
             exit(-1)
 
@@ -57,6 +60,12 @@ def generation(res):
         draft(player1)
         draft(player2)
         res = draft(player3)
+    elif res["game"]["phase"] == "end":
+        print("The game has ended")
+        print(res)
+        for player in res["players"]:
+            print(player["name"] + " vp: " + str(player["victoryPointsBreakdown"]["total"]))
+        exit(0)
     else:
         print("phase should be 'drafting' but is " + str(res["game"]["phase"]))
         exit(-1)
