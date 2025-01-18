@@ -185,8 +185,6 @@ def turn(player):
         print(game)
         exit(-1)
     waiting_for = game["waitingFor"]
-    dumped_waiting_for = json.dumps(waiting_for, indent=2)
-    #print("waiting for options: " + dumped_waiting_for)
 
     if "options" not in waiting_for:
         print(waiting_for["title"])
@@ -815,6 +813,9 @@ def turn(player):
             print("LOOK HERE options title not yet implemented")
             print(waiting_for)
             exit(-1)
+    #else:
+        #options is in waiting for
+
 
     action_index = random.randint(0, len(waiting_for["options"]) - 1)
     which_option = waiting_for["options"][action_index]
