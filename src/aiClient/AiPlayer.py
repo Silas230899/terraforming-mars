@@ -854,6 +854,7 @@ def turn(player):
             remaining_card_costs = card_costs - availableMC
             necessary_steel = math.ceil(remaining_card_costs/steelValue)
             if necessary_steel > availableSteel:
+                # TODO check if anything but mc is ever used
                 use_steel = steelValue
                 remaining_card_costs -= availableSteel * steelValue
                 necessary_titanium = math.ceil(remaining_card_costs/titaniumValue)
@@ -930,6 +931,7 @@ def turn(player):
         print("play project card")
         return res
     elif which_option["title"] == "Standard projects":
+        # TODO only select standard project if resources are available
         selected_standard_project = which_option["cards"][random.randint(0, len(which_option["cards"]) - 1)]["name"]
         standard_project_data = {
             "runId": player.run_id,
@@ -968,7 +970,11 @@ def turn(player):
         print(res)
         return res
     elif which_option["title"] == "Select one option":
+        # TODO is this every used?
         print("options: " + json.dumps(which_option))
+        print(json.dumps(waiting_for))
+        exit(-1)
+        # TODO dont hardcode
         place_tile_data = {
             "runId": "rab1daec42eee",
             "type": "space",
@@ -1462,9 +1468,7 @@ def turn(player):
         res = send_player_input(json.dumps(take_action_data), player.id)
         print("Took first action")
         return res
-    elif which_option["title"]["message"].startswith("Fund an award"):
-        print(which_option)
-        print("fund award")
+    elif which_option["title"]["message"] == "Fund an award (${0} M€)":
         which_award = which_option["options"]
         random_award = random.randint(0, len(which_award) - 1)
         fund_award_data = {
@@ -1481,11 +1485,6 @@ def turn(player):
         }
         res = send_player_input(json.dumps(fund_award_data), player.id)
         return res
-    elif which_option["title"]["message"].startswith("Take first action"):
-        print(which_option)
-        print("take first action: ")  # + dumped_waiting_for)
-        print("not implemented qwefdnhg98")
-        exit(0)
     elif which_option["title"]["message"].startswith("Convert") and which_option["title"]["message"].endswith("into greenery"):
         print(which_option)
         available_spaces = which_option["spaces"]
