@@ -1,15 +1,8 @@
 from AiPlayer import create_game, Player, initial_research_phase, turn, draft, research_phase
 
-new_game = create_game()
-print("New game created")
-
-player1 = Player(new_game["players"][0]["color"], new_game["players"][0]["id"], new_game["players"][0]["name"])
-player2 = Player(new_game["players"][1]["color"], new_game["players"][1]["id"], new_game["players"][1]["name"])
-player3 = Player(new_game["players"][2]["color"], new_game["players"][2]["id"], new_game["players"][2]["name"])
-
-initial_research_phase(player1)
-initial_research_phase(player2)
-res = initial_research_phase(player3)
+player1 = None
+player2 = None
+player3 = None
 
 # wenn man normal dran ist ist man active und die anderen nicht, im draft wenn quasi alle dran sind ist man selbst nicht active
 def get_next_player(players):
@@ -65,7 +58,8 @@ def generation(res):
         print(res)
         for player in res["players"]:
             print(player["name"] + " vp: " + str(player["victoryPointsBreakdown"]["total"]))
-        exit(0)
+        #exit(0)
+        return None
     else:
         print("phase should be 'drafting' but is " + str(res["game"]["phase"]))
         exit(-1)
@@ -81,8 +75,27 @@ def generation(res):
 
     return res
 
+#while True:
+#    res = generation(res)
+
+def game():
+    new_game = create_game()
+    print("New game created")
+
+    global player1, player2, player3
+    player1 = Player(new_game["players"][0]["color"], new_game["players"][0]["id"], new_game["players"][0]["name"])
+    player2 = Player(new_game["players"][1]["color"], new_game["players"][1]["id"], new_game["players"][1]["name"])
+    player3 = Player(new_game["players"][2]["color"], new_game["players"][2]["id"], new_game["players"][2]["name"])
+
+    initial_research_phase(player1)
+    initial_research_phase(player2)
+    res = initial_research_phase(player3)
+
+    while True:
+        res = generation(res)
+        if res is None:
+            break
+
+
 while True:
-    res = generation(res)
-
-
-
+    game()

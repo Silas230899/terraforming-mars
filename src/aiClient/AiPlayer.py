@@ -1,88 +1,9 @@
-# passen
 import math
 import random
-
-data = {
-        "runId": "rab1daec42eee",
-        "type": "or",
-        "index": 2,
-        "response": {
-            "type": "option"
-        }
-    }
-
-#plättchen platzieren
-data = {
-    "runId":"rab1daec42eee",
-    "type":"space",
-    "spaceId":"48"
-}
-
-#"""
-# karte(n) mit name ziehen/kaufen
-data = {
-    "runId":"rab1daec42eee",
-    "type":"card",
-    "cards":[
-        "Nuclear Zone",
-        "Nitrite Reducing Bacteria"
-    ]
-}
-#"""
-
-#"""
-# projektkarte ausspielen
-data = {
-    "runId":"rab1daec42eee",
-    "type":"or",
-    "index":0,
-    "response":{
-        "type":"projectCard",
-        "card":"Nitrite Reducing Bacteria",
-        "payment":{
-            "heat":0,"megaCredits":11,"steel":0,"titanium":0,"plants":0,"microbes":0,"floaters":0,"lunaArchivesScience":0,"spireScience":0,"seeds":0,"auroraiData":0,"graphene":0,"kuiperAsteroids":0,"corruption":0
-        }
-    }
-}
-#"""
-
-#"""
-# perform action
-data = {
-    "runId":"rab1daec42eee",
-    "type":"or",
-    "index":0,
-    "response":{
-        "type":"card",
-        "cards":[
-            "Nitrite Reducing Bacteria"
-        ]
-    }
-}
-#"""
-
-# select option
-data = {
-        "runId": "rab1daec42eee",
-        "type": "or",
-        "index": 0,
-        "response": {
-            "type": "option"
-        }
-    }
-
-# passen
-data = {
-        "runId": "rab1daec42eee",
-        "type": "or",
-        "index": 2,
-        "response": {
-            "type": "option"
-        }
-    }
-
 import http.client
 import json
+
+http_connection = http.client.HTTPConnection("localhost", 8080)
 
 # analog zu in "/new-game" auf "create game" zu klicken
 def create_game():
@@ -162,16 +83,16 @@ def create_game():
         "underworldExpansion": False
     }
     json_body = json.dumps(settings)
-    connection = http.client.HTTPConnection("localhost", 8080)
-    connection.request("PUT", "/game", body=json_body)
-    response = connection.getresponse()
+    #connection = http.client.HTTPConnection("localhost", 8080)
+    http_connection.request("PUT", "/game", body=json_body)
+    response = http_connection.getresponse()
     return json.loads(response.read().decode())
 
 
 def send_player_input(json_body, player_id):
-    connection = http.client.HTTPConnection("localhost", 8080)
-    connection.request("POST", "/player/input?id=" + player_id, body=json_body)
-    response = connection.getresponse()
+    #connection = http.client.HTTPConnection("localhost", 8080)
+    http_connection.request("POST", "/player/input?id=" + player_id, body=json_body)
+    response = http_connection.getresponse()
     return json.loads(response.read().decode())
 
 
@@ -244,15 +165,15 @@ def initial_research_phase(player):
     return res
 
 def waiting_for(player):
-    connection = http.client.HTTPConnection("localhost", 8080)
-    connection.request("GET", "/api/waitingfor?id=" + player.id + "&gameAge=" + str(player.game_age) + "&undoCount=" + str(player.undo_count))
-    response = connection.getresponse()
+    #connection = http.client.HTTPConnection("localhost", 8080)
+    http_connection.request("GET", "/api/waitingfor?id=" + player.id + "&gameAge=" + str(player.game_age) + "&undoCount=" + str(player.undo_count))
+    response = http_connection.getresponse()
     return json.loads(response.read().decode())
 
 def get_game(player_id):
-    connection = http.client.HTTPConnection("localhost", 8080)
-    connection.request("GET", "/api/player?id=" + player_id)
-    response = connection.getresponse()
+    #connection = http.client.HTTPConnection("localhost", 8080)
+    http_connection.request("GET", "/api/player?id=" + player_id)
+    response = http_connection.getresponse()
     return json.loads(response.read().decode())
 
 def turn(player):
@@ -377,7 +298,7 @@ def turn(player):
                 res = send_player_input(json.dumps(select_payment_data), player.id)
                 print("payed for milestone with heat/megacredits")
                 return res
-            elif waiting_for["title"]["message"].startswith("Select how to spend") and waiting_for["title"]["message"].endswidth("cards"):
+            elif waiting_for["title"]["message"].startswith("Select how to spend") and waiting_for["title"]["message"].endswith("cards"):
                 cost = waiting_for["amount"]
                 available_heat = game["thisPlayer"]["heat"]
                 pay_heat = cost
@@ -473,6 +394,7 @@ def turn(player):
                     }
                 }
 
+                print(str(cost) + "b56zn payed: " + str(json.dumps(select_payment_data)))
                 res = send_player_input(json.dumps(select_payment_data), player.id)
                 print("payed for action with heat/megacredits/steel/titanium")
                 return res
@@ -815,6 +737,8 @@ def turn(player):
                     "corruption": 0
                 }
             }
+
+            print(str(cost) + "o8om8m payed: " + str(json.dumps(select_payment_data)))
             res = send_player_input(json.dumps(select_payment_data), player.id)
             print("payed for action with heat or titanium or steel")
             return res
@@ -865,6 +789,27 @@ def turn(player):
             }
             res = send_player_input(json.dumps(select_card_data), player.id)
             print("couldnt afford any cards")
+            return res
+        elif waiting_for["title"] == "Select card to remove 1 Animal(s)":
+            available_cards = waiting_for["cards"]
+            max = waiting_for["max"]
+            min = waiting_for["min"]
+            if min != 1 or max != 1:
+                print(waiting_for)
+                print("problem qc2qce8q98ezqzqceq2")
+                exit(-1)
+
+            sample = random.sample(available_cards, random.randint(min, max))
+            card_names_selection = list(
+                map(
+                    lambda card: card["name"], sample))
+            select_card_data = {
+                "runId": player.run_id,
+                "type": "card",
+                "cards": card_names_selection
+            }
+            res = send_player_input(json.dumps(select_card_data), player.id)
+            print("selected card to remove 1 animal from" + str(card_names_selection))
             return res
         else:
             print("LOOK HERE options title not yet implemented")
@@ -1331,6 +1276,74 @@ def turn(player):
         print("Removed 2 microbes to raise temperature 1 step")
         res = send_player_input(json.dumps(remove_microbes_data), player.id)
         return res
+    elif which_option["title"] == "Add 3 microbes to a card":
+        available_cards = which_option["cards"]
+        selected_card = random.choice(available_cards)
+
+        pass_data = {
+            "runId": player.run_id,
+            "type": "or",
+            "index": action_index,
+            "response": {
+                "type": "card",
+                "cards": [selected_card["name"]]
+            }
+        }
+        res = send_player_input(json.dumps(pass_data), player.id)
+        print("Added 3 microbes to a card (" + selected_card["name"] + ")")
+        print(res)
+        return res
+    elif which_option["title"] == "Select card to add 2 microbes":
+        available_cards = which_option["cards"]
+        selected_card = random.choice(available_cards)
+
+        pass_data = {
+            "runId": player.run_id,
+            "type": "or",
+            "index": action_index,
+            "response": {
+                "type": "card",
+                "cards": [selected_card["name"]]
+            }
+        }
+        res = send_player_input(json.dumps(pass_data), player.id)
+        print("Added 2 microbes to a card (" + selected_card["name"] + ")")
+        print(res)
+        return res
+    elif which_option["title"] == "Select card to remove 2 Animal(s)":
+        available_cards = which_option["cards"]
+        selected_card = random.choice(available_cards)
+
+        pass_data = {
+            "runId": player.run_id,
+            "type": "or",
+            "index": action_index,
+            "response": {
+                "type": "card",
+                "cards": [selected_card["name"]]
+            }
+        }
+        res = send_player_input(json.dumps(pass_data), player.id)
+        print("Removed 2 animals from card (" + selected_card["name"] + ")")
+        print(res)
+        return res
+    elif which_option["title"] == "Select card to add 2 animals":
+        available_cards = which_option["cards"]
+        selected_card = random.choice(available_cards)
+
+        pass_data = {
+            "runId": player.run_id,
+            "type": "or",
+            "index": action_index,
+            "response": {
+                "type": "card",
+                "cards": [selected_card["name"]]
+            }
+        }
+        res = send_player_input(json.dumps(pass_data), player.id)
+        print("Selected card to add 2 animals (" + selected_card["name"] + ")")
+        print(res)
+        return res
     elif which_option["title"] == "Gain 4 plants":
         gain_4_plants_data = {
             "runId": player.run_id,
@@ -1355,6 +1368,18 @@ def turn(player):
         print("Spent 1 plant to gain 7 M€")
         res = send_player_input(json.dumps(spent_plant_for_mc_data), player.id)
         return res
+    elif which_option["title"] == "Gain plant":
+        gain_plant_data = {
+            "runId": player.run_id,
+            "type": "or",
+            "index": action_index,
+            "response": {
+                "type": "option"
+            }
+        }
+        print("Gained plant")
+        res = send_player_input(json.dumps(gain_plant_data), player.id)
+        return res
     elif which_option["title"] == "Gain 1 plant":
         gain_1_plant_data = {
             "runId": player.run_id,
@@ -1378,6 +1403,45 @@ def turn(player):
         }
         print("Gained 3 plant")
         res = send_player_input(json.dumps(gain_3_plants_data), player.id)
+        return res
+    elif which_option["title"] == "Gain 5 plants":
+        gain_5_plants_data = {
+            "runId": player.run_id,
+            "type": "or",
+            "index": action_index,
+            "response": {
+                "type": "option"
+            }
+        }
+        print("Gained 5 plants")
+        res = send_player_input(json.dumps(gain_5_plants_data), player.id)
+        return res
+    elif which_option["title"] == "Don't remove M€ from adjacent player":
+        dont_remove_mc_from_adjacent_player_data = {
+            "runId": player.run_id,
+            "type": "or",
+            "index": action_index,
+            "response": {
+                "type": "option"
+            }
+        }
+        print("Didnt remove mc from adjacent player")
+        res = send_player_input(json.dumps(dont_remove_mc_from_adjacent_player_data), player.id)
+        return res
+    elif which_option["title"] == "Select adjacent player to remove 4 M€ from":
+        selected_player = random.choice(which_option["players"])
+        select_player_data = {
+            "runId": player.run_id,
+            "type": "or",
+            "index": action_index,
+            "response": {
+                "type": "player",
+                "player": selected_player
+            }
+        }
+        print(waiting_for)
+        print("selected player " + selected_player + " to remove 4 mc from")
+        res = send_player_input(json.dumps(select_player_data), player.id)
         return res
     elif "message" not in which_option["title"]:
         print("bdsg LOOK HERE: " + which_option["title"] + " is not yet implemented")
@@ -1497,58 +1561,22 @@ def turn(player):
         res = send_player_input(json.dumps(add_resource_data), player.id)
         print("added resource to card: " + which_option["title"]["message"])
         return res
+    elif which_option["title"]["message"] == "Add ${0} animals to ${1}":
+        add_animals_data = {
+            "runId": player.run_id,
+            "type": "or",
+            "index": action_index,
+            "response": {
+                "type": "option"
+            }
+        }
+        res = send_player_input(json.dumps(add_animals_data), player.id)
+        print("added animals: " + which_option["title"]["message"])
+        return res
     else:
         print("LOOK HERE 1234 not implemented")
         print(which_option)
         exit(-1)
-'''
-    exit(0)
-
-    for action_index, option in enumerate(waiting_for["options"]):
-        if option["title"] == "Pass for this generation":
-            print("pass option")
-        elif option["title"] == "Play project card":
-            print("play project card")
-        elif option["title"] == "Standard projects":
-            print("standard projects")
-        elif option["title"] == "Sell patents":
-            print("sell patents")
-        elif option["title"] == "Select one option":
-            print("options: " + json.dumps(option))
-            continue
-            place_tile_data = {
-                "runId": "rab1daec42eee",
-                "type": "space",
-                "spaceId": "48"
-            }
-            res = send_player_input(json.dumps(place_tile_data), player.id)
-            print(res)
-        elif option["title"]["message"].startswith("Fund an award"):
-            print("fund award")
-        elif option["title"]["message"].startswith("Take first action"):
-            print("take first action: ")# + dumped_waiting_for)
-        else:
-            try:
-                print("remaining: " + json.dumps(option))
-            except Exception as e:
-                print("error: " + str(e) + ", " + dumped_waiting_for)
-            exit(0)
-    exit(0)
-
-    for action_index, option in enumerate(waiting_for["options"]):
-        if option["title"] == "Pass for this generation":
-            pass_data = {
-                "runId": player.run_id,
-                "type": "or",
-                "index": action_index,
-                "response": {
-                    "type": "option"
-                }
-            }
-            res = send_player_input(json.dumps(pass_data), player.id)
-            print(res)
-            print("phase: " + res["game"]["phase"])
-'''
 
 def draft(player):
     game = get_game(player.id)
@@ -1666,32 +1694,3 @@ def generation(first_player, second_player, third_player):
     research_phase(first_player)
     research_phase(second_player)
     research_phase(third_player)
-
-
-def rotation():
-    generation(player1, player2, player3)
-    generation(player2, player3, player1)
-    generation(player3, player1, player2)
-
-if __name__ == '__main__':
-    new_game = create_game()
-    print(new_game)
-    player1 = Player(new_game["players"][0]["color"], new_game["players"][0]["id"], new_game["players"][0]["name"])
-    player2 = Player(new_game["players"][1]["color"], new_game["players"][1]["id"], new_game["players"][1]["name"])
-    player3 = Player(new_game["players"][2]["color"], new_game["players"][2]["id"], new_game["players"][2]["name"])
-
-    print("turn: " + new_game["activePlayer"])
-
-    # order among these 3 is arbitrary
-    initial_research_phase(player1)
-    initial_research_phase(player2)
-    initial_research_phase(player3)
-
-    for _ in range(10):
-        rotation()
-
-    exit(0)
-
-
-
-
