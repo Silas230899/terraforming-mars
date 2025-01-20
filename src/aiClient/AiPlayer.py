@@ -152,12 +152,12 @@ def initial_research_phase(player):
             }]
     }
 
-    print("player " + player.name + " chose corporation (" + str(available_cash) + " MC)" + game["dealtCorporationCards"][corporation]["name"] + " and drew these cards: " + str(card_names_selection))
+    #print("player " + player.name + " chose corporation (" + str(available_cash) + " MC)" + game["dealtCorporationCards"][corporation]["name"] + " and drew these cards: " + str(card_names_selection))
 
     buy_initial_cards_json = json.dumps(buy_initial_cards)
     res = send_player_input(buy_initial_cards_json, player.id)
     #print(res)
-    print("phase: " + res["game"]["phase"])
+    #print("phase: " + res["game"]["phase"])
     player.game_age = res["game"]["gameAge"]
     player.undo_count = res["game"]["undoCount"]
     #is_waiting = waiting_for(player)
@@ -177,9 +177,9 @@ def get_game(player_id):
     return json.loads(response.read().decode())
 
 def turn(player):
-    print("turn of " + player.name)
+    #print("turn of " + player.name)
     game = get_game(player.id)
-    print("generation: " + str(game["game"]["generation"]))
+    #print("generation: " + str(game["game"]["generation"]))
     if "waitingFor" not in game:
         print("waiting for not in game warum auch immer")
         print(game)
@@ -187,7 +187,7 @@ def turn(player):
     waiting_for = game["waitingFor"]
 
     if "options" not in waiting_for:
-        print(waiting_for["title"])
+        #print(waiting_for["title"])
         if "message" in waiting_for["title"]:
             if waiting_for["title"]["message"].startswith("Select space for"):
                 available_spaces = waiting_for["spaces"]
@@ -198,7 +198,7 @@ def turn(player):
                     "spaceId": selected_space
                 }
                 res = send_player_input(json.dumps(select_space_data), player.id)
-                print("Select space")
+                #print("Select space")
                 return res
             elif waiting_for["title"]["message"].startswith("Select player to decrease"):
                 selected_player = random.choice(waiting_for["players"])
@@ -207,8 +207,8 @@ def turn(player):
                     "type": "player",
                     "player": selected_player
                 }
-                print(waiting_for)
-                print("selected player " + selected_player + " to decrease")
+                #print(waiting_for)
+                #print("selected player " + selected_player + " to decrease")
                 res = send_player_input(json.dumps(pass_data), player.id)
                 return res
             elif waiting_for["title"]["message"].startswith("Select card to add"):
@@ -230,16 +230,71 @@ def turn(player):
                     "cards": card_names_selection
                 }
                 res = send_player_input(json.dumps(select_card_data), player.id)
-                print("selected card to add resources" + str(card_names_selection))
+                #print("selected card to add resources" + str(card_names_selection))
                 return res
             elif waiting_for["title"]["message"].startswith("Select how to pay for") and waiting_for["title"]["message"].endswith("standard project"):
                 cost = waiting_for["amount"]
+
+                can_pay_with_heat = waiting_for["paymentOptions"]["heat"]
+                can_pay_with_titanium = waiting_for["paymentOptions"]["titanium"]
+                can_pay_with_steel = waiting_for["paymentOptions"]["steel"]
+
                 available_heat = game["thisPlayer"]["heat"]
-                pay_heat = cost
+                available_mc = game["thisPlayer"]["megaCredits"]
+                available_steel = game["thisPlayer"]["steel"]
+                steel_value = game["thisPlayer"]["steelValue"]
+                available_titanium = game["thisPlayer"]["titanium"]
+                titanium_value = game["thisPlayer"]["titaniumValue"]
+                # available_plants = game["thisPlayer"]["plants"]
+
+                available_payments = ["mc"]  # can always pay with mc
+                if can_pay_with_heat:
+                    available_payments.append("heat")
+                if can_pay_with_steel:
+                    available_payments.append("steel")
+                if can_pay_with_titanium:
+                    available_payments.append("titanium")
+
+                # generate order
+                random.shuffle(available_payments)
+
                 pay_mc = 0
-                if cost > available_heat:
-                    pay_heat = available_heat
-                    pay_mc = cost - pay_heat
+                pay_heat = 0
+                pay_steel = 0
+                pay_titanium = 0
+
+                remaining_cost = cost
+                for payment in available_payments:
+                    if remaining_cost <= 0:
+                        break
+                    elif payment == "mc":
+                        if available_mc >= remaining_cost:
+                            pay_mc = remaining_cost
+                            break
+                        else:
+                            pay_mc = available_mc
+                            remaining_cost = remaining_cost - available_mc
+                    elif payment == "heat":
+                        if available_heat >= remaining_cost:
+                            pay_heat = remaining_cost
+                            break
+                        else:
+                            pay_heat = available_heat
+                            remaining_cost = remaining_cost - available_heat
+                    elif payment == "steel":
+                        if available_steel * steel_value >= remaining_cost:
+                            pay_steel = math.ceil(remaining_cost / steel_value)
+                            break
+                        else:
+                            pay_steel = available_steel
+                            remaining_cost = remaining_cost - available_steel * steel_value
+                    elif payment == "titanium":
+                        if available_titanium * titanium_value >= remaining_cost:
+                            pay_titanium = math.ceil(remaining_cost / titanium_value)
+                            break
+                        else:
+                            pay_titanium = available_titanium
+                            remaining_cost = remaining_cost - available_titanium * titanium_value
 
                 select_payment_data = {
                     "runId": player.run_id,
@@ -247,8 +302,8 @@ def turn(player):
                     "payment": {
                         "heat": pay_heat,
                         "megaCredits": pay_mc,
-                        "steel": 0,
-                        "titanium": 0,
+                        "steel": pay_steel,
+                        "titanium": pay_titanium,
                         "plants": 0,
                         "microbes": 0,
                         "floaters": 0,
@@ -262,16 +317,71 @@ def turn(player):
                     }
                 }
                 res = send_player_input(json.dumps(select_payment_data), player.id)
-                print("payed for standard project with heat/megacredits")
+                #print("payed for standard project with heat/megacredits")
                 return res
             elif waiting_for["title"]["message"].startswith("Select how to pay for") and waiting_for["title"]["message"].endswith("milestone"):
                 cost = waiting_for["amount"]
+
+                can_pay_with_heat = waiting_for["paymentOptions"]["heat"]
+                can_pay_with_titanium = waiting_for["paymentOptions"]["titanium"]
+                can_pay_with_steel = waiting_for["paymentOptions"]["steel"]
+
                 available_heat = game["thisPlayer"]["heat"]
-                pay_heat = cost
+                available_mc = game["thisPlayer"]["megaCredits"]
+                available_steel = game["thisPlayer"]["steel"]
+                steel_value = game["thisPlayer"]["steelValue"]
+                available_titanium = game["thisPlayer"]["titanium"]
+                titanium_value = game["thisPlayer"]["titaniumValue"]
+                # available_plants = game["thisPlayer"]["plants"]
+
+                available_payments = ["mc"]  # can always pay with mc
+                if can_pay_with_heat:
+                    available_payments.append("heat")
+                if can_pay_with_steel:
+                    available_payments.append("steel")
+                if can_pay_with_titanium:
+                    available_payments.append("titanium")
+
+                # generate order
+                random.shuffle(available_payments)
+
                 pay_mc = 0
-                if cost > available_heat:
-                    pay_heat = available_heat
-                    pay_mc = cost - pay_heat
+                pay_heat = 0
+                pay_steel = 0
+                pay_titanium = 0
+
+                remaining_cost = cost
+                for payment in available_payments:
+                    if remaining_cost <= 0:
+                        break
+                    elif payment == "mc":
+                        if available_mc >= remaining_cost:
+                            pay_mc = remaining_cost
+                            break
+                        else:
+                            pay_mc = available_mc
+                            remaining_cost = remaining_cost - available_mc
+                    elif payment == "heat":
+                        if available_heat >= remaining_cost:
+                            pay_heat = remaining_cost
+                            break
+                        else:
+                            pay_heat = available_heat
+                            remaining_cost = remaining_cost - available_heat
+                    elif payment == "steel":
+                        if available_steel * steel_value >= remaining_cost:
+                            pay_steel = math.ceil(remaining_cost / steel_value)
+                            break
+                        else:
+                            pay_steel = available_steel
+                            remaining_cost = remaining_cost - available_steel * steel_value
+                    elif payment == "titanium":
+                        if available_titanium * titanium_value >= remaining_cost:
+                            pay_titanium = math.ceil(remaining_cost / titanium_value)
+                            break
+                        else:
+                            pay_titanium = available_titanium
+                            remaining_cost = remaining_cost - available_titanium * titanium_value
 
                 select_payment_data = {
                     "runId": player.run_id,
@@ -279,8 +389,8 @@ def turn(player):
                     "payment": {
                         "heat": pay_heat,
                         "megaCredits": pay_mc,
-                        "steel": 0,
-                        "titanium": 0,
+                        "steel": pay_steel,
+                        "titanium": pay_titanium,
                         "plants": 0,
                         "microbes": 0,
                         "floaters": 0,
@@ -293,10 +403,12 @@ def turn(player):
                         "corruption": 0
                     }
                 }
+
                 res = send_player_input(json.dumps(select_payment_data), player.id)
                 print("payed for milestone with heat/megacredits")
                 return res
             elif waiting_for["title"]["message"].startswith("Select how to spend") and waiting_for["title"]["message"].endswith("cards"):
+                # looks like this only happens for helion
                 cost = waiting_for["amount"]
                 available_heat = game["thisPlayer"]["heat"]
                 pay_heat = cost
@@ -341,35 +453,56 @@ def turn(player):
                 steel_value = game["thisPlayer"]["steelValue"]
                 available_titanium = game["thisPlayer"]["titanium"]
                 titanium_value = game["thisPlayer"]["titaniumValue"]
-                available_plants = game["thisPlayer"]["plants"]
+                # available_plants = game["thisPlayer"]["plants"]
+
+                available_payments = ["mc"]  # can always pay with mc
+                if can_pay_with_heat:
+                    available_payments.append("heat")
+                if can_pay_with_steel:
+                    available_payments.append("steel")
+                if can_pay_with_titanium:
+                    available_payments.append("titanium")
+
+                # generate order
+                random.shuffle(available_payments)
 
                 pay_mc = 0
                 pay_heat = 0
                 pay_steel = 0
                 pay_titanium = 0
 
-                if can_pay_with_heat:
-                    pay_heat = cost
-                    if cost > available_heat:
-                        pay_heat = available_heat
-                        pay_mc = cost - pay_heat
-                elif can_pay_with_titanium:
-                    necessary_titanium = math.ceil(cost / titanium_value)
-                    pay_titanium = necessary_titanium
-                    titanium_worth = available_titanium * titanium_value
-                    if cost > titanium_worth:
-                        pay_mc = cost - titanium_worth
-                        pay_titanium = available_titanium
-                elif can_pay_with_steel:
-                    necessary_steel = math.ceil(cost / steel_value)
-                    pay_steel = necessary_steel
-                    steel_worth = available_steel * steel_value
-                    if cost > steel_worth:
-                        pay_mc = cost - steel_worth
-                        pay_steel = available_steel
-                else:
-                    print("can pay something else VPÖva8wv98z6v")
-                    exit(-1)
+                remaining_cost = cost
+                for payment in available_payments:
+                    if remaining_cost <= 0:
+                        break
+                    elif payment == "mc":
+                        if available_mc >= remaining_cost:
+                            pay_mc = remaining_cost
+                            break
+                        else:
+                            pay_mc = available_mc
+                            remaining_cost = remaining_cost - available_mc
+                    elif payment == "heat":
+                        if available_heat >= remaining_cost:
+                            pay_heat = remaining_cost
+                            break
+                        else:
+                            pay_heat = available_heat
+                            remaining_cost = remaining_cost - available_heat
+                    elif payment == "steel":
+                        if available_steel * steel_value >= remaining_cost:
+                            pay_steel = math.ceil(remaining_cost / steel_value)
+                            break
+                        else:
+                            pay_steel = available_steel
+                            remaining_cost = remaining_cost - available_steel * steel_value
+                    elif payment == "titanium":
+                        if available_titanium * titanium_value >= remaining_cost:
+                            pay_titanium = math.ceil(remaining_cost / titanium_value)
+                            break
+                        else:
+                            pay_titanium = available_titanium
+                            remaining_cost = remaining_cost - available_titanium * titanium_value
 
                 select_payment_data = {
                     "runId": player.run_id,
@@ -433,35 +566,56 @@ def turn(player):
             steel_value = game["thisPlayer"]["steelValue"]
             available_titanium = game["thisPlayer"]["titanium"]
             titanium_value = game["thisPlayer"]["titaniumValue"]
-            available_plants = game["thisPlayer"]["plants"]
+            # available_plants = game["thisPlayer"]["plants"]
+
+            available_payments = ["mc"]  # can always pay with mc
+            if can_pay_with_heat:
+                available_payments.append("heat")
+            if can_pay_with_steel:
+                available_payments.append("steel")
+            if can_pay_with_titanium:
+                available_payments.append("titanium")
+
+            # generate order
+            random.shuffle(available_payments)
 
             pay_mc = 0
             pay_heat = 0
             pay_steel = 0
             pay_titanium = 0
 
-            if can_pay_with_heat:
-                pay_heat = cost
-                if cost > available_heat:
-                    pay_heat = available_heat
-                    pay_mc = cost - pay_heat
-            elif can_pay_with_titanium:
-                necessary_titanium = math.ceil(cost / titanium_value)
-                pay_titanium = necessary_titanium
-                titanium_worth = available_titanium * titanium_value
-                if cost > titanium_worth:
-                    pay_mc = cost - titanium_worth
-                    pay_titanium = available_titanium
-            elif can_pay_with_steel:
-                necessary_steel = math.ceil(cost / steel_value)
-                pay_steel = necessary_steel
-                steel_worth = available_steel * steel_value
-                if cost > steel_worth:
-                    pay_mc = cost - steel_worth
-                    pay_steel = available_steel
-            else:
-                print("can pay with something else vö03vv430vöv4aq2tbz")
-                exit(-1)
+            remaining_cost = cost
+            for payment in available_payments:
+                if remaining_cost <= 0:
+                    break
+                elif payment == "mc":
+                    if available_mc >= remaining_cost:
+                        pay_mc = remaining_cost
+                        break
+                    else:
+                        pay_mc = available_mc
+                        remaining_cost = remaining_cost - available_mc
+                elif payment == "heat":
+                    if available_heat >= remaining_cost:
+                        pay_heat = remaining_cost
+                        break
+                    else:
+                        pay_heat = available_heat
+                        remaining_cost = remaining_cost - available_heat
+                elif payment == "steel":
+                    if available_steel * steel_value >= remaining_cost:
+                        pay_steel = math.ceil(remaining_cost / steel_value)
+                        break
+                    else:
+                        pay_steel = available_steel
+                        remaining_cost = remaining_cost - available_steel * steel_value
+                elif payment == "titanium":
+                    if available_titanium * titanium_value >= remaining_cost:
+                        pay_titanium = math.ceil(remaining_cost / titanium_value)
+                        break
+                    else:
+                        pay_titanium = available_titanium
+                        remaining_cost = remaining_cost - available_titanium * titanium_value
 
             select_payment_data = {
                 "runId": player.run_id,
@@ -685,9 +839,9 @@ def turn(player):
             steel_value = game["thisPlayer"]["steelValue"]
             available_titanium = game["thisPlayer"]["titanium"]
             titanium_value = game["thisPlayer"]["titaniumValue"]
-            available_plants = game["thisPlayer"]["plants"]
+            #available_plants = game["thisPlayer"]["plants"]
 
-            available_payments = ["mc"]
+            available_payments = ["mc"] # can always pay with mc
             if can_pay_with_heat:
                 available_payments.append("heat")
             if can_pay_with_steel:
@@ -703,28 +857,38 @@ def turn(player):
             pay_steel = 0
             pay_titanium = 0
 
-
-            if can_pay_with_heat:
-                pay_heat = cost
-                if cost > available_heat:
-                    pay_heat = available_heat
-                    pay_mc = cost - pay_heat
-
-            if can_pay_with_titanium:
-                necessary_titanium = math.ceil(cost / titanium_value)
-                pay_titanium = necessary_titanium
-                titanium_worth = available_titanium * titanium_value
-                if cost > titanium_worth:
-                    pay_mc = cost - titanium_worth
-                    pay_titanium = available_titanium
-
-            if can_pay_with_steel:
-                necessary_steel = math.ceil(cost / steel_value)
-                pay_steel = necessary_steel
-                steel_worth = available_steel * steel_value
-                if cost > steel_worth:
-                    pay_mc = cost - steel_worth
-                    pay_steel = available_steel
+            remaining_cost = cost
+            for payment in available_payments:
+                if remaining_cost <= 0:
+                    break
+                elif payment == "mc":
+                    if available_mc >= remaining_cost:
+                        pay_mc = remaining_cost
+                        break
+                    else:
+                        pay_mc = available_mc
+                        remaining_cost = remaining_cost - available_mc
+                elif payment == "heat":
+                    if available_heat >= remaining_cost:
+                        pay_heat = remaining_cost
+                        break
+                    else:
+                        pay_heat = available_heat
+                        remaining_cost = remaining_cost - available_heat
+                elif payment == "steel":
+                    if available_steel * steel_value >= remaining_cost:
+                        pay_steel = math.ceil(remaining_cost/steel_value)
+                        break
+                    else:
+                        pay_steel = available_steel
+                        remaining_cost = remaining_cost - available_steel * steel_value
+                elif payment == "titanium":
+                    if available_titanium * titanium_value >= remaining_cost:
+                        pay_titanium = math.ceil(remaining_cost/titanium_value)
+                        break
+                    else:
+                        pay_titanium = available_titanium
+                        remaining_cost = remaining_cost - available_titanium * titanium_value
 
             select_payment_data = {
                 "runId": player.run_id,
@@ -753,12 +917,67 @@ def turn(player):
             return res
         elif waiting_for["title"] == "Select how to pay for milestone":
             cost = waiting_for["amount"]
+
+            can_pay_with_heat = waiting_for["paymentOptions"]["heat"]
+            can_pay_with_titanium = waiting_for["paymentOptions"]["titanium"]
+            can_pay_with_steel = waiting_for["paymentOptions"]["steel"]
+
             available_heat = game["thisPlayer"]["heat"]
-            pay_heat = cost
+            available_mc = game["thisPlayer"]["megaCredits"]
+            available_steel = game["thisPlayer"]["steel"]
+            steel_value = game["thisPlayer"]["steelValue"]
+            available_titanium = game["thisPlayer"]["titanium"]
+            titanium_value = game["thisPlayer"]["titaniumValue"]
+            # available_plants = game["thisPlayer"]["plants"]
+
+            available_payments = ["mc"]  # can always pay with mc
+            if can_pay_with_heat:
+                available_payments.append("heat")
+            if can_pay_with_steel:
+                available_payments.append("steel")
+            if can_pay_with_titanium:
+                available_payments.append("titanium")
+
+            # generate order
+            random.shuffle(available_payments)
+
             pay_mc = 0
-            if cost > available_heat:
-                pay_heat = available_heat
-                pay_mc = cost - pay_heat
+            pay_heat = 0
+            pay_steel = 0
+            pay_titanium = 0
+
+            remaining_cost = cost
+            for payment in available_payments:
+                if remaining_cost <= 0:
+                    break
+                elif payment == "mc":
+                    if available_mc >= remaining_cost:
+                        pay_mc = remaining_cost
+                        break
+                    else:
+                        pay_mc = available_mc
+                        remaining_cost = remaining_cost - available_mc
+                elif payment == "heat":
+                    if available_heat >= remaining_cost:
+                        pay_heat = remaining_cost
+                        break
+                    else:
+                        pay_heat = available_heat
+                        remaining_cost = remaining_cost - available_heat
+                elif payment == "steel":
+                    if available_steel * steel_value >= remaining_cost:
+                        pay_steel = math.ceil(remaining_cost / steel_value)
+                        break
+                    else:
+                        pay_steel = available_steel
+                        remaining_cost = remaining_cost - available_steel * steel_value
+                elif payment == "titanium":
+                    if available_titanium * titanium_value >= remaining_cost:
+                        pay_titanium = math.ceil(remaining_cost / titanium_value)
+                        break
+                    else:
+                        pay_titanium = available_titanium
+                        remaining_cost = remaining_cost - available_titanium * titanium_value
 
             select_payment_data = {
                 "runId": player.run_id,
@@ -766,8 +985,8 @@ def turn(player):
                 "payment": {
                     "heat": pay_heat,
                     "megaCredits": pay_mc,
-                    "steel": 0,
-                    "titanium": 0,
+                    "steel": pay_steel,
+                    "titanium": pay_titanium,
                     "plants": 0,
                     "microbes": 0,
                     "floaters": 0,
@@ -780,6 +999,7 @@ def turn(player):
                     "corruption": 0
                 }
             }
+
             res = send_player_input(json.dumps(select_payment_data), player.id)
             print("payed for milestone with heat/megacredits")
             return res
@@ -827,9 +1047,35 @@ def turn(player):
     #else:
         #options is in waiting for
 
+    standard_projects_count = 5
+    which_standard_project = random.randint(0, standard_projects_count-1)
 
-    action_index = random.randint(0, len(waiting_for["options"]) - 1)
-    which_option = waiting_for["options"][action_index]
+    which_option = waiting_for["options"][0] # initialization
+    while True:
+        action_index = random.randint(0, len(waiting_for["options"]) - 1) # choose random index
+        which_option = waiting_for["options"][action_index]
+        if which_option["title"] == "Standard projects":
+            available_heat = game["thisPlayer"]["heat"]
+            available_mc = game["thisPlayer"]["megaCredits"]
+            selected_standard_project_cost = which_option["cards"][which_standard_project]["calculatedCost"]
+            print("selected " + which_option["cards"][which_standard_project]["name"])
+            print("cost: " + str(which_option["cards"][which_standard_project]["calculatedCost"]))
+            is_helion = game["pickedCorporationCard"][0]["name"] == "Helion"
+            if is_helion:
+                if available_heat + available_mc >= selected_standard_project_cost:
+                    print("is helion " + str(available_mc) + str(available_mc))
+                    break
+            else:
+                if available_mc >= selected_standard_project_cost:
+                    print("is not helion " + str(available_mc))
+                    break
+        else:
+            break
+
+
+
+
+
     if which_option["title"] == "Pass for this generation":
         pass_data = {
             "runId": player.run_id,
@@ -1020,7 +1266,7 @@ def turn(player):
         return res
     elif which_option["title"] == "Standard projects":
         # TODO only select standard project if resources are available
-        selected_standard_project = which_option["cards"][random.randint(0, len(which_option["cards"]) - 1)]["name"]
+        selected_standard_project = which_option["cards"][which_standard_project]["name"]
         standard_project_data = {
             "runId": player.run_id,
             "type": "or",
@@ -1035,6 +1281,15 @@ def turn(player):
         if "message" in res and res["message"].endswith("not available"):
             print("retry because buying standard project threw error (" + res["message"] + ")")
             # essentially a hacky retry
+            print(game)
+            print(game["game"]["spaces"])
+            print(game["thisPlayer"])
+            print(waiting_for)
+            print(which_option)
+            print(which_option["cards"])
+            print(game["id"])
+            #exit(-1)
+            # maybe this is because no more space is available for a city
             return turn(player)
         return res
     elif which_option["title"] == "Sell patents":
@@ -1529,7 +1784,7 @@ def turn(player):
         print(game)
         print(which_option)
         exit(-1)
-    elif which_option["title"]["message"].startswith("Take first action"):
+    elif which_option["title"]["message"] == "Take first action of ${0} corporation":
         # the case for inventrix, ...
         take_action_data = {
             "runId": player.run_id,

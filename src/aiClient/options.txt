@@ -37,6 +37,7 @@ Gain 1 plant
 Gain 3 plants
 Gain 5 plants
 Don't remove M€ from adjacent player
+(msg) Take first action of ${0} corporation
 
 or resp space spaceId:
 Select space for greenery tile
@@ -47,5 +48,3 @@ Select adjacent player to remove 4 M€ from
 or resp or index resp option:
 Claim a milestone
 (msg) Fund an award (${0} M€)
-
-zul 700
