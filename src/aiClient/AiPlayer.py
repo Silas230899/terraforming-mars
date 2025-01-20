@@ -405,7 +405,7 @@ def turn(player):
                 }
 
                 res = send_player_input(json.dumps(select_payment_data), player.id)
-                print("payed for milestone with heat/megacredits")
+                #print("payed for milestone with heat/megacredits")
                 return res
             elif waiting_for["title"]["message"].startswith("Select how to spend") and waiting_for["title"]["message"].endswith("cards"):
                 # looks like this only happens for helion
@@ -438,7 +438,7 @@ def turn(player):
                     }
                 }
                 res = send_player_input(json.dumps(select_payment_data), player.id)
-                print("spent for card heat/megacredits")
+                #print("spent for card heat/megacredits")
                 return res
             elif waiting_for["title"]["message"].startswith("Select how to pay for") and waiting_for["title"]["message"].endswith("action"):
                 cost = waiting_for["amount"]
@@ -525,9 +525,9 @@ def turn(player):
                     }
                 }
 
-                print(str(cost) + "b56zn payed: " + str(json.dumps(select_payment_data)))
+                #print(str(cost) + "b56zn payed: " + str(json.dumps(select_payment_data)))
                 res = send_player_input(json.dumps(select_payment_data), player.id)
-                print("payed for action with heat/megacredits/steel/titanium")
+                #print("payed for action with heat/megacredits/steel/titanium")
                 return res
             else:
                 print("LOOK HERE options message not yet implemented")
@@ -541,7 +541,7 @@ def turn(player):
                 "spaceId": random.choice(available_spaces)
             }
             res = send_player_input(json.dumps(select_space_data), player.id)
-            print("Select space")
+            #print("Select space")
             return res
         elif waiting_for["title"].startswith("Select space reserved for ocean to place greenery tile"):
             available_spaces = waiting_for["spaces"]
@@ -551,7 +551,7 @@ def turn(player):
                 "spaceId": random.choice(available_spaces)
             }
             res = send_player_input(json.dumps(select_space_data), player.id)
-            print("Select space reserved for ocean to place greenery tile")
+            #print("Select space reserved for ocean to place greenery tile")
             return res
         elif waiting_for["title"].startswith("Select how to pay for award"):
             cost = waiting_for["amount"]
@@ -639,7 +639,7 @@ def turn(player):
             }
 
             res = send_player_input(json.dumps(select_payment_data), player.id)
-            print("payed for award project with heat/megacredits/steel/titanium")
+            #print("payed for award project with heat/megacredits/steel/titanium")
             return res
         elif waiting_for["title"] == "Select a space with a steel or titanium bonus":
             available_spaces = waiting_for["spaces"]
@@ -649,7 +649,7 @@ def turn(player):
                 "spaceId": random.choice(available_spaces)
             }
             res = send_player_input(json.dumps(select_space_data), player.id)
-            print("Selected space with a steel or titanium bonus (" + str(select_space_data["spaceId"]) + ")")
+            #print("Selected space with a steel or titanium bonus (" + str(select_space_data["spaceId"]) + ")")
             return res
         elif waiting_for["title"] == "Select space adjacent to a city tile":
             available_spaces = waiting_for["spaces"]
@@ -659,7 +659,7 @@ def turn(player):
                 "spaceId": random.choice(available_spaces)
             }
             res = send_player_input(json.dumps(select_space_data), player.id)
-            print("Selected space adjacent to a city tile (" + str(select_space_data["spaceId"]) + ")")
+            #print("Selected space adjacent to a city tile (" + str(select_space_data["spaceId"]) + ")")
             return res
         elif waiting_for["title"] == "Select builder card to copy":
             available_cards = waiting_for["cards"]
@@ -670,7 +670,7 @@ def turn(player):
                 "cards": [selected_card["name"]]
             }
             res = send_player_input(json.dumps(select_card_data), player.id)
-            print("Selected builder card to copy (" + selected_card["name"] + ")")
+            #print("Selected builder card to copy (" + selected_card["name"] + ")")
             return res
         elif waiting_for["title"] == "Select place next to no other tile for city":
             available_spaces = waiting_for["spaces"]
@@ -680,7 +680,7 @@ def turn(player):
                 "spaceId": random.choice(available_spaces)
             }
             res = send_player_input(json.dumps(select_space_data), player.id)
-            print("Selected place next to no other tile for city (" + str(select_space_data["spaceId"]) + ")")
+            #print("Selected place next to no other tile for city (" + str(select_space_data["spaceId"]) + ")")
             return res
         elif waiting_for["title"] == "Select 1 card(s) to keep":
             available_cards = waiting_for["cards"]
@@ -691,7 +691,7 @@ def turn(player):
                 "cards": [selected_card["name"]]
             }
             res = send_player_input(json.dumps(select_card_data), player.id)
-            print("Selected card to keep (" + selected_card["name"] + ")")
+            #print("Selected card to keep (" + selected_card["name"] + ")")
             return res
         elif waiting_for["title"] == "Select 2 card(s) to keep":
             available_cards = waiting_for["cards"]
@@ -705,7 +705,7 @@ def turn(player):
                 "cards": card_names_selection
             }
             res = send_player_input(json.dumps(select_card_data), player.id)
-            print("Selected cards to keep (" + str(card_names_selection) + ")")
+            #print("Selected cards to keep (" + str(card_names_selection) + ")")
             return res
         elif waiting_for["title"] == "Select space next to greenery for special tile":
             available_spaces = waiting_for["spaces"]
@@ -715,7 +715,7 @@ def turn(player):
                 "spaceId": random.choice(available_spaces)
             }
             res = send_player_input(json.dumps(select_space_data), player.id)
-            print("Selected space next to greenery for special tile (" + str(select_space_data["spaceId"]) + ")")
+            #print("Selected space next to greenery for special tile (" + str(select_space_data["spaceId"]) + ")")
             return res
         elif waiting_for["title"] == "Select either Tharsis Tholus, Ascraeus Mons, Pavonis Mons or Arsia Mons":
             available_spaces = waiting_for["spaces"]
@@ -725,7 +725,7 @@ def turn(player):
                 "spaceId": random.choice(available_spaces)
             }
             res = send_player_input(json.dumps(select_space_data), player.id)
-            print("Selected either Tharsis Tholus, Ascraeus Mons, Pavonis Mons or Arsia Mons (" + str(select_space_data["spaceId"]) + ")")
+            #print("Selected either Tharsis Tholus, Ascraeus Mons, Pavonis Mons or Arsia Mons (" + str(select_space_data["spaceId"]) + ")")
             return res
         elif waiting_for["title"] == "Select a space with a steel or titanium bonus adjacent to one of your tiles":
             available_spaces = waiting_for["spaces"]
@@ -735,8 +735,7 @@ def turn(player):
                 "spaceId": random.choice(available_spaces)
             }
             res = send_player_input(json.dumps(select_space_data), player.id)
-            print("Selected a space with a steel or titanium bonus adjacent to one of your tiles (" + str(
-                select_space_data["spaceId"]) + ")")
+            #print("Selected a space with a steel or titanium bonus adjacent to one of your tiles (" + str(select_space_data["spaceId"]) + ")")
             return res
         elif waiting_for["title"] == "Select space next to at least 2 other city tiles":
             available_spaces = waiting_for["spaces"]
@@ -746,8 +745,7 @@ def turn(player):
                 "spaceId": random.choice(available_spaces)
             }
             res = send_player_input(json.dumps(select_space_data), player.id)
-            print("Select space next to at least 2 other city tiles (" + str(
-                select_space_data["spaceId"]) + ")")
+            #print("Select space next to at least 2 other city tiles (" + str(select_space_data["spaceId"]) + ")")
             return res
         elif waiting_for["title"] == "Select a land space to place an ocean tile":
             available_spaces = waiting_for["spaces"]
@@ -757,8 +755,7 @@ def turn(player):
                 "spaceId": random.choice(available_spaces)
             }
             res = send_player_input(json.dumps(select_space_data), player.id)
-            print("Selected a land space to place an ocean tile (" + str(
-                select_space_data["spaceId"]) + ")")
+            #print("Selected a land space to place an ocean tile (" + str(select_space_data["spaceId"]) + ")")
             return res
         elif waiting_for["title"] == "Select amount of heat production to decrease":
             max = waiting_for["max"]
@@ -770,7 +767,7 @@ def turn(player):
                 "amount": decrease_amount
             }
             res = send_player_input(json.dumps(select_decrease_amount_data), player.id)
-            print("decreased heat production by " + str(decrease_amount))
+            #print("decreased heat production by " + str(decrease_amount))
             return res
         elif waiting_for["title"] == "Select amount of energy to spend":
             max = waiting_for["max"]
@@ -782,7 +779,7 @@ def turn(player):
                 "amount": spend_amount
             }
             res = send_player_input(json.dumps(select_spend_amount_data), player.id)
-            print("spent amount of energy " + str(spend_amount))
+            #print("spent amount of energy " + str(spend_amount))
             return res
         elif waiting_for["title"] == "Select card(s) to buy":
             available_cards = waiting_for["cards"]
@@ -803,7 +800,7 @@ def turn(player):
                 "cards": card_names_selection
             }
             res = send_player_input(json.dumps(select_card_data), player.id)
-            print("selected card to buy" + str(card_names_selection))
+            #print("selected card to buy" + str(card_names_selection))
             return res
         elif waiting_for["title"] == "Select card to remove 1 Microbe(s)":
             available_cards = waiting_for["cards"]
@@ -824,7 +821,7 @@ def turn(player):
                 "cards": card_names_selection
             }
             res = send_player_input(json.dumps(select_card_data), player.id)
-            print("selected card to remove microbe" + str(card_names_selection))
+            #print("selected card to remove microbe" + str(card_names_selection))
             return res
         elif waiting_for["title"] == "Select how to pay for action":
             cost = waiting_for["amount"]
@@ -911,9 +908,9 @@ def turn(player):
                 }
             }
 
-            print(str(cost) + " o8om8m payed: " + str(json.dumps(select_payment_data)))
+            #print(str(cost) + " o8om8m payed: " + str(json.dumps(select_payment_data)))
             res = send_player_input(json.dumps(select_payment_data), player.id)
-            print("payed for action with heat or titanium or steel")
+            #print("payed for action with heat or titanium or steel")
             return res
         elif waiting_for["title"] == "Select how to pay for milestone":
             cost = waiting_for["amount"]
@@ -1001,7 +998,7 @@ def turn(player):
             }
 
             res = send_player_input(json.dumps(select_payment_data), player.id)
-            print("payed for milestone with heat/megacredits")
+            #print("payed for milestone with heat/megacredits")
             return res
         elif waiting_for["title"] == "You cannot afford any cards":
             max = waiting_for["max"]
@@ -1017,7 +1014,7 @@ def turn(player):
                 "cards": []
             }
             res = send_player_input(json.dumps(select_card_data), player.id)
-            print("couldnt afford any cards")
+            #print("couldnt afford any cards")
             return res
         elif waiting_for["title"] == "Select card to remove 1 Animal(s)":
             available_cards = waiting_for["cards"]
@@ -1038,7 +1035,7 @@ def turn(player):
                 "cards": card_names_selection
             }
             res = send_player_input(json.dumps(select_card_data), player.id)
-            print("selected card to remove 1 animal from" + str(card_names_selection))
+            #print("selected card to remove 1 animal from" + str(card_names_selection))
             return res
         else:
             print("LOOK HERE options title not yet implemented")
@@ -1058,16 +1055,16 @@ def turn(player):
             available_heat = game["thisPlayer"]["heat"]
             available_mc = game["thisPlayer"]["megaCredits"]
             selected_standard_project_cost = which_option["cards"][which_standard_project]["calculatedCost"]
-            print("selected " + which_option["cards"][which_standard_project]["name"])
-            print("cost: " + str(which_option["cards"][which_standard_project]["calculatedCost"]))
+            #print("selected " + which_option["cards"][which_standard_project]["name"])
+            #print("cost: " + str(which_option["cards"][which_standard_project]["calculatedCost"]))
             is_helion = game["pickedCorporationCard"][0]["name"] == "Helion"
             if is_helion:
                 if available_heat + available_mc >= selected_standard_project_cost:
-                    print("is helion " + str(available_mc) + str(available_mc))
+                    #print("is helion " + str(available_mc) + str(available_mc))
                     break
             else:
                 if available_mc >= selected_standard_project_cost:
-                    print("is not helion " + str(available_mc))
+                    #print("is not helion " + str(available_mc))
                     break
         else:
             break
@@ -1085,7 +1082,7 @@ def turn(player):
                 "type": "option"
             }
         }
-        print("passed")
+        #print("passed")
         res = send_player_input(json.dumps(pass_data), player.id)
         return res
     elif which_option["title"] == "Play project card":
@@ -1101,39 +1098,6 @@ def turn(player):
         playable_cards = which_option["cards"]
         random_card = random.choice(playable_cards)
         card_costs = random_card["calculatedCost"]
-
-        use_heat = 0
-        use_MC = 0
-        use_steel = 0
-        use_titanium = 0
-        use_plants = 0
-        if card_costs > availableMC:
-            use_MC = availableMC
-            remaining_card_costs = card_costs - availableMC
-            necessary_steel = math.ceil(remaining_card_costs/steelValue)
-            if necessary_steel > availableSteel:
-                # TODO check if anything but mc is ever used
-                use_steel = availableSteel
-                remaining_card_costs -= availableSteel * steelValue
-                necessary_titanium = math.ceil(remaining_card_costs/titaniumValue)
-                if necessary_titanium > availableTitanium:
-                    use_titanium = availableTitanium
-                    if availableMC + availableSteel * steelValue + availableTitanium * titaniumValue > card_costs:
-                       print("grad so gerettet")
-                    else:
-                        print("max av:" + str(availableMC + availableSteel * steelValue + availableTitanium * titaniumValue))
-                        print("card" + random_card["name"])
-                        print("cost: " + str(card_costs))
-                        print(game["thisPlayer"])
-                        print("not enough mc nor steel nor titanium a93uhjr")
-                        # will trigger a retry
-                        #exit(-1)
-                else:
-                    use_titanium = necessary_titanium
-            else:
-                use_steel = necessary_steel
-        else:
-            use_MC = card_costs
 
         can_pay_steel = False
         if "AI Central,Aquifer Pumping,Artificial Lake,Biomass Combustors,Building Industries,Capital,Carbonate Processing,Colonizer Training Camp,Commercial District,Corporate Stronghold,Cupola City,Deep Well Heating,Development Center,Domed Crater,Electro Catapult,Eos Chasma National Park,Equatorial Magnetizer,Food Factory,Fueled Generators,Fuel Factory,Fusion Power,Geothermal Power,GHG Factories,Great Dam,Greenhouses,Heat Trappers,Immigrant City,Industrial Center,Industrial Microbes,Ironworks,Magnetic Field Dome,Magnetic Field Generators,Mars University,Martian Rails,Medical Lab,Mine,Mining Area,Mining Rights,Mining Rights,Mining Rights,Mohole Area,Natural Preserve,Noctis City,Noctis Farming,Nuclear Power,Olympus Conference,Open City,Ore Processor,Peroxide Power,Physics Complex,Power Infrastructure,Power Plant,,Protected Valley,Rad-Chem Factory,Research Outpost,Rover Construction,Soil Factory,Solar Power,Space Elevator,Steelworks,Strip Mine,Tectonic Stress Power,Titanium Mine,Tropical Resort,Underground City,Underground Detonations,Urbanized Area,Water Splitting Plant,Windmills".find(
@@ -1262,7 +1226,7 @@ def turn(player):
             print(payment_options)
             print("available mc: " + str(availableMC))
             exit(-1)
-        print("play project card")
+        #print("play project card")
         return res
     elif which_option["title"] == "Standard projects":
         # TODO only select standard project if resources are available
@@ -1277,17 +1241,17 @@ def turn(player):
             }
         }
         res = send_player_input(json.dumps(standard_project_data), player.id)
-        print("standard project (" + selected_standard_project + ")")
+        #print("standard project (" + selected_standard_project + ")")
         if "message" in res and res["message"].endswith("not available"):
-            print("retry because buying standard project threw error (" + res["message"] + ")")
+            #print("retry because buying standard project threw error (" + res["message"] + ")")
             # essentially a hacky retry
-            print(game)
-            print(game["game"]["spaces"])
-            print(game["thisPlayer"])
-            print(waiting_for)
-            print(which_option)
-            print(which_option["cards"])
-            print(game["id"])
+            #print(game)
+            #print(game["game"]["spaces"])
+            #print(game["thisPlayer"])
+            #print(waiting_for)
+            #print(which_option)
+            #print(which_option["cards"])
+            #print(game["id"])
             #exit(-1)
             # maybe this is because no more space is available for a city
             return turn(player)
@@ -1309,8 +1273,8 @@ def turn(player):
             }
         }
         res = send_player_input(json.dumps(pass_data), player.id)
-        print("sell patents")
-        print(res)
+        #print("sell patents")
+        #print(res)
         return res
     elif which_option["title"] == "End Turn":
         end_turn_data = {
@@ -1322,7 +1286,7 @@ def turn(player):
             }
         }
         res = send_player_input(json.dumps(end_turn_data), player.id)
-        print("End turn")
+        #print("End turn")
         return res
     elif which_option["title"] == "Convert 8 heat into temperature":
         convert_heat_data = {
@@ -1334,7 +1298,7 @@ def turn(player):
             }
         }
         res = send_player_input(json.dumps(convert_heat_data), player.id)
-        print("Convert heat into temperature")
+        #print("Convert heat into temperature")
         return res
     elif which_option["title"] == "Convert 8 plants into greenery":
         # maybe falscher name?!
@@ -1347,7 +1311,7 @@ def turn(player):
             }
         }
         res = send_player_input(json.dumps(convert_plants_data), player.id)
-        print("Convert plants into greenery")
+        #print("Convert plants into greenery")
         return res
     elif which_option["title"] == "Perform an action from a played card":
         #perform_card_action_data = {
@@ -1370,7 +1334,7 @@ def turn(player):
            }
         }
         res = send_player_input(json.dumps(perform_card_action_data), player.id)
-        print("Performing card action")
+        #print("Performing card action")
         if "message" in res and res["message"].startswith("Not a valid"):
             print(res["message"])
             print("problem in: Perform an action from a played card")
@@ -1386,7 +1350,7 @@ def turn(player):
                 "type": "option"
             }
         }
-        print("Do nothing")
+        #print("Do nothing")
         res = send_player_input(json.dumps(do_nothing_data), player.id)
         return res
     elif which_option["title"] == "Claim a milestone":
@@ -1404,7 +1368,7 @@ def turn(player):
                 }
             }
         }
-        print("Claim a milestone")
+        #print("Claim a milestone")
         res = send_player_input(json.dumps(claim_milestone_data), player.id)
         if "message" in res:
             print(res["message"])
@@ -1421,7 +1385,7 @@ def turn(player):
                 "type": "option"
             }
         }
-        print("Skipped removal")
+        #print("Skipped removal")
         res = send_player_input(json.dumps(skip_removal_data), player.id)
         return res
     elif which_option["title"] == "Skip removing plants":
@@ -1433,7 +1397,7 @@ def turn(player):
                 "type": "option"
             }
         }
-        print("Skipped removing plants")
+        #print("Skipped removing plants")
         res = send_player_input(json.dumps(skip_removal_data), player.id)
         return res
     elif which_option["title"] == "Increase your plant production 1 step":
@@ -1445,7 +1409,7 @@ def turn(player):
                 "type": "option"
             }
         }
-        print("Increased plant production 1 step")
+        #print("Increased plant production 1 step")
         res = send_player_input(json.dumps(increase_plant_production_data), player.id)
         return res
     elif which_option["title"] == "Select a card to discard":
@@ -1462,8 +1426,8 @@ def turn(player):
             }
         }
         res = send_player_input(json.dumps(pass_data), player.id)
-        print("Selected a card to discard (" + selected_card["name"] + ")")
-        print(res)
+        #print("Selected a card to discard (" + selected_card["name"] + ")")
+        #print(res)
         return res
     elif which_option["title"] == "Add a science resource to this card":
         add_science_data = {
@@ -1474,7 +1438,7 @@ def turn(player):
                 "type": "option"
             }
         }
-        print("Added a science resource to this card")
+        #print("Added a science resource to this card")
         res = send_player_input(json.dumps(add_science_data), player.id)
         return res
     elif which_option["title"] == "Do not remove resource":
@@ -1486,7 +1450,7 @@ def turn(player):
                 "type": "option"
             }
         }
-        print("Didnt remove resource")
+        #print("Didnt remove resource")
         res = send_player_input(json.dumps(dont_remove_data), player.id)
         return res
     elif which_option["title"] == "Increase your energy production 2 steps":
@@ -1498,7 +1462,7 @@ def turn(player):
                 "type": "option"
             }
         }
-        print("Increased energy production 2 steps")
+        #print("Increased energy production 2 steps")
         res = send_player_input(json.dumps(increase_energy_production_data), player.id)
         return res
     elif which_option["title"] == "Do not steal":
@@ -1510,7 +1474,7 @@ def turn(player):
                 "type": "option"
             }
         }
-        print("Didn't steal")
+        #print("Didn't steal")
         res = send_player_input(json.dumps(dont_steal_data), player.id)
         return res
     elif which_option["title"] == "Remove 2 microbes to raise oxygen level 1 step":
@@ -1522,7 +1486,7 @@ def turn(player):
                 "type": "option"
             }
         }
-        print("Removed 2 microbes to raise oxygen level 1 step")
+        #print("Removed 2 microbes to raise oxygen level 1 step")
         res = send_player_input(json.dumps(remove_microbes_data), player.id)
         return res
     elif which_option["title"] == "Add 1 microbe to this card":
@@ -1534,7 +1498,7 @@ def turn(player):
                 "type": "option"
             }
         }
-        print("Added 1 microbe to this card")
+        #print("Added 1 microbe to this card")
         res = send_player_input(json.dumps(add_microbe_data), player.id)
         return res
     elif which_option["title"] == "Remove 3 microbes to increase your terraform rating 1 step":
@@ -1546,7 +1510,7 @@ def turn(player):
                 "type": "option"
             }
         }
-        print("Removed 3 microbes to increase your terraform rating 1 step")
+        #print("Removed 3 microbes to increase your terraform rating 1 step")
         res = send_player_input(json.dumps(remove_microbes_data), player.id)
         return res
     elif which_option["title"] == "Select space for greenery tile":
@@ -1562,7 +1526,7 @@ def turn(player):
             }
         }
         res = send_player_input(json.dumps(select_space_data), player.id)
-        print("Selected space to place greenery (" + selected_space + ")")
+        #print("Selected space to place greenery (" + selected_space + ")")
         return res
     elif which_option["title"] == "Don't place a greenery":
         dont_place_greenery_data = {
@@ -1573,7 +1537,7 @@ def turn(player):
                 "type": "option"
             }
         }
-        print("Didnt place a greenery")
+        #print("Didnt place a greenery")
         res = send_player_input(json.dumps(dont_place_greenery_data), player.id)
         return res
     elif which_option["title"] == "Remove a science resource from this card to draw a card":
@@ -1585,7 +1549,7 @@ def turn(player):
                 "type": "option"
             }
         }
-        print("Removed a science resource from this card to draw a card")
+        #print("Removed a science resource from this card to draw a card")
         res = send_player_input(json.dumps(remove_science_data), player.id)
         return res
     elif which_option["title"] == "Spend 1 steel to gain 7 M€.":
@@ -1597,7 +1561,7 @@ def turn(player):
                 "type": "option"
             }
         }
-        print("Spent 1 steel to gain 7 M€")
+        #print("Spent 1 steel to gain 7 M€")
         res = send_player_input(json.dumps(spend_steel_data), player.id)
         return res
     elif which_option["title"] == "Remove 2 microbes to raise temperature 1 step":
@@ -1609,7 +1573,7 @@ def turn(player):
                 "type": "option"
             }
         }
-        print("Removed 2 microbes to raise temperature 1 step")
+        #print("Removed 2 microbes to raise temperature 1 step")
         res = send_player_input(json.dumps(remove_microbes_data), player.id)
         return res
     elif which_option["title"] == "Add 3 microbes to a card":
@@ -1626,8 +1590,8 @@ def turn(player):
             }
         }
         res = send_player_input(json.dumps(pass_data), player.id)
-        print("Added 3 microbes to a card (" + selected_card["name"] + ")")
-        print(res)
+        #print("Added 3 microbes to a card (" + selected_card["name"] + ")")
+        #print(res)
         return res
     elif which_option["title"] == "Select card to add 2 microbes":
         available_cards = which_option["cards"]
@@ -1643,8 +1607,8 @@ def turn(player):
             }
         }
         res = send_player_input(json.dumps(pass_data), player.id)
-        print("Added 2 microbes to a card (" + selected_card["name"] + ")")
-        print(res)
+        #print("Added 2 microbes to a card (" + selected_card["name"] + ")")
+        #print(res)
         return res
     elif which_option["title"] == "Select card to remove 2 Animal(s)":
         available_cards = which_option["cards"]
@@ -1660,8 +1624,8 @@ def turn(player):
             }
         }
         res = send_player_input(json.dumps(pass_data), player.id)
-        print("Removed 2 animals from card (" + selected_card["name"] + ")")
-        print(res)
+        #print("Removed 2 animals from card (" + selected_card["name"] + ")")
+        #print(res)
         return res
     elif which_option["title"] == "Select card to add 2 animals":
         available_cards = which_option["cards"]
@@ -1677,8 +1641,8 @@ def turn(player):
             }
         }
         res = send_player_input(json.dumps(pass_data), player.id)
-        print("Selected card to add 2 animals (" + selected_card["name"] + ")")
-        print(res)
+        #print("Selected card to add 2 animals (" + selected_card["name"] + ")")
+        #print(res)
         return res
     elif which_option["title"] == "Gain 4 plants":
         gain_4_plants_data = {
@@ -1689,7 +1653,7 @@ def turn(player):
                 "type": "option"
             }
         }
-        print("Gained 4 plants")
+        #print("Gained 4 plants")
         res = send_player_input(json.dumps(gain_4_plants_data), player.id)
         return res
     elif which_option["title"] == "Spend 1 plant to gain 7 M€.":
@@ -1701,7 +1665,7 @@ def turn(player):
                 "type": "option"
             }
         }
-        print("Spent 1 plant to gain 7 M€")
+        #print("Spent 1 plant to gain 7 M€")
         res = send_player_input(json.dumps(spent_plant_for_mc_data), player.id)
         return res
     elif which_option["title"] == "Gain plant":
@@ -1713,7 +1677,7 @@ def turn(player):
                 "type": "option"
             }
         }
-        print("Gained plant")
+        #print("Gained plant")
         res = send_player_input(json.dumps(gain_plant_data), player.id)
         return res
     elif which_option["title"] == "Gain 1 plant":
@@ -1725,7 +1689,7 @@ def turn(player):
                 "type": "option"
             }
         }
-        print("Gained 1 plant")
+        #print("Gained 1 plant")
         res = send_player_input(json.dumps(gain_1_plant_data), player.id)
         return res
     elif which_option["title"] == "Gain 3 plants":
@@ -1737,7 +1701,7 @@ def turn(player):
                 "type": "option"
             }
         }
-        print("Gained 3 plant")
+        #print("Gained 3 plant")
         res = send_player_input(json.dumps(gain_3_plants_data), player.id)
         return res
     elif which_option["title"] == "Gain 5 plants":
@@ -1749,7 +1713,7 @@ def turn(player):
                 "type": "option"
             }
         }
-        print("Gained 5 plants")
+        #print("Gained 5 plants")
         res = send_player_input(json.dumps(gain_5_plants_data), player.id)
         return res
     elif which_option["title"] == "Don't remove M€ from adjacent player":
@@ -1761,7 +1725,7 @@ def turn(player):
                 "type": "option"
             }
         }
-        print("Didnt remove mc from adjacent player")
+        #print("Didnt remove mc from adjacent player")
         res = send_player_input(json.dumps(dont_remove_mc_from_adjacent_player_data), player.id)
         return res
     elif which_option["title"] == "Select adjacent player to remove 4 M€ from":
@@ -1775,8 +1739,8 @@ def turn(player):
                 "player": selected_player
             }
         }
-        print(waiting_for)
-        print("selected player " + selected_player + " to remove 4 mc from")
+        #print(waiting_for)
+        #print("selected player " + selected_player + " to remove 4 mc from")
         res = send_player_input(json.dumps(select_player_data), player.id)
         return res
     elif "message" not in which_option["title"]:
@@ -1795,7 +1759,7 @@ def turn(player):
             }
         }
         res = send_player_input(json.dumps(take_action_data), player.id)
-        print("Took first action")
+        #print("Took first action")
         return res
     elif which_option["title"]["message"] == "Fund an award (${0} M€)":
         which_award = which_option["options"]
@@ -1815,7 +1779,7 @@ def turn(player):
         res = send_player_input(json.dumps(fund_award_data), player.id)
         return res
     elif which_option["title"]["message"].startswith("Convert") and which_option["title"]["message"].endswith("into greenery"):
-        print(which_option)
+        #print(which_option)
         available_spaces = which_option["spaces"]
         selected_space = random.choice(available_spaces)
         select_space_data = {
@@ -1828,7 +1792,7 @@ def turn(player):
             }
         }
         res = send_player_input(json.dumps(select_space_data), player.id)
-        print("Selected space to place greenery")
+        #print("Selected space to place greenery")
         return res
     elif which_option["title"]["message"].startswith("Remove"):
         remove_data = {
@@ -1839,7 +1803,7 @@ def turn(player):
                 "type": "option"
             }
         }
-        print("removed something: " + which_option["title"]["message"])
+        #print("removed something: " + which_option["title"]["message"])
         res = send_player_input(json.dumps(remove_data), player.id)
         return res
     elif which_option["title"]["message"] == "Steal ${0} M€ from ${1}":
@@ -1852,7 +1816,7 @@ def turn(player):
             }
         }
         res = send_player_input(json.dumps(steal_data), player.id)
-        print("stole megacredits: " + which_option["title"]["message"])
+        #print("stole megacredits: " + which_option["title"]["message"])
         return res
     elif which_option["title"]["message"] == "Steal ${0} steel from ${1}":
         steal_steel_data = {
@@ -1864,7 +1828,7 @@ def turn(player):
             }
         }
         res = send_player_input(json.dumps(steal_steel_data), player.id)
-        print("stole steel: " + which_option["title"]["message"])
+        #print("stole steel: " + which_option["title"]["message"])
         return res
     elif which_option["title"]["message"] == "Add ${0} microbes to ${1}":
         add_microbes_data = {
@@ -1876,7 +1840,7 @@ def turn(player):
             }
         }
         res = send_player_input(json.dumps(add_microbes_data), player.id)
-        print("added microbes: " + which_option["title"]["message"])
+        #print("added microbes: " + which_option["title"]["message"])
         return res
     elif which_option["title"]["message"] == "Add resource to card ${0}":
         add_resource_data = {
@@ -1888,7 +1852,7 @@ def turn(player):
             }
         }
         res = send_player_input(json.dumps(add_resource_data), player.id)
-        print("added resource to card: " + which_option["title"]["message"])
+        #print("added resource to card: " + which_option["title"]["message"])
         return res
     elif which_option["title"]["message"] == "Add ${0} animals to ${1}":
         add_animals_data = {
@@ -1900,7 +1864,7 @@ def turn(player):
             }
         }
         res = send_player_input(json.dumps(add_animals_data), player.id)
-        print("added animals: " + which_option["title"]["message"])
+        #print("added animals: " + which_option["title"]["message"])
         return res
     else:
         print("LOOK HERE 1234 not implemented")
@@ -1909,7 +1873,7 @@ def turn(player):
 
 def draft(player):
     game = get_game(player.id)
-    print("generation: " + str(game["game"]["generation"]))
+    #print("generation: " + str(game["game"]["generation"]))
     waiting_for = game["waitingFor"]
     card_selection = random.choice(waiting_for["cards"])["name"]
     draw_data = {
@@ -1918,15 +1882,15 @@ def draft(player):
         "cards": [card_selection]
     }
     res = send_player_input(json.dumps(draw_data), player.id)
-    print(res)
-    print("phase: " + res["game"]["phase"])
+    #print(res)
+    #print("phase: " + res["game"]["phase"])
     return res
 
 
 def research_phase(player):
     game = get_game(player.id)
     #print(game)
-    print("generation: " + str(game["game"]["generation"]))
+    #print("generation: " + str(game["game"]["generation"]))
     card_selection = list(
         map(
             lambda card: card["name"], random.sample(game["waitingFor"]["cards"], random.randint(0, 4))))
@@ -1938,7 +1902,7 @@ def research_phase(player):
     }
     res = send_player_input(json.dumps(buy_cards_data), player.id)
     # TODO could be too expensive
-    print(res)
+    #print(res)
 
     while "waitingFor" in res and res["game"]["phase"] == "research":
         if "title" in res["waitingFor"] and "message" in res["waitingFor"]["title"]:
@@ -1976,8 +1940,8 @@ def research_phase(player):
                         }
                     }
                     res = send_player_input(json.dumps(select_payment_data), player.id)
-                    print("payed with heat")
-                    print(res)
+                    #print("payed with heat")
+                    #print(res)
                 #print("select how to spend in research phase is not yet implemented")
                 #print(card_selection)
                 #print(res["waitingFor"])
@@ -1998,7 +1962,7 @@ def research_phase(player):
 
 
 def generation(first_player, second_player, third_player):
-    print("new generation:")
+    #print("new generation:")
 
     turn(first_player)
     turn(second_player)

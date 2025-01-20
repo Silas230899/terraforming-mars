@@ -16,19 +16,21 @@ def get_next_player(players):
                 return player3
 
 def generation(res):
-    print("Generation " + str(res["game"]["generation"]))
+    #print("Generation " + str(res["game"]["generation"]))
     current_player = get_next_player(res["players"])
 
     if res["game"]["phase"] != "action":
-        print("phase should be 'action' but is " + str(res["game"]["phase"]))
-        print(res)
+        #print("phase should be 'action' but is " + str(res["game"]["phase"]))
+        #print(res)
         exit(-1)
 
     while res["game"]["phase"] == "action" or res["game"]["phase"] == "production":
         if "waitingFor" in res:
-            print("waiting for something")
+            pass
+            #print("waiting for something")
         else:
-            print("not waiting for something")
+            pass
+            #print("not waiting for something")
 
         old_res = res
         res = turn(current_player)
@@ -54,11 +56,12 @@ def generation(res):
         draft(player2)
         res = draft(player3)
     elif res["game"]["phase"] == "end":
-        print("The game has ended")
-        print(res)
+        print("The game has ended ", end="")
+        #print(res)
         for player in res["players"]:
-            print(player["name"] + " vp: " + str(player["victoryPointsBreakdown"]["total"]))
+            print(player["name"] + ": " + str(player["victoryPointsBreakdown"]["total"]) + ", ", end="")
         #exit(0)
+        print()
         return None
     else:
         print("phase should be 'drafting' but is " + str(res["game"]["phase"]))
@@ -80,7 +83,7 @@ def generation(res):
 
 def game():
     new_game = create_game()
-    print("New game created")
+    #print("New game created")
 
     global player1, player2, player3
     player1 = Player(new_game["players"][0]["color"], new_game["players"][0]["id"], new_game["players"][0]["name"])
