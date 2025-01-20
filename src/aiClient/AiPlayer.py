@@ -687,33 +687,44 @@ def turn(player):
             titanium_value = game["thisPlayer"]["titaniumValue"]
             available_plants = game["thisPlayer"]["plants"]
 
+            available_payments = ["mc"]
+            if can_pay_with_heat:
+                available_payments.append("heat")
+            if can_pay_with_steel:
+                available_payments.append("steel")
+            if can_pay_with_titanium:
+                available_payments.append("titanium")
+
+            # generate order
+            random.shuffle(available_payments)
+
             pay_mc = 0
             pay_heat = 0
             pay_steel = 0
             pay_titanium = 0
+
 
             if can_pay_with_heat:
                 pay_heat = cost
                 if cost > available_heat:
                     pay_heat = available_heat
                     pay_mc = cost - pay_heat
-            elif can_pay_with_titanium:
+
+            if can_pay_with_titanium:
                 necessary_titanium = math.ceil(cost / titanium_value)
                 pay_titanium = necessary_titanium
                 titanium_worth = available_titanium * titanium_value
                 if cost > titanium_worth:
                     pay_mc = cost - titanium_worth
                     pay_titanium = available_titanium
-            elif can_pay_with_steel:
+
+            if can_pay_with_steel:
                 necessary_steel = math.ceil(cost / steel_value)
                 pay_steel = necessary_steel
                 steel_worth = available_steel * steel_value
                 if cost > steel_worth:
                     pay_mc = cost - steel_worth
                     pay_steel = available_steel
-            else:
-                print("can pay with something else qv2vwn897vnw04v")
-                exit(-1)
 
             select_payment_data = {
                 "runId": player.run_id,
@@ -736,7 +747,7 @@ def turn(player):
                 }
             }
 
-            print(str(cost) + "o8om8m payed: " + str(json.dumps(select_payment_data)))
+            print(str(cost) + " o8om8m payed: " + str(json.dumps(select_payment_data)))
             res = send_player_input(json.dumps(select_payment_data), player.id)
             print("payed for action with heat or titanium or steel")
             return res
@@ -840,8 +851,9 @@ def turn(player):
         titaniumValue = game["thisPlayer"]["titaniumValue"]
         availablePlants = game["thisPlayer"]["plants"]
 
-        project_cards = game["cardsInHand"]
-        random_card = random.choice(project_cards)
+        #project_cards = game["cardsInHand"]
+        playable_cards = which_option["cards"]
+        random_card = random.choice(playable_cards)
         card_costs = random_card["calculatedCost"]
 
         use_heat = 0
@@ -855,7 +867,7 @@ def turn(player):
             necessary_steel = math.ceil(remaining_card_costs/steelValue)
             if necessary_steel > availableSteel:
                 # TODO check if anything but mc is ever used
-                use_steel = steelValue
+                use_steel = availableSteel
                 remaining_card_costs -= availableSteel * steelValue
                 necessary_titanium = math.ceil(remaining_card_costs/titaniumValue)
                 if necessary_titanium > availableTitanium:
@@ -871,12 +883,62 @@ def turn(player):
                         # will trigger a retry
                         #exit(-1)
                 else:
-                    use_titanium = titaniumValue
+                    use_titanium = necessary_titanium
             else:
                 use_steel = necessary_steel
         else:
             use_MC = card_costs
 
+        can_pay_steel = False
+        if "AI Central,Aquifer Pumping,Artificial Lake,Biomass Combustors,Building Industries,Capital,Carbonate Processing,Colonizer Training Camp,Commercial District,Corporate Stronghold,Cupola City,Deep Well Heating,Development Center,Domed Crater,Electro Catapult,Eos Chasma National Park,Equatorial Magnetizer,Food Factory,Fueled Generators,Fuel Factory,Fusion Power,Geothermal Power,GHG Factories,Great Dam,Greenhouses,Heat Trappers,Immigrant City,Industrial Center,Industrial Microbes,Ironworks,Magnetic Field Dome,Magnetic Field Generators,Mars University,Martian Rails,Medical Lab,Mine,Mining Area,Mining Rights,Mining Rights,Mining Rights,Mohole Area,Natural Preserve,Noctis City,Noctis Farming,Nuclear Power,Olympus Conference,Open City,Ore Processor,Peroxide Power,Physics Complex,Power Infrastructure,Power Plant,,Protected Valley,Rad-Chem Factory,Research Outpost,Rover Construction,Soil Factory,Solar Power,Space Elevator,Steelworks,Strip Mine,Tectonic Stress Power,Titanium Mine,Tropical Resort,Underground City,Underground Detonations,Urbanized Area,Water Splitting Plant,Windmills".find(
+                random_card["name"]) != -1:
+            can_pay_steel = True
+
+        can_pay_titanium = False
+        if "Space Elevator,Aerobraked Ammonia Asteroid,Asteroid,Asteroid Mining,Beam From A Thorium Asteroid,Big Asteroid,Callisto Penal Mines,Comet,Convoy From Europa,Deimos Down,Ganymede Colony,Giant Ice Asteroid,Giant Space Mirror,Ice Asteroid,Immigration Shuttles,Imported GHG,Imported Hydrogen,Imported Nitrogen,Import of Advanced GHG,Interstellar Colony Ship,Io Mining Industries,Lagrange Observatory,Large Convoy,Methane From Titan,Miranda Resort,Nitrogen-Rich Asteroid,Optimal Aerobraking,Phobos Space Haven,Satellites,Security Fleet,Shuttles,Solar Wind Power,Soletta,Space Mirrors,Space Station,Technology Demonstration,Terraforming Ganymede,Toll Station,Towing A Comet,Trans-Neptune Probe,Vesta Shipyard,Water Import From Europa".find(
+                random_card["name"]) != -1:
+            can_pay_titanium = True
+
+        payment_options = which_option["paymentOptions"]
+        can_pay_heat = payment_options["heat"]
+
+        use_heat = 0
+        use_MC = 0
+        use_steel = 0
+        use_titanium = 0
+        use_plants = 0
+
+        remaining = card_costs
+        if availableMC >= remaining:
+            use_MC = remaining
+            remaining = 0
+        else:
+            use_MC = availableMC
+            remaining = remaining - use_MC
+
+        if can_pay_heat:
+            if availableHeat >= remaining:
+                use_heat = remaining
+                remaining = 0
+            else:
+                use_heat = availableHeat
+                remaining = remaining - use_heat
+
+        if can_pay_steel:
+            if availableSteel >= remaining:
+                use_steel = remaining
+                remaining = 0
+            else:
+                use_steel = availableSteel
+                remaining = remaining - use_steel
+
+        if can_pay_titanium:
+            if availableTitanium >= remaining:
+                use_titanium = remaining
+                remaining = 0
+            else:
+                use_titanium = availableTitanium
+                remaining = remaining - use_titanium
 
         pass_data = {
             "runId": player.run_id,
@@ -890,7 +952,7 @@ def turn(player):
                     "megaCredits": use_MC,
                     "steel":use_steel,
                     "titanium":use_titanium,
-                    "plants":use_plants,
+                    "plants":0,
                     "microbes":0,
                     "floaters":0,
                     "lunaArchivesScience":0,
@@ -905,28 +967,54 @@ def turn(player):
         }
         res = send_player_input(json.dumps(pass_data), player.id)
         if "message" in res and res["message"].startswith("Unknown"):
-            #print(project_cards)
-            #print(random_card)
-            #print("playing project card threw an error (" + res["message"] + ")")
-            #print(pass_data)
-            #exit(-1)
+            print(game)
+            print(res)
+            print(playable_cards)
+            print(random_card)
+            print("playing project card threw an error (" + res["message"] + ")")
+            print(pass_data)
+            print(payment_options)
+            print("available mc: " + str(availableMC))
+            exit(-1)
             # TODO most likely a wrong error message thrown because conditions are not met -> retry
             return turn(player)
         elif "message" in res and res["message"] == "You do not have that many resources to spend":
             print(res["message"])
             print("Card costs: " + str(random_card["calculatedCost"]))
             print(game["thisPlayer"])
+            print(payment_options)
+            print("available mc: " + str(availableMC))
             exit(-1)
-        elif "message" in res and res["message"] == "Did not spend enough to pay for card":
+        elif "message" in res and res["message"].startswith("Did not spend enough to pay for card"):
             # TODO when a card is selected the player cannot afford
             # has to be done another way but for now just retry
+            print(game)
+            print(res)
+            print(playable_cards)
+            print(random_card)
+            print("playing project card threw an error (" + res["message"] + ")")
+            print(pass_data)
+            print(payment_options)
+            print("available mc: " + str(availableMC))
+            exit(-1)
             return turn(player)
         elif "message" in res and str(res["message"]).find("units of") != -1 and str(res["message"]).find("must be reserved for"): # such as "0 units of steel must be reserved for Security Fleet"
             # maybe an error idk
+            print(game)
+            print(res)
+            print(playable_cards)
+            print(random_card)
+            print("playing project card threw an error (" + res["message"] + ")")
+            print(pass_data)
+            print(payment_options)
+            print("available mc: " + str(availableMC))
+            exit(-1)
             return turn(player)
         elif "message" in res:
             print("other message juhf984zt9e8th9e84t: " + res["message"])
             print(game["thisPlayer"])
+            print(payment_options)
+            print("available mc: " + str(availableMC))
             exit(-1)
         print("play project card")
         return res
@@ -967,20 +1055,6 @@ def turn(player):
         }
         res = send_player_input(json.dumps(pass_data), player.id)
         print("sell patents")
-        print(res)
-        return res
-    elif which_option["title"] == "Select one option":
-        # TODO is this every used?
-        print("options: " + json.dumps(which_option))
-        print(json.dumps(waiting_for))
-        exit(-1)
-        # TODO dont hardcode
-        place_tile_data = {
-            "runId": "rab1daec42eee",
-            "type": "space",
-            "spaceId": "48"
-        }
-        res = send_player_input(json.dumps(place_tile_data), player.id)
         print(res)
         return res
     elif which_option["title"] == "End Turn":
