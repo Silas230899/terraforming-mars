@@ -10,6 +10,7 @@ Add 3 microbes to a card
 Select card to add 2 microbes
 Select card to remove 2 Animal(s)
 Select card to add 2 animals
+Select card to add 4 animals
 
 or resp option:
 Pass for this generation
