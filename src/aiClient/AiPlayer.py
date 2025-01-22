@@ -189,7 +189,8 @@ def turn(player):
     if "options" not in waiting_for:
         #print(waiting_for["title"])
         if "message" in waiting_for["title"]:
-            if waiting_for["title"]["message"].startswith("Select space for"):
+            if waiting_for["title"]["message"] == "Select space for ${0} tile":
+                tile_to_place_name = waiting_for["title"]["data"][0]["value"]
                 available_spaces = waiting_for["spaces"]
                 selected_space = random.choice(available_spaces)
                 select_space_data = {
@@ -200,7 +201,9 @@ def turn(player):
                 res = send_player_input(json.dumps(select_space_data), player.id)
                 #print("Select space")
                 return res
-            elif waiting_for["title"]["message"].startswith("Select player to decrease"):
+            elif waiting_for["title"]["message"] == "Select player to decrease ${0} production by ${1} step(s)":
+                which_production = waiting_for["title"]["data"][0]["value"]
+                steps = waiting_for["title"]["data"][1]["value"]
                 selected_player = random.choice(waiting_for["players"])
                 pass_data = {
                     "runId": player.run_id,
@@ -211,7 +214,9 @@ def turn(player):
                 #print("selected player " + selected_player + " to decrease")
                 res = send_player_input(json.dumps(pass_data), player.id)
                 return res
-            elif waiting_for["title"]["message"].startswith("Select card to add"):
+            elif waiting_for["title"]["message"] == "Select card to add ${0} ${1}":
+                add_amount = waiting_for["title"]["data"][0]["value"]
+                add_what = waiting_for["title"]["data"][1]["value"]
                 available_cards = waiting_for["cards"]
                 max = waiting_for["max"]
                 min = waiting_for["min"]
@@ -232,7 +237,10 @@ def turn(player):
                 res = send_player_input(json.dumps(select_card_data), player.id)
                 #print("selected card to add resources" + str(card_names_selection))
                 return res
-            elif waiting_for["title"]["message"].startswith("Select how to pay for") and waiting_for["title"]["message"].endswith("standard project"):
+            elif waiting_for["title"]["message"] == "Select how to pay for the ${0} standard project":
+                which_standard_project = waiting_for["title"]["data"][0]["value"] # type 3
+                #print(waiting_for["title"])
+                #exit(-1)
                 cost = waiting_for["amount"]
 
                 can_pay_with_heat = waiting_for["paymentOptions"]["heat"]
@@ -320,6 +328,9 @@ def turn(player):
                 #print("payed for standard project with heat/megacredits")
                 return res
             elif waiting_for["title"]["message"].startswith("Select how to pay for") and waiting_for["title"]["message"].endswith("milestone"):
+                print("if this happens this cant be removed") # TODO looks like this can be removed
+                print(waiting_for["title"])
+                exit(-1)
                 cost = waiting_for["amount"]
 
                 can_pay_with_heat = waiting_for["paymentOptions"]["heat"]
@@ -408,6 +419,9 @@ def turn(player):
                 #print("payed for milestone with heat/megacredits")
                 return res
             elif waiting_for["title"]["message"].startswith("Select how to spend") and waiting_for["title"]["message"].endswith("cards"):
+                how_much_mc = waiting_for["title"]["message"]["data"][0]["value"] # type 1
+                how_many_cards = waiting_for["title"]["message"]["data"][1]["value"] # type 1
+
                 # looks like this only happens for helion
                 cost = waiting_for["amount"]
                 available_heat = game["thisPlayer"]["heat"]
@@ -440,7 +454,9 @@ def turn(player):
                 res = send_player_input(json.dumps(select_payment_data), player.id)
                 #print("spent for card heat/megacredits")
                 return res
-            elif waiting_for["title"]["message"].startswith("Select how to pay for") and waiting_for["title"]["message"].endswith("action"):
+            elif waiting_for["title"]["message"] == "Select how to pay for ${0} action":
+                which_card_name = waiting_for["title"]["message"]["data"][0]["value"] # type 3
+
                 cost = waiting_for["amount"]
 
                 can_pay_with_heat = waiting_for["paymentOptions"]["heat"]
@@ -533,7 +549,9 @@ def turn(player):
                 print("LOOK HERE options message not yet implemented")
                 print(waiting_for)
                 exit(-1)
-        elif waiting_for["title"].startswith("Select space for"):
+        elif waiting_for["title"] == "Select space for ocean tile":
+
+            #hier zuletzt
             available_spaces = waiting_for["spaces"]
             select_space_data = {
                 "runId": player.run_id,
@@ -1804,7 +1822,7 @@ def turn(player):
         }
         res = send_player_input(json.dumps(fund_award_data), player.id)
         return res
-    elif which_option["title"]["message"].startswith("Convert") and which_option["title"]["message"].endswith("into greenery"):
+    elif which_option["title"]["message"] == "Convert ${0} plants into greenery":
         #print(which_option)
         available_spaces = which_option["spaces"]
         selected_space = random.choice(available_spaces)
@@ -1820,7 +1838,7 @@ def turn(player):
         res = send_player_input(json.dumps(select_space_data), player.id)
         #print("Selected space to place greenery")
         return res
-    elif which_option["title"]["message"].startswith("Remove"):
+    elif which_option["title"]["message"] == "Remove ${0} plants from ${1}":
         remove_data = {
             "runId": player.run_id,
             "type": "or",
@@ -1830,6 +1848,18 @@ def turn(player):
             }
         }
         #print("removed something: " + which_option["title"]["message"])
+        res = send_player_input(json.dumps(remove_data), player.id)
+        return res
+    elif which_option["title"]["message"] == "Remove ${0} ${1} from ${2}":
+        remove_data = {
+            "runId": player.run_id,
+            "type": "or",
+            "index": action_index,
+            "response": {
+                "type": "option"
+            }
+        }
+        # print("removed something: " + which_option["title"]["message"])
         res = send_player_input(json.dumps(remove_data), player.id)
         return res
     elif which_option["title"]["message"] == "Steal ${0} M€ from ${1}":
