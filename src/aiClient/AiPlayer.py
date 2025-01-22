@@ -418,9 +418,10 @@ def turn(player):
                 res = send_player_input(json.dumps(select_payment_data), player.id)
                 #print("payed for milestone with heat/megacredits")
                 return res
-            elif waiting_for["title"]["message"].startswith("Select how to spend") and waiting_for["title"]["message"].endswith("cards"):
-                how_much_mc = waiting_for["title"]["message"]["data"][0]["value"] # type 1
-                how_many_cards = waiting_for["title"]["message"]["data"][1]["value"] # type 1
+            elif waiting_for["title"]["message"] == "Select how to spend ${0} M€ for ${1} cards":
+
+                how_much_mc = waiting_for["title"]["data"][0]["value"] # type 1
+                how_many_cards = waiting_for["title"]["data"][1]["value"] # type 1
 
                 # looks like this only happens for helion
                 cost = waiting_for["amount"]
@@ -455,7 +456,7 @@ def turn(player):
                 #print("spent for card heat/megacredits")
                 return res
             elif waiting_for["title"]["message"] == "Select how to pay for ${0} action":
-                which_card_name = waiting_for["title"]["message"]["data"][0]["value"] # type 3
+                which_card_name = waiting_for["title"]["data"][0]["value"] # type 3
 
                 cost = waiting_for["amount"]
 
@@ -561,7 +562,7 @@ def turn(player):
             res = send_player_input(json.dumps(select_space_data), player.id)
             #print("Select space")
             return res
-        elif waiting_for["title"].startswith("Select space reserved for ocean to place greenery tile"):
+        elif waiting_for["title"] == "Select space reserved for ocean to place greenery tile":
             available_spaces = waiting_for["spaces"]
             select_space_data = {
                 "runId": player.run_id,
@@ -571,7 +572,7 @@ def turn(player):
             res = send_player_input(json.dumps(select_space_data), player.id)
             #print("Select space reserved for ocean to place greenery tile")
             return res
-        elif waiting_for["title"].startswith("Select how to pay for award"):
+        elif waiting_for["title"] == "Select how to pay for award":
             cost = waiting_for["amount"]
 
             can_pay_with_heat = waiting_for["paymentOptions"]["heat"]
@@ -774,6 +775,76 @@ def turn(player):
             }
             res = send_player_input(json.dumps(select_space_data), player.id)
             #print("Selected a land space to place an ocean tile (" + str(select_space_data["spaceId"]) + ")")
+            return res
+        elif waiting_for["title"] == "Select space for city tile":
+            available_spaces = waiting_for["spaces"]
+            select_space_data = {
+                "runId": player.run_id,
+                "type": "space",
+                "spaceId": random.choice(available_spaces)
+            }
+            res = send_player_input(json.dumps(select_space_data), player.id)
+            # print("Selected a land space to place an ocean tile (" + str(select_space_data["spaceId"]) + ")")
+            return res
+        elif waiting_for["title"] == "Select space for greenery tile":
+            available_spaces = waiting_for["spaces"]
+            select_space_data = {
+                "runId": player.run_id,
+                "type": "space",
+                "spaceId": random.choice(available_spaces)
+            }
+            res = send_player_input(json.dumps(select_space_data), player.id)
+            # print("Selected a land space to place an ocean tile (" + str(select_space_data["spaceId"]) + ")")
+            return res
+        elif waiting_for["title"] == "Select space for ocean from temperature increase":
+            available_spaces = waiting_for["spaces"]
+            select_space_data = {
+                "runId": player.run_id,
+                "type": "space",
+                "spaceId": random.choice(available_spaces)
+            }
+            res = send_player_input(json.dumps(select_space_data), player.id)
+            # print("Selected a land space to place an ocean tile (" + str(select_space_data["spaceId"]) + ")")
+            return res
+        elif waiting_for["title"] == "Select space for claim":
+            available_spaces = waiting_for["spaces"]
+            select_space_data = {
+                "runId": player.run_id,
+                "type": "space",
+                "spaceId": random.choice(available_spaces)
+            }
+            res = send_player_input(json.dumps(select_space_data), player.id)
+            # print("Selected a land space to place an ocean tile (" + str(select_space_data["spaceId"]) + ")")
+            return res
+        elif waiting_for["title"] == "Select space for first ocean":
+            available_spaces = waiting_for["spaces"]
+            select_space_data = {
+                "runId": player.run_id,
+                "type": "space",
+                "spaceId": random.choice(available_spaces)
+            }
+            res = send_player_input(json.dumps(select_space_data), player.id)
+            # print("Selected a land space to place an ocean tile (" + str(select_space_data["spaceId"]) + ")")
+            return res
+        elif waiting_for["title"] == "Select space for second ocean":
+            available_spaces = waiting_for["spaces"]
+            select_space_data = {
+                "runId": player.run_id,
+                "type": "space",
+                "spaceId": random.choice(available_spaces)
+            }
+            res = send_player_input(json.dumps(select_space_data), player.id)
+            # print("Selected a land space to place an ocean tile (" + str(select_space_data["spaceId"]) + ")")
+            return res
+        elif waiting_for["title"] == "Select space for special city tile":
+            available_spaces = waiting_for["spaces"]
+            select_space_data = {
+                "runId": player.run_id,
+                "type": "space",
+                "spaceId": random.choice(available_spaces)
+            }
+            res = send_player_input(json.dumps(select_space_data), player.id)
+            # print("Selected a land space to place an ocean tile (" + str(select_space_data["spaceId"]) + ")")
             return res
         elif waiting_for["title"] == "Select amount of heat production to decrease":
             max = waiting_for["max"]
@@ -1220,6 +1291,7 @@ def turn(player):
             print("Card costs: " + str(random_card["calculatedCost"]))
             print(game["thisPlayer"])
             print(payment_options)
+            print(pass_data)
             print("available mc: " + str(available_mc))
             exit(-1)
         elif "message" in res and res["message"].startswith("Did not spend enough to pay for card"):
@@ -1787,6 +1859,22 @@ def turn(player):
         # print("Selected card to add 2 animals (" + selected_card["name"] + ")")
         # print(res)
         return res
+    elif which_option["title"] == "Add 2 animals to a card":
+        available_cards = which_option["cards"]
+        selected_card = random.choice(available_cards)
+
+        pass_data = {
+            "runId": player.run_id,
+            "type": "or",
+            "index": action_index,
+            "response": {
+                "type": "card",
+                "cards": [selected_card["name"]]
+            }
+        }
+        res = send_player_input(json.dumps(pass_data), player.id)
+
+        return res
     elif "message" not in which_option["title"]:
         print("bdsg LOOK HERE: " + which_option["title"] + " is not yet implemented")
         print(game)
@@ -1945,6 +2033,8 @@ def draft(player):
 
 def research_phase(player):
     game = get_game(player.id)
+    #print(game["waitingFor"])
+    #exit(-1)
     #print(game)
     #print("generation: " + str(game["game"]["generation"]))
     card_selection = list(
@@ -1962,7 +2052,9 @@ def research_phase(player):
 
     while "waitingFor" in res and res["game"]["phase"] == "research":
         if "title" in res["waitingFor"] and "message" in res["waitingFor"]["title"]:
-            if res["waitingFor"]["title"]["message"].startswith("Select how to spend"):
+            if res["waitingFor"]["title"]["message"] == "Select how to spend ${0} M€ for ${1} cards":
+                #print(res["waitingFor"])
+                #exit(-1)
                 if res["waitingFor"]["paymentOptions"]["heat"]:
                     cost = res["waitingFor"]["amount"]
                     available_heat = game["thisPlayer"]["heat"]

@@ -1,4 +1,6 @@
 from AiPlayer import create_game, Player, initial_research_phase, turn, draft, research_phase
+from ClientGame import ClientGame
+import http.client
 
 player1 = None
 player2 = None
@@ -20,7 +22,7 @@ def generation(res):
     current_player = get_next_player(res["players"])
 
     if res["game"]["phase"] != "action":
-        #print("phase should be 'action' but is " + str(res["game"]["phase"]))
+        print("phase should be 'action' but is " + str(res["game"]["phase"]))
         #print(res)
         exit(-1)
 
@@ -100,5 +102,35 @@ def game():
             break
 
 
-while True:
+
+import time
+
+times = []
+
+while False:
+    start_time = time.time()
     game()
+    duration = time.time() - start_time
+    times.append(duration)
+    average = sum(times) / len(times)
+    print("average game time: " + str(average) + ", last: " + str(times[-1]))
+
+
+#http_connection = http.client.HTTPConnection("localhost", 8080)
+
+def loop():
+    while True:
+        start_time1 = time.time()
+        client_game1 = ClientGame()
+        client_game1.start()
+        duration1 = time.time() - start_time1
+        times.append(duration1)
+        average = sum(times) / len(times)
+        print("average game time: " + str(average) + ", last: " + str(times[-1]))
+
+import threading
+thread1 = threading.Thread(target=loop)
+thread2 = threading.Thread(target=loop)
+thread1.start()
+thread2.start()
+
