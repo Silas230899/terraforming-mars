@@ -21,7 +21,7 @@ import {QuotaConfig, QuotaHandler} from '../server/QuotaHandler';
 import {durationToMilliseconds} from '../utils/durations';
 
 function get(): QuotaConfig {
-  const defaultQuota = {limit: 1, perMs: 1}; // Effectively, no limit.
+  const defaultQuota = {limit: 10, perMs: 1}; // Effectively, no limit.
   const val = process.env.GAME_QUOTA;
   try {
     if (val !== undefined) {
