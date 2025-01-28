@@ -3,6 +3,7 @@ import {SQLite} from './SQLite';
 import {IDatabase} from './IDatabase';
 import {LocalFilesystem} from './LocalFilesystem';
 import {LocalStorage} from './LocalStorage';
+import {InMemoryDatabase} from '../InMemoryDatabase';
 
 export class Database {
   private static instance: IDatabase;
@@ -20,6 +21,9 @@ export class Database {
       } else if (process.env.LOCAL_STORAGE_DB !== undefined) {
         console.log('Connecting to local storage database.');
         Database.instance = new LocalStorage();
+      } else if (process.env.IN_MEMORY_DB !== undefined) {
+        console.log('Connecting to in memory database.');
+        Database.instance = new InMemoryDatabase();
       } else {
         console.log('Connecting to SQLite database.');
         Database.instance = new SQLite();
