@@ -774,7 +774,7 @@ export class Player implements IPlayer {
     const totalToPay = this.payingAmount(payment, this.paymentOptionsForCard(selectedCard));
 
     if (totalToPay < cardCost) {
-      throw new Error('Did not spend enough to pay for card');
+      throw new Error('Did not spend enough to pay for card (' + totalToPay + ' < ' + cardCost + ')');
     }
     return this.playCard(selectedCard, payment, cardAction);
   }
