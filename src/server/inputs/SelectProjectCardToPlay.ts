@@ -76,11 +76,11 @@ export class SelectProjectCardToPlay extends BasePlayerInput<IProjectCard> {
 
     const card = this.cards.find((card) => card.name === input.card);
     if (card === undefined) {
-      throw new InputError('Unknown card name ' + input.card);
+      throw new InputError(input.card + ' is not playable');
     }
     const details = this.extras.get(input.card);
     if (details === undefined) {
-      throw new InputError('Unknown card name ' + input.card);
+      throw new InputError('No details for card with name ' + input.card);
     }
     // These are not used for safety but do help give a better error message
     // to the user
