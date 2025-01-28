@@ -37,6 +37,8 @@ def generation(res):
         old_res = res
         res = turn(current_player)
         if "players" not in res:
+            print("run id: " + old_res["game"]["runId"])
+            print("player id: " + old_res["game"]["id"])
             print("Players not in res:")
             print("old res:")
             print(old_res)
@@ -58,7 +60,7 @@ def generation(res):
         draft(player2)
         res = draft(player3)
     elif res["game"]["phase"] == "end":
-        print("The game has ended ", end="")
+        #print("The game has ended ", end="")
         #print(res)
         for player in res["players"]:
             print(player["name"] + ": " + str(player["victoryPointsBreakdown"]["total"]) + ", ", end="")
@@ -116,21 +118,27 @@ while False:
     print("average game time: " + str(average) + ", last: " + str(times[-1]))
 
 
-#http_connection = http.client.HTTPConnection("localhost", 8080)
+start_time = time.time()
+games_count = 0
 
-def loop():
+def loop(http_connection, name):
     while True:
         start_time1 = time.time()
-        client_game1 = ClientGame()
+        client_game1 = ClientGame(http_connection)
         client_game1.start()
         duration1 = time.time() - start_time1
         times.append(duration1)
         average = sum(times) / len(times)
-        print("average game time: " + str(average) + ", last: " + str(times[-1]))
+        #print("average game time in (" + name + "): " + str(average) + ", last: " + str(times[-1]))
+        current_time = time.time()
+        #print(str((current_time-start_time)/len(times)) + "(" + str(current_time-start_time) + ", " + str(len(times)) + ")")
+        #break
 
 import threading
-thread1 = threading.Thread(target=loop)
-thread2 = threading.Thread(target=loop)
-thread1.start()
-thread2.start()
 
+if __name__ == '__main__':
+    for i in range(2):
+        http_connectionx = http.client.HTTPConnection("localhost", 8080)
+        thread = threading.Thread(target=loop, args=(http_connectionx, "thread" + str(i)))
+        thread.start()
+        time.sleep(0.75)

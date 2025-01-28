@@ -11,7 +11,7 @@ class ClientGame:
     def __init__(self, http_connection):
         self.http_connection = http_connection
 
-        new_game = create_game()
+        new_game = create_game(http_connection)
 
         self.player1 = Player(new_game["players"][0]["color"],
                               new_game["players"][0]["id"],
@@ -24,9 +24,9 @@ class ClientGame:
                               new_game["players"][2]["name"])
 
     def start(self):
-        initial_research_phase(self.player1)
-        initial_research_phase(self.player2)
-        res = initial_research_phase(self.player3)
+        initial_research_phase(self.player1, self.http_connection)
+        initial_research_phase(self.player2, self.http_connection)
+        res = initial_research_phase(self.player3, self.http_connection)
 
         while True:
             res = self.generation(res)
@@ -48,12 +48,12 @@ class ClientGame:
         #print("Generation " + str(res["game"]["generation"]))
         current_player = self.get_next_player(res["players"])
 
-        if res["game"]["phase"] != "action":
-            print("phase should be 'action' but is " + str(res["game"]["phase"]))
+        if res["game"]["phase"] != "action" and res["game"]["phase"] != "preludes":
+            print("phase should be 'action' or 'preludes' but is " + str(res["game"]["phase"]))
             #print(res)
             exit(-1)
 
-        while res["game"]["phase"] == "action" or res["game"]["phase"] == "production":
+        while res["game"]["phase"] == "action" or res["game"]["phase"] == "production" or res["game"]["phase"] == "preludes":
             if "waitingFor" in res:
                 pass
                 #print("waiting for something")
@@ -62,8 +62,10 @@ class ClientGame:
                 #print("not waiting for something")
 
             old_res = res
-            res = turn(current_player)
+            res = turn(current_player, self.http_connection)
             if "players" not in res:
+                print("run id: " + old_res["runId"])
+                print("player id: " + old_res["id"])
                 print("Players not in res:")
                 print("old res:")
                 print(old_res)
@@ -73,33 +75,34 @@ class ClientGame:
             current_player = self.get_next_player(res["players"])
 
         if res["game"]["phase"] == "drafting":
-            draft(self.player1)
-            draft(self.player2)
-            draft(self.player3)
+            draft(self.player1, self.http_connection)
+            draft(self.player2, self.http_connection)
+            draft(self.player3, self.http_connection)
 
-            draft(self.player1)
-            draft(self.player2)
-            draft(self.player3)
+            draft(self.player1, self.http_connection)
+            draft(self.player2, self.http_connection)
+            draft(self.player3, self.http_connection)
 
-            draft(self.player1)
-            draft(self.player2)
-            res = draft(self.player3)
+            draft(self.player1, self.http_connection)
+            draft(self.player2, self.http_connection)
+            res = draft(self.player3, self.http_connection)
         elif res["game"]["phase"] == "end":
-            print("The game has ended ", end="")
+            # print("The game has ended (" + res["id"] + ")", end="")
             #print(res)
             for player in res["players"]:
-                print(player["name"] + ": " + str(player["victoryPointsBreakdown"]["total"]) + ", ", end="")
+                pass
+                #print(player["name"] + ": " + str(player["victoryPointsBreakdown"]["total"]) + ", ", end="")
             #exit(0)
-            print()
+            #print()
             return None
         else:
             print("phase should be 'drafting' but is " + str(res["game"]["phase"]))
             exit(-1)
 
         if res["game"]["phase"] == "research":
-            research_phase(self.player1)
-            research_phase(self.player2)
-            res = research_phase(self.player3)
+            research_phase(self.player1, self.http_connection)
+            research_phase(self.player2, self.http_connection)
+            res = research_phase(self.player3, self.http_connection)
             #current_player = get_next_player(res["players"])
         else:
             print("phase should be 'research' but is " + str(res["game"]["phase"]))
