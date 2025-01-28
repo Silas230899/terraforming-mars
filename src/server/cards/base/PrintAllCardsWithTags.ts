@@ -1080,7 +1080,6 @@ fs.readdir(currentDirectory, (err, files) => {
     const regex = /tags:\s*\[Tag\.[A-Z]+(?:,\s*Tag\.[A-Z]+)*\]/;
     const match = regex.exec(content.toString());
     let res = null;
-    // TODO Mining Card
     // const filename = file.split('.')[0];
     if (match) {
       res = match[0].split(':')[1].trim().replaceAll('[', '').replaceAll(']', '');
