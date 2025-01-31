@@ -1,6 +1,7 @@
 from AiPlayer import create_game, Player, initial_research_phase, turn, draft, research_phase
 from ClientGame import ClientGame
 import http.client
+from multiprocessing import Process
 
 player1 = None
 player2 = None
@@ -122,6 +123,7 @@ start_time = time.time()
 games_count = 0
 
 def loop(http_connection, name):
+    http_connection = http.client.HTTPConnection("localhost", 8080)
     while True:
         start_time1 = time.time()
         client_game1 = ClientGame(http_connection)
@@ -131,7 +133,7 @@ def loop(http_connection, name):
         average = sum(times) / len(times)
         #print("average game time in (" + name + "): " + str(average) + ", last: " + str(times[-1]))
         current_time = time.time()
-        #print(str((current_time-start_time)/len(times)) + "(" + str(current_time-start_time) + ", " + str(len(times)) + ")")
+        print(name + ": " + str((current_time-start_time)/len(times)) + "(" + str(current_time-start_time) + ", " + str(len(times)) + ")")
         #break
 
 import threading
