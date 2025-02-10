@@ -3,6 +3,8 @@ from ClientGame import ClientGame
 import http.client
 from multiprocessing import Process
 
+THREADS_COUNT = 1
+
 player1 = None
 player2 = None
 player3 = None
@@ -139,7 +141,7 @@ def loop(http_connection, name):
 import threading
 
 if __name__ == '__main__':
-    for i in range(2):
+    for i in range(THREADS_COUNT):
         http_connectionx = http.client.HTTPConnection("localhost", 8080)
         thread = threading.Thread(target=loop, args=(http_connectionx, "thread" + str(i)))
         thread.start()

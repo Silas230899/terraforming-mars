@@ -56,6 +56,9 @@ class OnPolicyAlgorithm(BaseAlgorithm):
     """
 
     rollout_buffer: RolloutBuffer
+    rollout_buffer_player1: RolloutBuffer
+    rollout_buffer_player2: RolloutBuffer
+    rollout_buffer_player3: RolloutBuffer
     policy: ActorCriticPolicy
 
     def __init__(
@@ -142,6 +145,26 @@ class OnPolicyAlgorithm(BaseAlgorithm):
             n_envs=self.n_envs,
             **self.rollout_buffer_kwargs,
         )
+        self.rollout_buffer_player2 = self.rollout_buffer_class(
+            self.n_steps,
+            self.observation_space,  # type: ignore[arg-type]
+            self.action_space,
+            device=self.device,
+            gamma=self.gamma,
+            gae_lambda=self.gae_lambda,
+            n_envs=self.n_envs,
+            **self.rollout_buffer_kwargs,
+        )
+        self.rollout_buffer_player3 = self.rollout_buffer_class(
+            self.n_steps,
+            self.observation_space,  # type: ignore[arg-type]
+            self.action_space,
+            device=self.device,
+            gamma=self.gamma,
+            gae_lambda=self.gae_lambda,
+            n_envs=self.n_envs,
+            **self.rollout_buffer_kwargs,
+        )
         self.policy = self.policy_class(  # type: ignore[assignment]
             self.observation_space, self.action_space, self.lr_schedule, use_sde=self.use_sde, **self.policy_kwargs
         )
@@ -195,6 +218,9 @@ class OnPolicyAlgorithm(BaseAlgorithm):
 
         n_steps = 0
         rollout_buffer.reset()
+        self.rollout_buffer_player1.reset()
+        self.rollout_buffer_player2.reset()
+        self.rollout_buffer_player3.reset()
         # Sample new weights for the state dependent exploration
         if self.use_sde:
             self.policy.reset_noise(env.num_envs)
@@ -225,9 +251,7 @@ class OnPolicyAlgorithm(BaseAlgorithm):
                     # as we are sampling from an unbounded Gaussian distribution
                     clipped_actions = np.clip(actions, self.action_space.low, self.action_space.high)
 
-            # depending on self._last_observation determine to which player the result from step belongs to
-            print("Current player: " + str(self._last_obs["discrete"]))
-
+            #print("current turn: " + str(env.envs[0].current_turn))
 
             new_obs, rewards, dones, infos = env.step(clipped_actions)
 
@@ -266,6 +290,37 @@ class OnPolicyAlgorithm(BaseAlgorithm):
                 values,
                 log_probs,
             )
+
+            # depending on self._last_observation determine to which player the result from step belongs to
+            match self._last_obs["discrete"]:
+                case 0:
+                    self.rollout_buffer_player1.add(
+                        self._last_obs,  # type: ignore[arg-type]
+                        actions,
+                        rewards,
+                        self._last_episode_starts,  # type: ignore[arg-type]
+                        values,
+                        log_probs,
+                    )
+                case 1:
+                    self.rollout_buffer_player2.add(
+                        self._last_obs,  # type: ignore[arg-type]
+                        actions,
+                        rewards,
+                        self._last_episode_starts,  # type: ignore[arg-type]
+                        values,
+                        log_probs,
+                    )
+                case 2:
+                    self.rollout_buffer_player3.add(
+                        self._last_obs,  # type: ignore[arg-type]
+                        actions,
+                        rewards,
+                        self._last_episode_starts,  # type: ignore[arg-type]
+                        values,
+                        log_probs,
+                    )
+
             self._last_obs = new_obs  # type: ignore[assignment]
             self._last_episode_starts = dones
 
@@ -274,6 +329,14 @@ class OnPolicyAlgorithm(BaseAlgorithm):
             values = self.policy.predict_values(obs_as_tensor(new_obs, self.device))  # type: ignore[arg-type]
 
         rollout_buffer.compute_returns_and_advantage(last_values=values, dones=dones)
+
+        match self._last_obs["discrete"]:
+            case 0:
+                self.rollout_buffer_player1.compute_returns_and_advantage(last_values=values, dones=dones)
+            case 1:
+                self.rollout_buffer_player2.compute_returns_and_advantage(last_values=values, dones=dones)
+            case 2:
+                self.rollout_buffer_player3.compute_returns_and_advantage(last_values=values, dones=dones)
 
         callback.update_locals(locals())
 

@@ -8,7 +8,7 @@ from torch.nn import functional as F
 
 from stable_baselines3.common.buffers import RolloutBuffer
 from stable_baselines3.common.policies import ActorCriticCnnPolicy, ActorCriticPolicy, BasePolicy, MultiInputActorCriticPolicy
-from stable_baselines3.common.type_aliases import GymEnv, MaybeCallback, Schedule
+from stable_baselines3.common.type_aliases import GymEnv, MaybeCallback, Schedule, RolloutBufferSamples
 from stable_baselines3.common.utils import explained_variance, get_schedule_fn
 
 from on_policy_algorithm import OnPolicyAlgorithm
@@ -200,12 +200,59 @@ class PPO(OnPolicyAlgorithm):
         pg_losses, value_losses = [], []
         clip_fractions = []
 
+        #d: RolloutBufferSamples = self.rollout_buffer_player1.get(1)
+        #self.rollout_buffer_player1.get(5).actions
+
+        combined_rollout_buffers = self.rollout_buffer_class(
+            self.n_steps*3,
+            self.observation_space,  # type: ignore[arg-type]
+            self.action_space,
+            device=self.device,
+            gamma=self.gamma,
+            gae_lambda=self.gae_lambda,
+            n_envs=self.n_envs,
+            **self.rollout_buffer_kwargs,
+        )
+        # combined_rollout_buffers.actions = self.rollout_buffer.actions
+        # combined_rollout_buffers.observations = self.rollout_buffer.observations
+        # combined_rollout_buffers.advantages = self.rollout_buffer.advantages
+        # combined_rollout_buffers.log_probs = self.rollout_buffer.log_probs
+        # combined_rollout_buffers.values = self.rollout_buffer.values
+        # combined_rollout_buffers.returns = self.rollout_buffer.returns
+        combined_rollout_buffers.actions = np.concatenate(
+            self.rollout_buffer_player1.actions,
+            self.rollout_buffer_player2.actions,
+            self.rollout_buffer_player3.actions)
+        combined_rollout_buffers.observations = np.concatenate(
+            self.rollout_buffer_player1.observations,
+            self.rollout_buffer_player2.observations,
+            self.rollout_buffer_player3.observations)
+        combined_rollout_buffers.advantages = np.concatenate(
+            self.rollout_buffer_player1.advantages,
+            self.rollout_buffer_player2.advantages,
+            self.rollout_buffer_player3.advantages)
+        combined_rollout_buffers.log_probs = np.concatenate(
+            self.rollout_buffer_player1.log_probs,
+            self.rollout_buffer_player2.log_probs,
+            self.rollout_buffer_player3.log_probs)
+        combined_rollout_buffers.values = np.concatenate(
+            self.rollout_buffer_player1.values,
+            self.rollout_buffer_player2.values,
+            self.rollout_buffer_player3.values)
+        combined_rollout_buffers.returns = np.concatenate(
+            self.rollout_buffer_player1.returns,
+            self.rollout_buffer_player2.returns,
+            self.rollout_buffer_player3.returns)
+
+        combined_rollout_buffers.pos = combined_rollout_buffers.buffer_size
+        combined_rollout_buffers.full = True
+
         continue_training = True
         # train for n_epochs epochs
         for epoch in range(self.n_epochs):
             approx_kl_divs = []
             # Do a complete pass on the rollout buffer
-            for rollout_data in self.rollout_buffer.get(self.batch_size):
+            for rollout_data in combined_rollout_buffers.get(self.batch_size):
                 actions = rollout_data.actions
                 if isinstance(self.action_space, spaces.Discrete):
                     # Convert discrete action from float to long
@@ -283,6 +330,7 @@ class PPO(OnPolicyAlgorithm):
                 break
 
         explained_var = explained_variance(self.rollout_buffer.values.flatten(), self.rollout_buffer.returns.flatten())
+        explained_var = explained_variance(combined_rollout_buffers.values.flatten(), combined_rollout_buffers.returns.flatten())
 
         # Logs
         self.logger.record("train/entropy_loss", np.mean(entropy_losses))

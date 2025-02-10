@@ -1647,10 +1647,11 @@ def turn(player, http_connection):
             #print(game["id"])
             #exit(-1)
             # maybe this is because no more space is available for a city
+            print("No space left to place city" + selected_standard_project + " 9sv8z9abüaöe9b")
             return turn(player, http_connection)
         return res
     elif which_option["title"] == "Sell patents":
-        project_cards = game["cardsInHand"]
+        project_cards = which_option["cards"]
         card_selection = random.sample(project_cards, random.randint(1, len(project_cards)))
         card_names_selection = list(
             map(
