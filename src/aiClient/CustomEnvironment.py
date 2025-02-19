@@ -7,8 +7,14 @@ import numpy as np
 import json
 import random
 
+from gymnasium.spaces import Box, Discrete
+
+from action_names import *
+
 NUMBER_CORPORATIONS = 12
 NUMBER_PLAYERS = 3
+NUMBER_OF_CARDS = 199
+NUMBER_ALL_OPTIONS = 58
 
 class PhasesEnum(Enum):
     INITIAL_RESEARCH = 0,
@@ -84,6 +90,12 @@ class CustomEnv(gym.Env):
             gym.spaces.Discrete(3),
             gym.spaces.Box(low=0, high=1, shape=(2,), dtype=np.float32),
         ))
+
+        self.action_space = spaces.Dict({
+            SELECTED_ACTION_OPTION_INDEX: Discrete(NUMBER_ALL_OPTIONS),
+            SELECTED_CARD_INDEX: Discrete(NUMBER_OF_CARDS),
+            PAY_MC_PERCENTAGE: Box(low=0, high=1, shape=(1,), dtype=np.float32),
+        })
 
         # Aktionsraum
         self.action_space = spaces.Box(low=0, high=1.0, shape=(4,), dtype=np.float32)
@@ -397,6 +409,11 @@ class CustomEnv(gym.Env):
             }
         }
 
+        selected_action_index = action["selected_action_index"]
+        selected_action_index = action[SELECTED_ACTION_OPTION_INDEX]
+        selected_card = action["selected_card"]
+        pay_mc_percentage = action["pay_mc_percentage"]
+
         payload = None
 
         run_id = 894568394
@@ -413,6 +430,9 @@ class CustomEnv(gym.Env):
             selected_option_index = self.action_option_argmax(
                 all_options_percentages=action[ActionSpaceRanges.WAITING_FOR_OPTIONS],
                 available_options=current_state["waitingFor"]["options"])
+
+            selected_option_index = action["selected_option_index"]
+
             option = current_state["waitingFor"]["options"][selected_option_index]
             action_name = option["title"]["message"] if "message" in option["title"] else option["title"]
             match action_name:
