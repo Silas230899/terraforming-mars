@@ -5,6 +5,9 @@ from stable_baselines3.common.torch_layers import BaseFeaturesExtractor
 import gymnasium as gym
 import numpy as np
 
+from action_observation_names import *
+
+
 class CustomFeatureExtractor(BaseFeaturesExtractor):
     def __init__(self, observation_space: gym.spaces.Dict, features_dim: int = 64):
         super().__init__(observation_space, features_dim)
@@ -46,23 +49,53 @@ class HybridActorCriticPolicy(ActorCriticPolicy):
 
         self.log_std = nn.Parameter(th.zeros(self.num_continuous))
 
+        # **Manuelle Zuordnung der Maskierungs-Beobachtungen**
+        self.discrete_mask_mapping = {
+            SELECTED_ACTION_OPTION_INDEX: AVAILABLE_ACTION_OPTIONS,
+            "action2": "mask_action2",
+            "action3": "mask_action3"
+        }
+
+        self.binary_mask_mapping = {
+            "binary1": "mask_binary1",
+            "binary2": "mask_binary2"
+        }
+
     def forward(self, obs, deterministic=False):
         features = self.features_extractor(obs)
         discrete_logits = self.discrete_policy(features)
         continuous_mean = self.continuous_policy(features)
         binary_logits = self.binary_policy(features)  # MultiBinary Logits
 
-        # Extrahiere Masken aus der Beobachtung
-        action_masks = {
-            "discrete": obs["discrete_mask"],
-            "binary": obs["binary_mask"]
-        }
+        # **Masken anhand der definierten Mappings abrufen**
+        discrete_masks = [obs[self.discrete_mask_mapping[key]] for key in self.discrete_keys if
+                          key in self.discrete_mask_mapping]
+        binary_masks = [obs[self.binary_mask_mapping[key]] for key in self.binary_keys if
+                        key in self.binary_mask_mapping]
 
-        # Diskrete Aktion mit Masking
-        masked_discrete_logits = discrete_logits + (1 - action_masks['discrete']) * -float('inf')
+        # **Diskrete Logits maskieren**
+        masked_discrete_logits = []
+        start_idx = 0
+        for i, key in enumerate(self.discrete_keys):
+            num_values = self.action_space.spaces[key].n
+            mask = discrete_masks[i] if i < len(discrete_masks) else th.ones_like(
+                discrete_logits[:, start_idx:start_idx + num_values])
+            masked_logits = discrete_logits[:, start_idx:start_idx + num_values] + (1 - mask) * -float('inf')
+            masked_discrete_logits.append(masked_logits)
+            start_idx += num_values
+        masked_discrete_logits = th.cat(masked_discrete_logits, dim=-1)  # Wieder zusammenführen
 
-        # MultiBinary Aktion mit Masking
-        masked_binary_logits = binary_logits + (1 - action_masks['binary']) * -float('inf')
+        # **MultiBinary Logits maskieren**
+        masked_binary_logits = []
+        start_idx = 0
+        for i, key in enumerate(self.binary_keys):
+            num_values = self.action_space.spaces[key].n
+            mask = binary_masks[i] if i < len(binary_masks) else th.ones_like(
+                binary_logits[:, start_idx:start_idx + num_values])
+            masked_logits = binary_logits[:, start_idx:start_idx + num_values] + (1 - mask) * -float('inf')
+            masked_binary_logits.append(masked_logits)
+            start_idx += num_values
+        masked_binary_logits = th.cat(masked_binary_logits, dim=-1)  # Wieder zusammenführen
 
         return masked_discrete_logits, continuous_mean, masked_binary_logits
 
