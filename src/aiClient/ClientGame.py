@@ -78,17 +78,17 @@ class ClientGame:
 
         if res["game"]["phase"] == "drafting":
             current_player = self.get_next_player(res["players"])
-            print(current_player.name)
+            # print(current_player.name)
             draft(self.player1, self.http_connection)
             current_player = self.get_next_player(res["players"])
-            print(current_player.name)
+            # print(current_player.name)
             draft(self.player2, self.http_connection)
             current_player = self.get_next_player(res["players"])
-            print(current_player.name)
+            # print(current_player.name)
             draft(self.player3, self.http_connection)
             current_player = self.get_next_player(res["players"])
-            print(current_player.name)
-            print()
+            # print(current_player.name)
+            # print()
 
             draft(self.player1, self.http_connection)
             draft(self.player2, self.http_connection)

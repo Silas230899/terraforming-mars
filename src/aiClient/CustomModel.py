@@ -52,12 +52,14 @@ class HybridActorCriticPolicy(ActorCriticPolicy):
         # **Manuelle Zuordnung der Maskierungs-Beobachtungen**
         self.discrete_mask_mapping = {
             SELECTED_ACTION_OPTION_INDEX: AVAILABLE_ACTION_OPTIONS,
-            "action2": "mask_action2",
-            "action3": "mask_action3"
+            SELECTED_CARD_INDEX: AVAILABLE_CARDS,
+            SELECTED_SPACE_INDEX: AVAILABLE_SPACES,
+            SELECTED_CARD_FROM_PLAYED_CARDS_INDEX: PLAYED_CARDS_ONE_HOT,
+            SELECTED_STANDARD_PROJECT_INDEX: AVAILABLE_STANDARD_PROJECTS,
         }
 
         self.binary_mask_mapping = {
-            "binary1": "mask_binary1",
+            MULTIPLE_SELECTED_CARDS: AVAILABLE_CARDS,
             "binary2": "mask_binary2"
         }
 

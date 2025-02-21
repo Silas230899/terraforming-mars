@@ -2196,6 +2196,7 @@ def turn(player, http_connection):
         return res
     elif which_option["title"] == "Select adjacent player to remove 4 M€ from":
         selected_player = random.choice(which_option["players"])
+        print(which_option["players"])
         select_player_data = {
             "runId": player.run_id,
             "type": "or",

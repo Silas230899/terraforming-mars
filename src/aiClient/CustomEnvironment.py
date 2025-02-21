@@ -23,7 +23,11 @@ NUMBER_PLAYERS = 3
 NUMBER_OF_CARDS = 199
 NUMBER_ALL_ACTION_OPTIONS = 58
 NUMBER_ALL_ACTIONS = 38 # without action options
-NUMBER_SPACES = -1 # TODO to be counted
+NUMBER_SPACES = 68 # indices 01 to 69
+
+def NUMBER_OF_AWARDS(): return len(AWARDS_INT_STR.values())
+def NUMBER_OF_MILESTONES(): return len(MILESTONES_INT_STR.values())
+def NUMBER_OF_STANDARD_PROJECTS(): return len(STANDARD_PROJECTS_INDEX_NAME.values())
 
 class PhasesEnum(Enum):
     INITIAL_RESEARCH = 0,
@@ -39,6 +43,32 @@ ACTION_OPTIONS: Dict[str, int] = {
     "End turn": 1,
 
 }
+
+AWARDS_INT_STR: Dict[int, str] = {
+    0: "Miner",
+    1: "Scientist",
+    2: "Landlord",
+    3: "Thermalist",
+    4: "Banker",
+}
+
+MILESTONES_INT_STR: Dict[int, str] = {
+    0: "Gardener",
+    1: "Mayor",
+    2: "Terraformer",
+    3: "Planner",
+    4: "Builder",
+}
+
+STANDARD_PROJECTS_INDEX_NAME: Dict[int, str] = {
+    0: "Power Plant:SP",
+    1: "Asteroid:SP",
+    2: "Aquifer",
+    3: "Greenery",
+    4: "City"
+}
+
+PLAYERS_COLOR_ID: Dict[str, int] = {}
 
 ACTION_OPTIONS_INT_STR: Dict[int, str] = {
     0: "Pass for this generation",
@@ -105,6 +135,10 @@ class CustomEnv(gym.Env):
             RESERVE_STEEL: Box(0, 50, (1,), np.int8),
             RESERVE_TITANIUM: Box(0, 50, (1,), np.int8),
             AVAILABLE_SPACES: MultiBinary(NUMBER_SPACES),
+            PLAYED_CARDS_ONE_HOT: MultiBinary(NUMBER_OF_CARDS),
+            AVAILABLE_MILESTONES: MultiBinary(NUMBER_OF_MILESTONES()),
+            AVAILABLE_AWARDS: MultiBinary(NUMBER_OF_AWARDS()),
+            AVAILABLE_STANDARD_PROJECTS: MultiBinary(NUMBER_OF_STANDARD_PROJECTS()),
         })
 
         self.action_space = spaces.Dict({
@@ -115,8 +149,13 @@ class CustomEnv(gym.Env):
             PAY_STEEL_PERCENTAGE: Box(0, 1, (1,), np.float32),
             PAY_TITANIUM_PERCENTAGE: Box(0, 1, (1,), np.float32),
             PAY_MICROBES_PERCENTAGE: Box(0, 1, (1,), np.float32),
-            SELECTED_CARDS: MultiBinary(NUMBER_OF_CARDS),
-            SELECTED_SPACE: Discrete(NUMBER_SPACES),
+            MULTIPLE_SELECTED_CARDS: MultiBinary(NUMBER_OF_CARDS),
+            SELECTED_SPACE_INDEX: Discrete(NUMBER_SPACES),
+            SELECTED_PLAYER: Discrete(NUMBER_PLAYERS),
+            SELECTED_CARD_FROM_PLAYED_CARDS_INDEX: Discrete(NUMBER_OF_CARDS),
+            SELECTED_MILESTONE_INDEX: Discrete(NUMBER_OF_MILESTONES()),
+            SELECTED_AWARD_INDEX: Discrete(NUMBER_OF_AWARDS()),
+            SELECTED_STANDARD_PROJECT_INDEX: Discrete(NUMBER_OF_STANDARD_PROJECTS()),
         })
 
     def reset(self, seed=None, options=None):
@@ -350,7 +389,7 @@ class CustomEnv(gym.Env):
                     can_pay_with_microbes = False
                     if card_name in PLANT_CARDS_SET:
                         for p in current_state["players"]:
-                            if p["name"] == player.name:
+                            if p["color"] == player.color:
                                 for card in p["tableau"]:
                                     if card["name"] == "Psychrophiles":
                                         can_pay_with_microbes = True
@@ -442,12 +481,9 @@ class CustomEnv(gym.Env):
                                     remaining_cost = remaining_cost - available_microbes * microbes_value
 
                     payload = self.create_or_resp_project_card_payment(run_id, selected_option_index, card_name, pay_heat, pay_mc, pay_steel, pay_titanium, pay_microbes)
-                case "Standard project":
-                    pass
                 case "Sell patents": # multiple cards
-                    # available_cards = selected_option["cards"]
                     selected_cards = []
-                    selected_card_indices = action[SELECTED_CARDS]
+                    selected_card_indices = action[MULTIPLE_SELECTED_CARDS]
                     for idx, binary in enumerate(selected_card_indices):
                         if binary == 1:
                             selected_card_name: str = CARD_NAMES_INT_STR[idx]
@@ -462,27 +498,46 @@ class CustomEnv(gym.Env):
                       "Select card to add 4 animals",
                       "Add 2 animals to a card"):
                     available_cards = selected_option["cards"]
-                    selected_card_from_all_name: str = CARD_NAMES_INT_STR[action[SELECTED_CARD_INDEX]]
+                    selected_card_from_all_name: str = CARD_NAMES_INT_STR[action[SELECTED_CARD_FROM_PLAYED_CARDS_INDEX]]
                     selected_card = None
                     for card in available_cards:
                         if card["name"] == selected_card_from_all_name:
                             selected_card = card
                             break
                     payload = self.create_or_resp_card_cards(run_id, selected_option_index, [selected_card["name"]])
-                case "Claim a milestone":
-                    pass
                 case ("Select space for greenery tile",
                       "Convert ${0} plants into greenery"):
-                    available_spaces = selected_option["spaces"]
-                    selected_space = action[SELECTED_SPACE]
-                    payload = self.create_or_resp_space_space_id(run_id, selected_option_index, selected_space)
+                    available_spaces_ids = selected_option["spaces"]
+                    selected_space_index = action[SELECTED_SPACE_INDEX]
+                    selected_space_id = str(selected_space_index + 1) # TODO maybe "1" is not treated the same as "01"
+                    payload = self.create_or_resp_space_space_id(run_id, selected_option_index, selected_space_id)
                 case "Select adjacent player to remove 4 M€ from":
-                    available_players = selected_option["players"]
-                    selected_player = 0
+                    available_players_colors = selected_option["players"]
+                    selected_player_color = action[SELECTED_PLAYER]
+                    selected_player = None # TODO
                     payload = self.create_or_resp_player_player(run_id, selected_option_index, selected_player)
-                    pass
                 case "Fund an award (${0} M€)":
-                    payload = self.create_or_resp_or_resp_option(run_id, selected_option_index, 0)
+                    available_awards = selected_option["options"]
+                    selected_award_from_all_name: str = AWARDS_INT_STR[action[SELECTED_AWARD_INDEX]]
+                    selected_award_index = -1
+                    for idx, award in enumerate(available_awards):
+                        if award["name"] == selected_award_from_all_name:
+                            selected_award_index = idx
+                            break
+                    payload = self.create_or_resp_or_resp_option(run_id, selected_option_index, selected_award_index)
+                case "Standard projects":
+                    # possibly none are available
+                    selected_standard_project_name = STANDARD_PROJECTS_INDEX_NAME[action[SELECTED_STANDARD_PROJECT_INDEX]]
+                    self.create_or_resp_card_cards(run_id, selected_option_index, [selected_standard_project_name])
+                case "Claim a milestone":
+                    available_milestones = selected_option["options"]
+                    selected_milestone_from_all_name: str = MILESTONES_INT_STR[action[SELECTED_MILESTONE_INDEX]]
+                    selected_milestone_index = -1
+                    for idx, milestone in enumerate(available_milestones):
+                        if milestone["name"] == selected_milestone_from_all_name:
+                            selected_milestone_index = idx
+                            break
+                    self.create_or_resp_or_resp_option(run_id, selected_option_index, selected_milestone_index)
         else:
             message = current_state["waitingFor"]["title"]["message"] if "message" in current_state["waitingFor"]["title"] else current_state["waitingFor"]["title"]
             match message:
