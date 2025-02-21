@@ -81,9 +81,49 @@ CARD_NAMES_INT_STR: Dict[int, str] = {
     2: "karte3",
 }
 
-class ActionOptions(Enum):
-    PASS_FOR_THIS_GENERATION = "Pass for this generation",
-    END_TURN = "End turn",
+TILE_NAMES_OF_SELECTABLE_SPACES: Dict[str, int] = {
+    "Mohole Area": 0,
+    "Nuclear Zone": 1,
+    "Commercial District": 2,
+    "Restricted Area": 3,
+    "Natural Preserve": 4
+}
+NUMBER_OF_TILES_TO_SELECT_SPACE_FOR = 5
+
+CORPORATIONS_WITH_FIRST_ACTION: Dict[str, int] = {
+    "Valley Trust": 0,
+    "Inventrix": 1,
+    "Vitor": 2,
+    "Tharsis Republic": 3,
+}
+NUMBER_OF_CORPORATIONS_WITH_FIRST_ACTION = 4
+
+REMOVABLE_RESOURCES_NAMES = {
+    "M€": 0,
+    "steel": 1,
+    "titanium": 2,
+}
+NUMBER_OF_REMOVABLE_RESOURCES = 3
+
+CARDS_MICROBES_CAN_BE_ADDED_TO = {
+    "Psychrophiles": 0,
+    "GHG Producing Bacteria": 1,
+    "Nitrite Reducing Bacteria": 2,
+    "Tardigrades": 3,
+    "Ants": 4,
+    "Decomposers": 5,
+}
+NUMBER_OF_CARDS_MICROBES_CAN_BE_ADDED_TO = 6
+
+CARDS_RESOURCES_CAN_BE_ADDED_TO = {
+    "Regolith Eaters": 0,
+    "Tardigrades": 1,
+    "GHG Producing Bacteria": 2,
+    "Ecological Zone": 3,
+    "Pets": 4,
+    "Decomposers": 5,
+} # unused
+
 
 class CustomEnv(gym.Env):
     http_connection = None
@@ -139,6 +179,43 @@ class CustomEnv(gym.Env):
             AVAILABLE_MILESTONES: MultiBinary(NUMBER_OF_MILESTONES()),
             AVAILABLE_AWARDS: MultiBinary(NUMBER_OF_AWARDS()),
             AVAILABLE_STANDARD_PROJECTS: MultiBinary(NUMBER_OF_STANDARD_PROJECTS()),
+
+            # for "Take first action of ${0} corporation"
+            CORPORATION_TO_TAKE_FIRST_ACTION_OF: Discrete(NUMBER_OF_CORPORATIONS_WITH_FIRST_ACTION),
+
+            # "Remove ${0} plants from ${1}"
+            AMOUNT_OF_PLANTS_TO_REMOVE: Box(0, 8, (1,), np.int8),
+            PLAYER_TO_REMOVE_PLANTS_FROM: Discrete(NUMBER_PLAYERS),
+
+            # "Remove ${0} ${1} from ${2}"
+            RESOURCE_TO_REMOVE: Discrete(NUMBER_OF_REMOVABLE_RESOURCES),
+            AMOUNT_OF_RESOURCE_TO_REMOVE: Box(0, 8, (1,), np.int8),
+            PLAYER_TO_REMOVE_RESOURCE_FROM: Discrete(NUMBER_PLAYERS),
+
+            # "Steal ${0} M€ from ${1}"
+            AMOUNT_OF_MC_TO_STEAL: Box(0, 100, (1,), np.int8),
+            PLAYER_TO_STEAL_MC_FROM: Discrete(NUMBER_PLAYERS),
+
+            # "Steal ${0} steel from ${1}"
+            AMOUNT_OF_STEEL_TO_STEAL: Box(0, 2, (1,), np.int8),
+            PLAYER_TO_STEAL_STEEL_FROM: Discrete(NUMBER_PLAYERS),
+
+            # "Add ${0} microbes to ${1}"
+            AMOUNT_OF_MICROBES_TO_ADD: Box(0, 3, (1,), np.int8),
+            CARD_TO_ADD_MICROBES_TO: Discrete(NUMBER_OF_CARDS_MICROBES_CAN_BE_ADDED_TO),
+
+            # "Fund ${0} award"
+            WHAT_AWARD_TO_FUND: Discrete(NUMBER_OF_AWARDS()),
+
+            # Convert ${0} plants into greenery
+            HOW_MANY_PLANTS_TO_CONVERT_INTO_GREENERY: Box(7, 8, (1,), np.int8),
+
+            # Fund an award (${0} M€)
+            FUND_AWARD_COST: Discrete(3), # 8, 14, 20
+
+
+
+            TILE_TO_SELECT_SPACE_FOR: Discrete(NUMBER_OF_TILES_TO_SELECT_SPACE_FOR)
         })
 
         self.action_space = spaces.Dict({
@@ -360,7 +437,7 @@ class CustomEnv(gym.Env):
                       "Gain 3 plants",
                       "Gain 5 plants",
                       "Don't remove M€ from adjacent player",
-                      "Take first action of ${0} corporation",
+                      "Take first action of ${0} corporation", #c = which_option["title"]["data"][0]["value"]
                       "Remove ${0} plants from ${1}",
                       "Remove ${0} ${1} from ${2}",
                       "Steal ${0} M€ from ${1}",
@@ -526,7 +603,7 @@ class CustomEnv(gym.Env):
                             break
                     payload = self.create_or_resp_or_resp_option(run_id, selected_option_index, selected_award_index)
                 case "Standard projects":
-                    # possibly none are available
+                    # wenn das SP nicht verfügbar ist, darf es gar nicht erst als option im beobachtungsraum sein
                     selected_standard_project_name = STANDARD_PROJECTS_INDEX_NAME[action[SELECTED_STANDARD_PROJECT_INDEX]]
                     self.create_or_resp_card_cards(run_id, selected_option_index, [selected_standard_project_name])
                 case "Claim a milestone":

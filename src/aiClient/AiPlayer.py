@@ -1420,10 +1420,6 @@ def turn(player, http_connection):
         else:
             break
 
-
-
-
-
     if which_option["title"] == "Pass for this generation":
         pass_data = {
             "runId": player.run_id,
@@ -1647,7 +1643,7 @@ def turn(player, http_connection):
             #print(game["id"])
             #exit(-1)
             # maybe this is because no more space is available for a city
-            print("No space left to place city" + selected_standard_project + " 9sv8z9abüaöe9b")
+            print("No space left to place " + selected_standard_project + " 9sv8z9abüaöe9b " + res["message"])
             return turn(player, http_connection)
         return res
     elif which_option["title"] == "Sell patents":
@@ -2196,7 +2192,6 @@ def turn(player, http_connection):
         return res
     elif which_option["title"] == "Select adjacent player to remove 4 M€ from":
         selected_player = random.choice(which_option["players"])
-        print(which_option["players"])
         select_player_data = {
             "runId": player.run_id,
             "type": "or",
@@ -2249,6 +2244,9 @@ def turn(player, http_connection):
         print(which_option)
         exit(-1)
     elif which_option["title"]["message"] == "Take first action of ${0} corporation":
+        corporation = which_option["title"]["data"][0]["value"]
+        if corporation not in {"Valley Trust", "Inventrix", "Vitor", "Tharsis Republic"}:
+            print(corporation)
         # the case for inventrix, ...
         take_action_data = {
             "runId": player.run_id,
@@ -2262,6 +2260,8 @@ def turn(player, http_connection):
         #print("Took first action")
         return res
     elif which_option["title"]["message"] == "Fund an award (${0} M€)":
+        amount = which_option["title"]["data"][0]["value"]
+        print(amount)
         which_award = which_option["options"]
         random_award = random.randint(0, len(which_award) - 1)
         fund_award_data = {
@@ -2279,7 +2279,7 @@ def turn(player, http_connection):
         res = send_player_input(json.dumps(fund_award_data), player.id, http_connection)
         return res
     elif which_option["title"]["message"] == "Convert ${0} plants into greenery":
-        #print(which_option)
+        amount = which_option["title"]["data"][0]["value"]
         available_spaces = which_option["spaces"]
         selected_space = random.choice(available_spaces)
         select_space_data = {
@@ -2295,6 +2295,8 @@ def turn(player, http_connection):
         #print("Selected space to place greenery")
         return res
     elif which_option["title"]["message"] == "Remove ${0} plants from ${1}":
+        amount_of_plants = which_option["title"]["data"][0]["value"]
+        from_whom = which_option["title"]["data"][1]["value"]
         remove_data = {
             "runId": player.run_id,
             "type": "or",
@@ -2307,6 +2309,9 @@ def turn(player, http_connection):
         res = send_player_input(json.dumps(remove_data), player.id, http_connection)
         return res
     elif which_option["title"]["message"] == "Remove ${0} ${1} from ${2}":
+        amount_to_remove = which_option["title"]["data"][0]["value"]
+        resource_to_remove = which_option["title"]["data"][1]["value"]
+        from_whom = which_option["title"]["data"][2]["value"]
         remove_data = {
             "runId": player.run_id,
             "type": "or",
@@ -2343,6 +2348,9 @@ def turn(player, http_connection):
         #print("stole steel: " + which_option["title"]["message"])
         return res
     elif which_option["title"]["message"] == "Add ${0} microbes to ${1}":
+        amount = which_option["title"]["data"][0]["value"]
+        which_card = which_option["title"]["data"][1]["value"]
+
         add_microbes_data = {
             "runId": player.run_id,
             "type": "or",
@@ -2355,6 +2363,7 @@ def turn(player, http_connection):
         #print("added microbes: " + which_option["title"]["message"])
         return res
     elif which_option["title"]["message"] == "Add resource to card ${0}":
+        which_card = which_option["title"]["data"][0]["value"]
         add_resource_data = {
             "runId": player.run_id,
             "type": "or",
@@ -2367,6 +2376,8 @@ def turn(player, http_connection):
         #print("added resource to card: " + which_option["title"]["message"])
         return res
     elif which_option["title"]["message"] == "Add ${0} animals to ${1}":
+        amount = which_option["title"]["data"][0]["value"]
+        to_what = which_option["title"]["data"][1]["value"]
         add_animals_data = {
             "runId": player.run_id,
             "type": "or",
@@ -2379,6 +2390,7 @@ def turn(player, http_connection):
         #print("added animals: " + which_option["title"]["message"])
         return res
     elif which_option["title"]["message"] == "Fund ${0} award":
+        what_award = which_option["title"]["data"][0]["value"]
         add_animals_data = {
             "runId": player.run_id,
             "type": "or",
