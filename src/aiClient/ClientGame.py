@@ -47,22 +47,13 @@ class ClientGame:
                     return self.player3
 
     def generation(self, res):
-        #print("Generation " + str(res["game"]["generation"]))
         current_player = self.get_next_player(res["players"])
 
         if res["game"]["phase"] != "action" and res["game"]["phase"] != "preludes":
             print("phase should be 'action' or 'preludes' but is " + str(res["game"]["phase"]))
-            #print(res)
             exit(-1)
 
         while res["game"]["phase"] == "action" or res["game"]["phase"] == "production" or res["game"]["phase"] == "preludes":
-            if "waitingFor" in res:
-                pass
-                #print("waiting for something")
-            else:
-                pass
-                #print("not waiting for something")
-
             old_res = res
             res = turn(current_player, self.http_connection)
             if "players" not in res:
@@ -77,44 +68,36 @@ class ClientGame:
             current_player = self.get_next_player(res["players"])
 
         if res["game"]["phase"] == "drafting":
-            current_player = self.get_next_player(res["players"])
-            # print(current_player.name)
-            draft(self.player1, self.http_connection)
-            current_player = self.get_next_player(res["players"])
-            # print(current_player.name)
-            draft(self.player2, self.http_connection)
-            current_player = self.get_next_player(res["players"])
-            # print(current_player.name)
-            draft(self.player3, self.http_connection)
-            current_player = self.get_next_player(res["players"])
-            # print(current_player.name)
-            # print()
+            res = turn(self.player1, self.http_connection)
+            res = turn(self.player2, self.http_connection)
+            res = turn(self.player3, self.http_connection)
 
-            draft(self.player1, self.http_connection)
-            draft(self.player2, self.http_connection)
-            draft(self.player3, self.http_connection)
+            res = turn(self.player1, self.http_connection)
+            res = turn(self.player2, self.http_connection)
+            res = turn(self.player3, self.http_connection)
 
-            draft(self.player1, self.http_connection)
-            draft(self.player2, self.http_connection)
-            res = draft(self.player3, self.http_connection)
+            res = turn(self.player1, self.http_connection)
+            res = turn(self.player2, self.http_connection)
+            res = turn(self.player3, self.http_connection)
         elif res["game"]["phase"] == "end":
-            # print("The game has ended (" + res["id"] + ")", end="")
-            #print(res)
             for player in res["players"]:
                 pass
                 #print(player["name"] + ": " + str(player["victoryPointsBreakdown"]["total"]) + ", ", end="")
-            #exit(0)
-            #print()
             return None
         else:
             print("phase should be 'drafting' but is " + str(res["game"]["phase"]))
             exit(-1)
 
         if res["game"]["phase"] == "research":
-            research_phase(self.player1, self.http_connection)
-            research_phase(self.player2, self.http_connection)
-            res = research_phase(self.player3, self.http_connection)
-            #current_player = get_next_player(res["players"])
+            res = turn(self.player1, self.http_connection)
+            while "waitingFor" in res and res["game"]["phase"] == "research":
+                res = turn(self.player1, self.http_connection)
+            res = turn(self.player2, self.http_connection)
+            while "waitingFor" in res and res["game"]["phase"] == "research":
+                res = turn(self.player2, self.http_connection)
+            res = turn(self.player3, self.http_connection)
+            while "waitingFor" in res and res["game"]["phase"] == "research":
+                res = turn(self.player3, self.http_connection)
         else:
             print("phase should be 'research' but is " + str(res["game"]["phase"]))
             exit(-1)

@@ -68,6 +68,9 @@ STEPS_TO_DECREASE_PRODUCTION = "steps_to_decrease_production"
 
 WHAT_STANDARD_PROJECT_TO_SELECT_HOW_TO_PAY_FOR = "what_standard_project_to_select_how_to_pay_for"
 
+# Select a card to keep and pass the rest to ${0}
+PASS_REMAINING_DRAFT_CARDS_TO_WHOM = "pass_remaining_draft_cards_to_whom"
+
 
 
 # action names:
@@ -96,3 +99,6 @@ AMOUNT_OF_HEAT_PRODUCTION_TO_DECREASE = "amount_of_heat_production_to_decrease"
 # Select amount of energy to spend
 MAX_AMOUNT_OF_ENERGY_TO_SPEND = "max_amount_of_energy_to_spend"
 AMOUNT_OF_ENERGY_TO_SPEND = "amount_of_energy_to_spend"
+
+# "Select card(s) to buy" (for research phase)
+MULTIPLE_SELECTED_RESEARCH_CARDS = "multiple_selected_research_cards"

@@ -298,6 +298,9 @@ class CustomEnv(gym.Env):
 
             # Select amount of energy to spend
             MAX_AMOUNT_OF_ENERGY_TO_SPEND: Box(0, 50, (1,), np.int8),
+
+            # Select a card to keep and pass the rest to ${0}
+            PASS_REMAINING_DRAFT_CARDS_TO_WHOM: Discrete(NUMBER_PLAYERS)
         })
 
         self.action_space = spaces.Dict({
@@ -324,6 +327,9 @@ class CustomEnv(gym.Env):
 
             # Select amount of energy to spend
             AMOUNT_OF_ENERGY_TO_SPEND: Box(0, 50, (1,), np.int8),
+
+            # Select card(s) to buy
+            MULTIPLE_SELECTED_RESEARCH_CARDS: MultiBinary(NUMBER_OF_CARDS),
         })
 
     def reset(self, seed=None, options=None):
@@ -422,18 +428,11 @@ class CustomEnv(gym.Env):
         #                       result["players"][2]["name"])
 
         return {
-            "current_phase": self.current_phase.sample(),
-            "dealt_project_cards": self.dealt_project_cards.sample(),
+            AVAILABLE_ACTION_OPTIONS: None,
+            SELECTED_ACTION_INDEX: None,
             "available_corporations": self.available_corporations.sample(),
             "available_initial_project_cards": self.available_initial_project_cards.sample(),
         }, {}
-
-    def draft(self):
-        return {
-            "game": {
-                "phase": "research"
-            }
-        }
 
     def normal_turn(self, action):
 
@@ -677,10 +676,27 @@ class CustomEnv(gym.Env):
                       "Select 1 card(s) to keep",
                       "Select card to remove 1 Microbe(s)",
                       "Select card to remove 1 Animal(s)",
-                      "Select prelude card to play"):
+                      "Select prelude card to play",
+                      "Select a card to keep and pass the rest to ${0}"):
                     available_cards = current_state["waitingFor"]["cards"]
                     selected_card_from_all_name: str = CARD_NAMES_INT_STR[action[SELECTED_CARD_INDEX]]
-                    self.create_cards_response(run_id, [selected_card_from_all_name])
+                    payload = self.create_cards_response(run_id, [selected_card_from_all_name])
+                case "Select card(s) to buy":  # 0 or 1
+                    available_cards = current_state["waitingFor"]["cards"]
+                    max_amount_of_cards = current_state["waitingFor"]["max"]
+                    if max_amount_of_cards == 1:
+                        selected_card_index = action[SELECTED_CARD_INDEX]
+                        selected_card_from_all_name: str = CARD_NAMES_INT_STR[selected_card_index]
+                        selected_cards_names = [selected_card_from_all_name]
+                        payload = self.create_cards_response(run_id, selected_cards_names)
+                    elif max_amount_of_cards == 4:
+                        selected_cards_names = []
+                        selected_card_indices = action[MULTIPLE_SELECTED_CARDS]
+                        for idx, binary in enumerate(selected_card_indices):
+                            if binary == 1:
+                                selected_card_name: str = CARD_NAMES_INT_STR[idx]
+                                selected_cards_names.append(selected_card_name)
+                        payload = self.create_cards_response(run_id, selected_cards_names)
                 case "Select 2 card(s) to keep":
                     available_cards = current_state["waitingFor"]["cards"]
                     selected_cards_indices = action[TWO_SELECTED_CARDS_INDICES]
@@ -693,12 +709,6 @@ class CustomEnv(gym.Env):
                     if len(selected_cards_names) != 2:
                         print("did not correctly select 2 cards")
                         exit(-458764)
-                    self.create_cards_response(run_id, selected_cards_names)
-                case "Select card(s) to buy": # always 1 is meant
-                    available_cards = current_state["waitingFor"]["cards"]
-                    selected_card_index = action[SELECTED_CARD_INDEX]
-                    selected_card_from_all_name: str = CARD_NAMES_INT_STR[selected_card_index]
-                    selected_cards_names = [selected_card_from_all_name]
                     self.create_cards_response(run_id, selected_cards_names)
                 case "You cannot afford any cards":
                     self.create_cards_response(run_id, [])
@@ -900,7 +910,7 @@ class CustomEnv(gym.Env):
         res = None
         match (self.last_observation["current_phase"]):
             case PhasesEnum.DRAFTING.value:
-                res = self.draft()
+                pass
             case PhasesEnum.ACTION.value, PhasesEnum.PRODUCTION.value, PhasesEnum.PRELUDES.value:
                 res = self.normal_turn(action)
 

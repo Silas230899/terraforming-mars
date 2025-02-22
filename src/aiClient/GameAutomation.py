@@ -138,7 +138,7 @@ def loop(http_connection, name):
 
 import threading
 
-THREADS_COUNT = 2
+THREADS_COUNT = 1
 
 if __name__ == '__main__':
     for i in range(THREADS_COUNT):

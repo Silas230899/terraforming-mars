@@ -539,7 +539,6 @@ def turn(player, http_connection):
                 # looks like this only happens for helion
                 cost = waiting_for["amount"]
                 available_heat = game["thisPlayer"]["heat"]
-                print(waiting_for["paymentOptions"]["heat"])
                 pay_heat = cost
                 pay_mc = 0
                 if cost > available_heat:
@@ -659,6 +658,15 @@ def turn(player, http_connection):
                 #print(str(cost) + "b56zn payed: " + str(json.dumps(select_payment_data)))
                 res = send_player_input(json.dumps(select_payment_data), player.id, http_connection)
                 #print("payed for action with heat/megacredits/steel/titanium")
+                return res
+            elif waiting_for["title"]["message"] == "Select a card to keep and pass the rest to ${0}":
+                card_selection = random.choice(waiting_for["cards"])["name"]
+                draw_data = {
+                    "runId": player.run_id,
+                    "type": "card",
+                    "cards": [card_selection]
+                }
+                res = send_player_input(json.dumps(draw_data), player.id, http_connection)
                 return res
             else:
                 print("LOOK HERE options message not yet implemented")
@@ -989,9 +997,10 @@ def turn(player, http_connection):
             max = waiting_for["max"]
             min = waiting_for["min"]
             if min != 0 or max != 1:
-                print(waiting_for)
-                print("problem 87wzv89w489v4ö09")
-                exit(-1)
+                #print(waiting_for)
+                #print("problem 87wzv89w489v4ö09")
+                #exit(-1)
+                pass
 
             sample = random.sample(available_cards, random.randint(min, max))
             card_names_selection = list(
@@ -2409,8 +2418,6 @@ def turn(player, http_connection):
 
 def draft(player, http_connection):
     game = get_game(player.id, http_connection)
-    print(json.dumps(game, indent=2))
-    exit(-1)
     #print("generation: " + str(game["game"]["generation"]))
     waiting_for = game["waitingFor"]
     card_selection = random.choice(waiting_for["cards"])["name"]

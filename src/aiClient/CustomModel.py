@@ -62,6 +62,7 @@ class HybridActorCriticPolicy(ActorCriticPolicy):
         self.binary_mask_mapping = {
             MULTIPLE_SELECTED_CARDS: AVAILABLE_CARDS,
             TWO_SELECTED_CARDS_INDICES: AVAILABLE_CARDS,
+            MULTIPLE_SELECTED_RESEARCH_CARDS: AVAILABLE_CARDS,
         }
 
     def forward(self, obs, deterministic=False):
