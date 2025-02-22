@@ -14,7 +14,8 @@ RESERVE_MC = "reserve_mc"
 RESERVE_STEEL = "reserve_steel"
 RESERVE_TITANIUM = "reserve_titanium"
 AVAILABLE_SPACES = "available_spaces"
-PLAYED_CARDS_ONE_HOT = "played_cards"
+AVAILABLE_PLAYERS = "available_players"
+MULTIPLE_PLAYED_CARDS = "multiple_played_cards"
 AVAILABLE_AWARDS = "available_awards"
 AVAILABLE_MILESTONES = "available_milestones"
 AVAILABLE_STANDARD_PROJECTS = "available_standard_projects"
@@ -58,8 +59,14 @@ HOW_MANY_PLANTS_TO_CONVERT_INTO_GREENERY = "how_many_plants_to_convert_into_gree
 # Fund an award (${0} M€)
 FUND_AWARD_COST = "fund_award_cost"
 
-
+# Select space for ${0} tile
 TILE_TO_SELECT_SPACE_FOR = "tile_to_select_space_for"
+
+# Select player to decrease ${0} production by ${1} step(s)
+PRODUCTION_TO_DECREASE = "production_to_decrease"
+STEPS_TO_DECREASE_PRODUCTION = "steps_to_decrease_production"
+
+WHAT_STANDARD_PROJECT_TO_SELECT_HOW_TO_PAY_FOR = "what_standard_project_to_select_how_to_pay_for"
 
 
 
@@ -78,3 +85,14 @@ SELECTED_CARD_FROM_PLAYED_CARDS_INDEX = "selected_card_from_played_cards_index"
 SELECTED_AWARD_INDEX = "selected_award_index"
 SELECTED_MILESTONE_INDEX = "selected_milestone_index"
 SELECTED_STANDARD_PROJECT_INDEX = "selected_standard_project_index"
+
+# Select 2 card(s) to keep
+TWO_SELECTED_CARDS_INDICES = "two_selected_cards_indices"
+
+# Select amount of heat production to decrease
+MAX_AMOUNT_OF_HEAT_PRODUCTION_TO_DECREASE = "max_amount_of_heat_production_to_decrease"
+AMOUNT_OF_HEAT_PRODUCTION_TO_DECREASE = "amount_of_heat_production_to_decrease"
+
+# Select amount of energy to spend
+MAX_AMOUNT_OF_ENERGY_TO_SPEND = "max_amount_of_energy_to_spend"
+AMOUNT_OF_ENERGY_TO_SPEND = "amount_of_energy_to_spend"

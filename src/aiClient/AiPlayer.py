@@ -16,21 +16,21 @@ def create_game(http_connection):
     settings = {
         "players": [
             {
-                "name": "Yellow",
+                "name": "YellowPlayer",
                 "color": "yellow",
                 "beginner": False,
                 "handicap": 0,
                 "first": False
             },
             {
-                "name": "Red",
+                "name": "RedPlayer",
                 "color": "red",
                 "beginner": False,
                 "handicap": 0,
                 "first": False
             },
             {
-                "name": "Green",
+                "name": "GreenPlayer",
                 "color": "green",
                 "beginner": False,
                 "handicap": 0,
@@ -352,7 +352,6 @@ def turn(player, http_connection):
                 return res
             elif waiting_for["title"]["message"] == "Select how to spend ${0} M€":
                 amount_megacredits = waiting_for["title"]["data"][0]["value"]  # type 1 # immer 3??
-                # print(waiting_for["title"])
                 # exit(-1)
                 cost = waiting_for["amount"]
 
@@ -540,6 +539,7 @@ def turn(player, http_connection):
                 # looks like this only happens for helion
                 cost = waiting_for["amount"]
                 available_heat = game["thisPlayer"]["heat"]
+                print(waiting_for["paymentOptions"]["heat"])
                 pay_heat = cost
                 pay_mc = 0
                 if cost > available_heat:
@@ -1449,6 +1449,7 @@ def turn(player, http_connection):
             can_pay_with_titanium = True
 
         payment_options = which_option["paymentOptions"]
+
         can_pay_with_heat = payment_options["heat"]
 
         can_pay_with_microbes = False
@@ -2261,7 +2262,6 @@ def turn(player, http_connection):
         return res
     elif which_option["title"]["message"] == "Fund an award (${0} M€)":
         amount = which_option["title"]["data"][0]["value"]
-        print(amount)
         which_award = which_option["options"]
         random_award = random.randint(0, len(which_award) - 1)
         fund_award_data = {
@@ -2409,6 +2409,8 @@ def turn(player, http_connection):
 
 def draft(player, http_connection):
     game = get_game(player.id, http_connection)
+    print(json.dumps(game, indent=2))
+    exit(-1)
     #print("generation: " + str(game["game"]["generation"]))
     waiting_for = game["waitingFor"]
     card_selection = random.choice(waiting_for["cards"])["name"]

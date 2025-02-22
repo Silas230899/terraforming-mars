@@ -27,7 +27,7 @@ class HybridActionWrapper(gym.ActionWrapper):
         self.action_space = gym.spaces.Box(low=low, high=high, dtype=np.float32)
 
     def action(self, action):
-        """ Wandelt eine SB3-Box-Action in ein Dict mit diskreten, kontinuierlichen und MultiBinary-Aktionen um. """
+        """Wandelt eine SB3-Box-Action zurück in ein Dict mit allen diskreten, kontinuierlichen und MultiBinary-Aktionen."""
         idx = 0
         discrete_actions = {}
         for key in self.discrete_keys:
@@ -49,5 +49,31 @@ class HybridActionWrapper(gym.ActionWrapper):
             binary_actions[key] = (binary_logits > 0.5).astype(np.int32)  # Masking in Policy
             idx += num_values
 
+        # Rekonstruiertes Dict genau wie das Original
         return {**discrete_actions, **continuous_actions, **binary_actions}
+
+    # def action(self, action):
+    #     """ Wandelt eine SB3-Box-Action in ein Dict mit diskreten, kontinuierlichen und MultiBinary-Aktionen um. """
+    #     idx = 0
+    #     discrete_actions = {}
+    #     for key in self.discrete_keys:
+    #         num_values = self.env.action_space.spaces[key].n
+    #         discrete_logits = action[idx:idx + num_values]
+    #         discrete_actions[key] = np.argmax(discrete_logits)  # Masking in Policy
+    #         idx += num_values
+    #
+    #     continuous_actions = {}
+    #     for key in self.continuous_keys:
+    #         num_values = self.env.action_space.spaces[key].shape[0]
+    #         continuous_actions[key] = action[idx:idx + num_values]
+    #         idx += num_values
+    #
+    #     binary_actions = {}
+    #     for key in self.binary_keys:
+    #         num_values = self.env.action_space.spaces[key].n
+    #         binary_logits = action[idx:idx + num_values]
+    #         binary_actions[key] = (binary_logits > 0.5).astype(np.int32)  # Masking in Policy
+    #         idx += num_values
+    #
+    #     return {**discrete_actions, **continuous_actions, **binary_actions}
 

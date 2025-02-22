@@ -20,8 +20,8 @@ PLANT_CARDS_SET = {'Biosphere Support', 'Dome Farming', 'Ecology Experts', 'Expe
 
 NUMBER_CORPORATIONS = 12
 NUMBER_PLAYERS = 3
-NUMBER_OF_CARDS = 199
-NUMBER_ALL_ACTION_OPTIONS = 58
+NUMBER_OF_CARDS = 211 + 2 + 6 + 50 + 14 # 283
+NUMBER_ALL_ACTION_OPTIONS = 57
 NUMBER_ALL_ACTIONS = 38 # without action options
 NUMBER_SPACES = 68 # indices 01 to 69
 
@@ -68,11 +68,70 @@ STANDARD_PROJECTS_INDEX_NAME: Dict[int, str] = {
     4: "City"
 }
 
-PLAYERS_COLOR_ID: Dict[str, int] = {}
+PLAYERS_ID_COLOR: Dict[int, str] = {
+    0: "red",
+    1: "green",
+    2: "yellow"
+}
 
-ACTION_OPTIONS_INT_STR: Dict[int, str] = {
+ACTION_OPTIONS_INDEX_NAME: Dict[int, str] = {
     0: "Pass for this generation",
     1: "End turn",
+    2: "Convert 8 heat into temperature",
+    3: "Convert 8 plants into greenery",
+    4: "Do nothing",
+    5: "Skip removal",
+    6: "Skip removing plants",
+    7: "Increase your plant production 1 step",
+    8: "Add a science resource to this card",
+    9: "Do not remove resource",
+    10: "Increase your energy production 2 steps",
+    11: "Increase titanium production 1 step",
+    12: "Increase megacredits production 1 step",
+    13: "Increase steel production 1 step",
+    14: "Increase plants production 1 step",
+    15: "Increase heat production 1 step",
+    16: "Increase energy production 1 step",
+    17: "Do not steal",
+    18: "Remove 2 microbes to raise oxygen level 1 step"
+    19: "Add 1 microbe to this card",
+    20: "Remove 3 microbes to increase your terraform rating 1 step",
+    21: "Don't place a greenery",
+    22: "Remove a science resource from this card to draw a card",
+    23: "Spend 1 steel to gain 7 M€.",
+    24: "Remove 2 microbes to raise temperature 1 step",
+    25: "Gain 4 plants",
+    26: "Spend 1 plant to gain 7 M€.",
+    27: "Gain plant",
+    28: "Gain 1 plant",
+    29: "Gain 3 plants",
+    30: "Gain 5 plants",
+    31: "Don't remove M€ from adjacent player",
+    32: "Take first action of ${0} corporation",
+    33: "Remove ${0} plants from ${1}",
+    34: "Remove ${0} ${1} from ${2}",
+    35: "Steal ${0} M€ from ${1}",
+    36: "Steal ${0} steel from ${1}",
+    37: "Add ${0} microbes to ${1}",
+    38: "Add resource to card ${0}",
+    39: "Add ${0} animals to ${1}",
+    40: "Fund ${0} award",
+    41: "Play project card",
+    42: "Sell patents",
+    43: "Perform an action from a played card",
+    44: "Select a card to discard",
+    45: "Add 3 microbes to a card",
+    46: "Select card to add 2 microbes",
+    47: "Select card to remove 2 Animal(s)",
+    48: "Select card to add 2 animals",
+    49: "Select card to add 4 animals",
+    50: "Add 2 animals to a card",
+    51: "Select space for greenery tile",
+    52: "Convert ${0} plants into greenery",
+    53: "Select adjacent player to remove 4 M€ from",
+    54: "Fund an award (${0} M€)",
+    55: "Standard projects",
+    56: "Claim a milestone",
 }
 
 CARD_NAMES_INT_STR: Dict[int, str] = {
@@ -104,6 +163,16 @@ REMOVABLE_RESOURCES_NAMES = {
     "titanium": 2,
 }
 NUMBER_OF_REMOVABLE_RESOURCES = 3
+
+DECREASABLE_PRODUCTIONS_NAMES = {
+    "megacredits": 0,
+    "steel": 1,
+    "titanium": 2,
+    "heat": 3,
+    "plants": 4,
+    "energy": 5
+}
+NUMBER_OF_DECREASABLE_PRODUCTIONS = 6
 
 CARDS_MICROBES_CAN_BE_ADDED_TO = {
     "Psychrophiles": 0,
@@ -160,7 +229,7 @@ class CustomEnv(gym.Env):
 
         # Beobachtungsraum
         self.observation_space = spaces.Dict({
-            AVAILABLE_ACTION_OPTIONS: MultiBinary(len(ACTION_OPTIONS_INT_STR.values())),
+            AVAILABLE_ACTION_OPTIONS: MultiBinary(NUMBER_ALL_ACTION_OPTIONS),
             SELECTED_ACTION_INDEX: Discrete(NUMBER_ALL_ACTIONS),
             AVAILABLE_CARDS: MultiBinary(NUMBER_OF_CARDS),
             AVAILABLE_HEAT: Box(0, 500, (1,), np.int8),
@@ -175,7 +244,8 @@ class CustomEnv(gym.Env):
             RESERVE_STEEL: Box(0, 50, (1,), np.int8),
             RESERVE_TITANIUM: Box(0, 50, (1,), np.int8),
             AVAILABLE_SPACES: MultiBinary(NUMBER_SPACES),
-            PLAYED_CARDS_ONE_HOT: MultiBinary(NUMBER_OF_CARDS),
+            AVAILABLE_PLAYERS: MultiBinary(NUMBER_PLAYERS),
+            MULTIPLE_PLAYED_CARDS: MultiBinary(NUMBER_OF_CARDS),
             AVAILABLE_MILESTONES: MultiBinary(NUMBER_OF_MILESTONES()),
             AVAILABLE_AWARDS: MultiBinary(NUMBER_OF_AWARDS()),
             AVAILABLE_STANDARD_PROJECTS: MultiBinary(NUMBER_OF_STANDARD_PROJECTS()),
@@ -213,9 +283,21 @@ class CustomEnv(gym.Env):
             # Fund an award (${0} M€)
             FUND_AWARD_COST: Discrete(3), # 8, 14, 20
 
+            # Select space for ${0} tile
+            TILE_TO_SELECT_SPACE_FOR: Discrete(NUMBER_OF_TILES_TO_SELECT_SPACE_FOR),
 
+            # Select player to decrease ${0} production by ${1} step(s)
+            PRODUCTION_TO_DECREASE: Discrete(NUMBER_OF_DECREASABLE_PRODUCTIONS),
+            STEPS_TO_DECREASE_PRODUCTION: Box(0, 8, (1,), np.int8),
 
-            TILE_TO_SELECT_SPACE_FOR: Discrete(NUMBER_OF_TILES_TO_SELECT_SPACE_FOR)
+            # Select how to pay for the ${0} standard project
+            WHAT_STANDARD_PROJECT_TO_SELECT_HOW_TO_PAY_FOR: Discrete(NUMBER_OF_STANDARD_PROJECTS()),
+
+            # Select amount of heat production to decrease
+            MAX_AMOUNT_OF_HEAT_PRODUCTION_TO_DECREASE: Box(0, 50, (1,), np.int8),
+
+            # Select amount of energy to spend
+            MAX_AMOUNT_OF_ENERGY_TO_SPEND: Box(0, 50, (1,), np.int8),
         })
 
         self.action_space = spaces.Dict({
@@ -233,6 +315,15 @@ class CustomEnv(gym.Env):
             SELECTED_MILESTONE_INDEX: Discrete(NUMBER_OF_MILESTONES()),
             SELECTED_AWARD_INDEX: Discrete(NUMBER_OF_AWARDS()),
             SELECTED_STANDARD_PROJECT_INDEX: Discrete(NUMBER_OF_STANDARD_PROJECTS()),
+
+            # Select 2 card(s) to keep
+            TWO_SELECTED_CARDS_INDICES: MultiBinary(NUMBER_OF_CARDS),
+
+            # Select amount of heat production to decrease
+            AMOUNT_OF_HEAT_PRODUCTION_TO_DECREASE: Box(0, 50, (1,), np.int8),
+
+            # Select amount of energy to spend
+            AMOUNT_OF_ENERGY_TO_SPEND: Box(0, 50, (1,), np.int8),
         })
 
     def reset(self, seed=None, options=None):
@@ -391,7 +482,7 @@ class CustomEnv(gym.Env):
             # TODO if index = standard project, check if is available and maybe choose other
 
             # die available options müssen noch von den namen her auf die korrekten indizes gemapped werden
-            selected_option_from_all: str = ACTION_OPTIONS_INT_STR[action[SELECTED_ACTION_OPTION_INDEX]]
+            selected_option_from_all: str = ACTION_OPTIONS_INDEX_NAME[action[SELECTED_ACTION_OPTION_INDEX]]
             selected_option_index = -1
             for idx, option in enumerate(available_options):
                 if "message" in option["title"]:
@@ -459,10 +550,21 @@ class CustomEnv(gym.Env):
                     card_cost = selected_card["calculatedCost"]
                     card_name = selected_card["name"]
 
+                    reserve_units = selected_card["reserveUnits"] if "reserveUnits" in selected_card else None
+                    reserve_heat = 0
+                    reserve_mc = 0
+                    reserve_titanium = 0
+                    reserve_steel = 0
+                    if reserve_units:
+                        reserve_heat = reserve_units["heat"]
+                        reserve_mc = reserve_units["megacredits"]
+                        reserve_steel = reserve_units["steel"]
+                        reserve_titanium = reserve_units["titanium"]
+
                     payment_options = selected_option["paymentOptions"]
                     can_pay_with_heat = payment_options["heat"]
-                    can_pay_with_steel = card_name in BUILDING_CARDS_SET # building cards
-                    can_pay_with_titanium = card_name in SPACE_CARDS_SET # space cards
+                    can_pay_with_steel = card_name in BUILDING_CARDS_SET  # building cards
+                    can_pay_with_titanium = card_name in SPACE_CARDS_SET  # space cards
                     can_pay_with_microbes = False
                     if card_name in PLANT_CARDS_SET:
                         for p in current_state["players"]:
@@ -473,89 +575,17 @@ class CustomEnv(gym.Env):
                                         break
                                 break
 
-                    pay_heat_percentage = action[PAY_HEAT_PERCENTAGE]
-                    pay_mc_percentage = action[PAY_MC_PERCENTAGE]
-                    pay_steel_percentage = action[PAY_STEEL_PERCENTAGE]
-                    pay_titanium_percentage = action[PAY_TITANIUM_PERCENTAGE]
-                    pay_microbes_percentage = action[PAY_MICROBES_PERCENTAGE]
-
-                    available_heat = current_state["thisPlayer"]["heat"]
-                    available_mc = current_state["thisPlayer"]["megaCredits"]
-                    available_steel = current_state["thisPlayer"]["steel"]
-                    steel_value = current_state["thisPlayer"]["steelValue"]
-                    available_titanium = current_state["thisPlayer"]["titanium"]
-                    titanium_value = current_state["thisPlayer"]["titaniumValue"]
-                    available_microbes = current_state["waitingFor"]["microbes"]
-                    microbes_value = 2
-
-                    reserve_units = selected_card["reserveUnits"] if "reserveUnits" in selected_card else None
-                    if reserve_units is not None:
-                        available_heat -= reserve_units["heat"]
-                        available_mc -= reserve_units["mc"]
-                        available_titanium -= reserve_units["titanium"]
-                        available_steel -= reserve_units["steel"]
-
-                    pay_heat = math.floor(pay_heat_percentage * available_heat) * (1 if can_pay_with_heat else 0)
-                    pay_mc = math.floor(pay_mc_percentage * available_mc)
-                    pay_steel = math.floor(pay_steel_percentage * available_steel) * (1 if can_pay_with_steel else 0)
-                    pay_titanium = math.floor(pay_titanium_percentage * available_titanium) * (1 if can_pay_with_titanium else 0)
-                    pay_microbes = math.floor(pay_microbes_percentage * available_microbes) * (1 if can_pay_with_microbes else 0)
-
-                    payment = pay_heat + pay_mc + pay_steel * steel_value + pay_titanium * titanium_value + pay_microbes * microbes_value
-
-                    if payment != card_cost:
-                        pay_heat = 0
-                        pay_mc = 0
-                        pay_steel = 0
-                        pay_titanium = 0
-                        pay_microbes = 0
-
-                        available_payments = ["mc"]
-                        if can_pay_with_heat: available_payments.append("heat")
-                        if can_pay_with_steel: available_payments.append("steel")
-                        if can_pay_with_titanium: available_payments.append("titanium")
-                        if can_pay_with_microbes: available_payments.append("microbes")
-                        random.shuffle(available_payments)  # random order
-
-                        remaining_cost = card_cost
-                        for payment in available_payments:
-                            if remaining_cost <= 0:
-                                break
-                            elif payment == "mc":
-                                if available_mc >= remaining_cost:
-                                    pay_mc = remaining_cost
-                                    break
-                                else:
-                                    pay_mc = available_mc
-                                    remaining_cost = remaining_cost - available_mc
-                            elif payment == "heat":
-                                if available_heat >= remaining_cost:
-                                    pay_heat = remaining_cost
-                                    break
-                                else:
-                                    pay_heat = available_heat
-                                    remaining_cost = remaining_cost - available_heat
-                            elif payment == "steel":
-                                if available_steel * steel_value >= remaining_cost:
-                                    pay_steel = math.ceil(remaining_cost / steel_value)
-                                    break
-                                else:
-                                    pay_steel = available_steel
-                                    remaining_cost = remaining_cost - available_steel * steel_value
-                            elif payment == "titanium":
-                                if available_titanium * titanium_value >= remaining_cost:
-                                    pay_titanium = math.ceil(remaining_cost / titanium_value)
-                                    break
-                                else:
-                                    pay_titanium = available_titanium
-                                    remaining_cost = remaining_cost - available_titanium * titanium_value
-                            elif payment == "microbes":
-                                if available_microbes * microbes_value >= remaining_cost:
-                                    pay_microbes = math.ceil(remaining_cost / microbes_value)
-                                    break
-                                else:
-                                    pay_microbes = available_microbes
-                                    remaining_cost = remaining_cost - available_microbes * microbes_value
+                    pay_heat, pay_mc, pay_steel, pay_titanium, pay_microbes = self.calc_payment_for_project_card(action,
+                                                                                                                 current_state,
+                                                                                                                 card_cost,
+                                                                                                                 can_pay_with_heat,
+                                                                                                                 can_pay_with_steel,
+                                                                                                                 can_pay_with_titanium,
+                                                                                                                 can_pay_with_microbes,
+                                                                                                                 reserve_heat,
+                                                                                                                 reserve_mc,
+                                                                                                                 reserve_titanium,
+                                                                                                                 reserve_steel)
 
                     payload = self.create_or_resp_project_card_payment(run_id, selected_option_index, card_name, pay_heat, pay_mc, pay_steel, pay_titanium, pay_microbes)
                 case "Sell patents": # multiple cards
@@ -566,8 +596,11 @@ class CustomEnv(gym.Env):
                             selected_card_name: str = CARD_NAMES_INT_STR[idx]
                             selected_cards.append(selected_card_name)
                     payload = self.create_or_resp_card_cards(run_id, selected_option_index, selected_cards)
-                case ("Perform an action from a played card", # single card
-                      "Select a card to discard",
+                case "Perform an action from a played card":
+                    available_cards = selected_option["cards"]
+                    selected_card_from_all_name: str = CARD_NAMES_INT_STR[action[SELECTED_CARD_FROM_PLAYED_CARDS_INDEX]]
+                    payload = self.create_or_resp_card_cards(run_id, selected_option_index, [selected_card_from_all_name])
+                case ("Select a card to discard", # single card
                       "Add 3 microbes to a card",
                       "Select card to add 2 microbes",
                       "Select card to remove 2 Animal(s)",
@@ -575,13 +608,8 @@ class CustomEnv(gym.Env):
                       "Select card to add 4 animals",
                       "Add 2 animals to a card"):
                     available_cards = selected_option["cards"]
-                    selected_card_from_all_name: str = CARD_NAMES_INT_STR[action[SELECTED_CARD_FROM_PLAYED_CARDS_INDEX]]
-                    selected_card = None
-                    for card in available_cards:
-                        if card["name"] == selected_card_from_all_name:
-                            selected_card = card
-                            break
-                    payload = self.create_or_resp_card_cards(run_id, selected_option_index, [selected_card["name"]])
+                    selected_card_from_all_name: str = CARD_NAMES_INT_STR[action[SELECTED_CARD_INDEX]]
+                    payload = self.create_or_resp_card_cards(run_id, selected_option_index, [selected_card_from_all_name])
                 case ("Select space for greenery tile",
                       "Convert ${0} plants into greenery"):
                     available_spaces_ids = selected_option["spaces"]
@@ -590,9 +618,9 @@ class CustomEnv(gym.Env):
                     payload = self.create_or_resp_space_space_id(run_id, selected_option_index, selected_space_id)
                 case "Select adjacent player to remove 4 M€ from":
                     available_players_colors = selected_option["players"]
-                    selected_player_color = action[SELECTED_PLAYER]
-                    selected_player = None # TODO
-                    payload = self.create_or_resp_player_player(run_id, selected_option_index, selected_player)
+                    selected_player_index = action[SELECTED_PLAYER]
+                    selected_player_color = PLAYERS_ID_COLOR[selected_player_index]
+                    payload = self.create_or_resp_player_player(run_id, selected_option_index, selected_player_color)
                 case "Fund an award (${0} M€)":
                     available_awards = selected_option["options"]
                     selected_award_from_all_name: str = AWARDS_INT_STR[action[SELECTED_AWARD_INDEX]]
@@ -636,68 +664,132 @@ class CustomEnv(gym.Env):
                       "Select space for first ocean",
                       "Select space for second ocean",
                       "Select space for special city tile"):
-                    selected_space = 0
-                    payload = self.create_space_id_response(run_id, selected_space)
+                    available_spaces_ids = current_state["waitingFor"]["spaces"]
+                    selected_space_index_from_all = action[SELECTED_SPACE_INDEX]
+                    selected_space_id = str(selected_space_index_from_all + 1)
+                    payload = self.create_space_id_response(run_id, selected_space_id)
                 case "Select player to decrease ${0} production by ${1} step(s)":
-                    selected_player = 0
-                    payload = self.create_player_response(run_id, selected_player)
-                case ("Select card to add ${0} ${1}",
+                    selected_player_index = action[SELECTED_PLAYER]
+                    selected_player_color = PLAYERS_ID_COLOR[selected_player_index]
+                    payload = self.create_player_response(run_id, selected_player_color)
+                case ("Select card to add ${0} ${1}", # geschenkt
                       "Select builder card to copy",
                       "Select 1 card(s) to keep",
                       "Select card to remove 1 Microbe(s)",
                       "Select card to remove 1 Animal(s)",
                       "Select prelude card to play"):
                     available_cards = current_state["waitingFor"]["cards"]
-                    selected_card = None
-                    self.create_cards_response(run_id, [selected_card["name"]])
+                    selected_card_from_all_name: str = CARD_NAMES_INT_STR[action[SELECTED_CARD_INDEX]]
+                    self.create_cards_response(run_id, [selected_card_from_all_name])
                 case "Select 2 card(s) to keep":
                     available_cards = current_state["waitingFor"]["cards"]
+                    selected_cards_indices = action[TWO_SELECTED_CARDS_INDICES]
                     selected_cards_names = []
+                    for idx, binary in enumerate(selected_cards_indices):
+                        if binary == 1:
+                            selected_card_name: str = CARD_NAMES_INT_STR[idx]
+                            selected_cards_names.append(selected_card_name)
+
+                    if len(selected_cards_names) != 2:
+                        print("did not correctly select 2 cards")
+                        exit(-458764)
                     self.create_cards_response(run_id, selected_cards_names)
-                case "Select card(s) to buy":
+                case "Select card(s) to buy": # always 1 is meant
                     available_cards = current_state["waitingFor"]["cards"]
-                    selected_cards_names = []
+                    selected_card_index = action[SELECTED_CARD_INDEX]
+                    selected_card_from_all_name: str = CARD_NAMES_INT_STR[selected_card_index]
+                    selected_cards_names = [selected_card_from_all_name]
                     self.create_cards_response(run_id, selected_cards_names)
                 case "You cannot afford any cards":
                     self.create_cards_response(run_id, [])
                 case "Play project card":
-                    pay_mc = 0
-                    pay_heat = 0
-                    pay_steel = 0
-                    pay_titanium = 0
-                    pay_microbes = 0
-                    self.create_project_card_payment_response(run_id, "test", pay_heat, pay_mc, pay_steel, pay_titanium, pay_microbes)
+                    available_cards = current_state["waitingFor"]["cards"]
+                    selected_card_from_all_name: str = CARD_NAMES_INT_STR[action[SELECTED_CARD_INDEX]]
+                    selected_card = None
+                    for card in available_cards:
+                        if card["name"] == selected_card_from_all_name:
+                            selected_card = card
+                            break
+
+                    card_cost = selected_card["calculatedCost"]
+                    card_name = selected_card["name"]
+
+                    reserve_units = selected_card["reserveUnits"] if "reserveUnits" in selected_card else None
+                    reserve_heat = 0
+                    reserve_mc = 0
+                    reserve_titanium = 0
+                    reserve_steel = 0
+                    if reserve_units:
+                        reserve_heat = reserve_units["heat"]
+                        reserve_mc = reserve_units["megacredits"]
+                        reserve_steel = reserve_units["steel"]
+                        reserve_titanium = reserve_units["titanium"]
+
+                    payment_options = current_state["waitingFor"]["paymentOptions"]
+                    can_pay_with_heat = payment_options["heat"]
+                    can_pay_with_steel = card_name in BUILDING_CARDS_SET  # building cards
+                    can_pay_with_titanium = card_name in SPACE_CARDS_SET  # space cards
+                    can_pay_with_microbes = False
+                    if card_name in PLANT_CARDS_SET:
+                        for p in current_state["players"]:
+                            if p["color"] == player.color:
+                                for card in p["tableau"]:
+                                    if card["name"] == "Psychrophiles":
+                                        can_pay_with_microbes = True
+                                        break
+                                break
+
+                    pay_heat, pay_mc, pay_steel, pay_titanium, pay_microbes = self.calc_payment_for_project_card(action,
+                                                                                                                 current_state,
+                                                                                                                 card_cost,
+                                                                                                                 can_pay_with_heat,
+                                                                                                                 can_pay_with_steel,
+                                                                                                                 can_pay_with_titanium,
+                                                                                                                 can_pay_with_microbes,
+                                                                                                                 reserve_heat,
+                                                                                                                 reserve_mc,
+                                                                                                                 reserve_titanium,
+                                                                                                                 reserve_steel)
+
+                    self.create_project_card_payment_response(run_id, card_name, pay_heat, pay_mc, pay_steel, pay_titanium, pay_microbes)
                     pass
                 case ("Select how to pay for the ${0} standard project",
                       "Select how to spend ${0} M€",
                       "Select how to spend ${0} M€ for ${1} cards",
-                      "Select how to pay for ${0} action",
+                      "Select how to pay for ${0} action", # too complicated
                       "Select how to pay for award",
                       "Select how to pay for action",
                       "Select how to pay for milestone"):
-                    if message == "Select how to pay for the ${0} standard project":
-                        pass
-                    elif message == "Select how to spend ${0} M€":
-                        pass
-                    elif message == "Select how to spend ${0} M€ for ${1} cards":
-                        pass
-                    elif message == "Select how to pay for ${0} action":
-                        pass
-                    elif message == "Select how to pay for award":
-                        pass
 
+                    cost = current_state["waitingFor"]["amount"]
 
-                    cost = current_state["waitingFor"]["cost"]
-                    pay_mc = 0
-                    pay_heat = 0
-                    pay_steel = 0
-                    pay_titanium = 0
+                    payment_options = current_state["waitingFor"]["paymentOptions"]
+                    can_pay_with_heat = payment_options["heat"]
+                    can_pay_with_titanium = payment_options["titanium"]
+                    can_pay_with_steel = payment_options["steel"]
+
+                    pay_heat, pay_mc, pay_steel, pay_titanium, _ = self.calc_payment_for_project_card(action,
+                                                                                                     current_state,
+                                                                                                     cost,
+                                                                                                     can_pay_with_heat,
+                                                                                                     can_pay_with_steel,
+                                                                                                     can_pay_with_titanium,
+                                                                                                     False,
+                                                                                                     0,
+                                                                                                     0,
+                                                                                                     0,
+                                                                                                     0)
                     payload = self.create_payment_response(run_id, pay_heat, pay_mc, pay_steel, pay_titanium)
-                case ("Select amount of heat production to decrease",
-                      "Select amount of energy to spend"):
-                    amount = 0
-                    min = current_state["waitingFor"]["min"]
+                case "Select amount of heat production to decrease":
+                    selected_amount = action[AMOUNT_OF_HEAT_PRODUCTION_TO_DECREASE]
+                    #min = current_state["waitingFor"]["min"]
                     max = current_state["waitingFor"]["max"]
+                    amount = min(selected_amount, max)
+                    payload = self.create_amount_response(run_id, amount)
+                case "Select amount of energy to spend":
+                    selected_amount = action[AMOUNT_OF_ENERGY_TO_SPEND]
+                    max = current_state["waitingFor"]["max"]
+                    amount = min(selected_amount, max)
                     payload = self.create_amount_response(run_id, amount)
 
         # send_player_input(json.dumps(select_space_data), player.id, http_connection)
@@ -706,6 +798,103 @@ class CustomEnv(gym.Env):
                 "phase": "action"
             }
         }
+
+    def calc_payment_for_project_card(self,
+                                      action,
+                                      current_state,
+                                      cost,
+                                      can_pay_with_heat,
+                                      can_pay_with_steel,
+                                      can_pay_with_titanium,
+                                      can_pay_with_microbes,
+                                      reserve_heat,
+                                      reserve_mc,
+                                      reserve_titanium,
+                                      reserve_steel):
+
+        pay_heat_percentage = action[PAY_HEAT_PERCENTAGE]
+        pay_mc_percentage = action[PAY_MC_PERCENTAGE]
+        pay_steel_percentage = action[PAY_STEEL_PERCENTAGE]
+        pay_titanium_percentage = action[PAY_TITANIUM_PERCENTAGE]
+        pay_microbes_percentage = action[PAY_MICROBES_PERCENTAGE]
+
+        available_heat = current_state["thisPlayer"]["heat"]
+        available_mc = current_state["thisPlayer"]["megaCredits"]
+        available_steel = current_state["thisPlayer"]["steel"]
+        steel_value = current_state["thisPlayer"]["steelValue"]
+        available_titanium = current_state["thisPlayer"]["titanium"]
+        titanium_value = current_state["thisPlayer"]["titaniumValue"]
+        available_microbes = current_state["waitingFor"]["microbes"]
+        microbes_value = 2
+
+        available_heat -= reserve_heat
+        available_mc -= reserve_mc
+        available_titanium -= reserve_titanium
+        available_steel -= reserve_steel
+
+        pay_heat = math.floor(pay_heat_percentage * available_heat) * (1 if can_pay_with_heat else 0)
+        pay_mc = math.floor(pay_mc_percentage * available_mc)
+        pay_steel = math.floor(pay_steel_percentage * available_steel) * (1 if can_pay_with_steel else 0)
+        pay_titanium = math.floor(pay_titanium_percentage * available_titanium) * (1 if can_pay_with_titanium else 0)
+        pay_microbes = math.floor(pay_microbes_percentage * available_microbes) * (1 if can_pay_with_microbes else 0)
+
+        payment = pay_heat + pay_mc + pay_steel * steel_value + pay_titanium * titanium_value + pay_microbes * microbes_value
+
+        if payment != cost:
+            pay_heat = 0
+            pay_mc = 0
+            pay_steel = 0
+            pay_titanium = 0
+            pay_microbes = 0
+
+            available_payments = ["mc"]
+            if can_pay_with_heat: available_payments.append("heat")
+            if can_pay_with_steel: available_payments.append("steel")
+            if can_pay_with_titanium: available_payments.append("titanium")
+            if can_pay_with_microbes: available_payments.append("microbes")
+            random.shuffle(available_payments)  # random order
+
+            remaining_cost = cost
+            for payment in available_payments:
+                if remaining_cost <= 0:
+                    break
+                elif payment == "mc":
+                    if available_mc >= remaining_cost:
+                        pay_mc = remaining_cost
+                        break
+                    else:
+                        pay_mc = available_mc
+                        remaining_cost = remaining_cost - available_mc
+                elif payment == "heat":
+                    if available_heat >= remaining_cost:
+                        pay_heat = remaining_cost
+                        break
+                    else:
+                        pay_heat = available_heat
+                        remaining_cost = remaining_cost - available_heat
+                elif payment == "steel":
+                    if available_steel * steel_value >= remaining_cost:
+                        pay_steel = math.ceil(remaining_cost / steel_value)
+                        break
+                    else:
+                        pay_steel = available_steel
+                        remaining_cost = remaining_cost - available_steel * steel_value
+                elif payment == "titanium":
+                    if available_titanium * titanium_value >= remaining_cost:
+                        pay_titanium = math.ceil(remaining_cost / titanium_value)
+                        break
+                    else:
+                        pay_titanium = available_titanium
+                        remaining_cost = remaining_cost - available_titanium * titanium_value
+                elif payment == "microbes":
+                    if available_microbes * microbes_value >= remaining_cost:
+                        pay_microbes = math.ceil(remaining_cost / microbes_value)
+                        break
+                    else:
+                        pay_microbes = available_microbes
+                        remaining_cost = remaining_cost - available_microbes * microbes_value
+
+        return pay_heat, pay_mc, pay_steel, pay_titanium, pay_microbes
 
     def step(self, action):
         res = None
