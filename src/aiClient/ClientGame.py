@@ -1,6 +1,7 @@
 import json
 
-from AiPlayer import Player, initial_research_phase, research_phase, draft, turn, create_game
+from AiPlayer import initial_research_phase, research_phase, draft, turn, create_game
+from Player import Player
 
 
 class ClientGame:

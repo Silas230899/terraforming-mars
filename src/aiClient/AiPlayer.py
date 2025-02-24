@@ -1,6 +1,5 @@
 import math
 import random
-import http.client
 import json
 
 SPACE_CARDS = ",Space Hotels,Point Luna,Orbital Construction Yard,Space Elevator,Aerobraked Ammonia Asteroid,Asteroid,Asteroid Mining,Beam From A Thorium Asteroid,Big Asteroid,Callisto Penal Mines,Comet,Convoy From Europa,Deimos Down,Ganymede Colony,Giant Ice Asteroid,Giant Space Mirror,Ice Asteroid,Immigration Shuttles,Imported GHG,Imported Hydrogen,Imported Nitrogen,Import of Advanced GHG,Interstellar Colony Ship,Io Mining Industries,Lagrange Observatory,Large Convoy,Methane From Titan,Miranda Resort,Nitrogen-Rich Asteroid,Optimal Aerobraking,Phobos Space Haven,Satellites,Security Fleet,Shuttles,Solar Wind Power,Soletta,Space Mirrors,Space Station,Technology Demonstration,Terraforming Ganymede,Toll Station,Towing A Comet,Trans-Neptune Probe,Vesta Shipyard,Water Import From Europa,"
@@ -102,21 +101,16 @@ def send_player_input(json_body, player_id, http_connection):
     return json.loads(response.read().decode())
 
 
-class Player:
-    game_age = 0
-    undo_count = 0
-    run_id = ""
-
-    def __init__(self, color, id, name):
-        self.color = color
-        self.id = id
-        self.name = name
-
 # research phase
 def initial_research_phase(player, http_connection):
     game = get_game(player.id, http_connection)
     player.run_id = game["runId"]
     # print("run id: " + player.run_id + " player id: " + player.id)
+    #print(json.dumps(game, indent=4))
+    #exit(48574985)
+
+    res = turn(player, http_connection)
+    return res
 
     corporation_selection = random.randint(0, 1)
     available_corporations = game["dealtCorporationCards"]
@@ -1403,6 +1397,68 @@ def turn(player, http_connection):
             exit(-1)
     #else:
         #options is in waiting for
+
+    if waiting_for["title"] == "Initial Research Phase":
+        corporation_selection = random.randint(0, 1)
+        available_corporations = game["dealtCorporationCards"]
+        corporation_name = available_corporations[corporation_selection]["name"]
+
+        startingMegaCredits = {
+            "CrediCor": 57,
+            "EcoLine": 36,
+            "Helion": 42,
+            "Interplanetary Cinematics": 30,
+            "Inventrix": 45,
+            "Mining Guild": 30,
+            "PhoboLog": 23,
+            "Tharsis Republic": 40,
+            "Thorgate": 48,
+            "United Nations Mars Initiative": 40,
+            "Saturn Systems": 42,
+            "Teractor": 60,
+            "Cheung Shing MARS": 44,
+            "Point Luna": 38,
+            "Robinson Industries": 47,
+            "Valley Trust": 37,
+            "Vitor": 45,
+        }
+        available_cash = startingMegaCredits[corporation_name]
+
+        while True:
+            cardssss = game["waitingFor"]["options"][2]["cards"]
+            card_selection = random.sample(cardssss, random.randint(0, 10))
+            card_cost = sum(map(lambda card: card["calculatedCost"], card_selection))
+            if card_cost <= available_cash:
+                break
+            # print("too expensive, draw again")
+
+        project_card_names_selection = list(
+            map(
+                lambda card: card["name"], card_selection))
+
+        available_prelude_cards = game["waitingFor"]["options"][1]["cards"]
+        selected_prelude_cards = random.sample(available_prelude_cards, 2)
+        prelude_cards_names_selection = list(map(lambda card: card["name"], selected_prelude_cards))
+
+        buy_initial_cards = {
+            "runId": player.run_id,
+            "type": "initialCards",
+            "responses": [
+                {
+                    "type": "card",
+                    "cards": [corporation_name]
+                }, {
+                    "type": "card",
+                    "cards": prelude_cards_names_selection
+                }, {
+                    "type": "card",
+                    "cards": project_card_names_selection
+                }]
+        }
+
+        buy_initial_cards_json = json.dumps(buy_initial_cards)
+        res = send_player_input(buy_initial_cards_json, player.id, http_connection)
+        return res
 
     standard_projects_count = 5
     which_standard_project = random.randint(0, standard_projects_count-1)

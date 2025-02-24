@@ -14,7 +14,7 @@ export class SelectInitialCards extends OptionsInput<undefined> {
     super('initialCards', '', []);
     const game = player.game;
     let corporation: ICorporationCard;
-    this.title = ' ';
+    this.title = 'Initial Research Phase';
     this.buttonLabel = 'Start';
 
     this.options.push(
