@@ -94,7 +94,7 @@ ACTION_OPTIONS_INDEX_NAME: Dict[int, str] = {
     15: "Increase heat production 1 step",
     16: "Increase energy production 1 step",
     17: "Do not steal",
-    18: "Remove 2 microbes to raise oxygen level 1 step"
+    18: "Remove 2 microbes to raise oxygen level 1 step",
     19: "Add 1 microbe to this card",
     20: "Remove 3 microbes to increase your terraform rating 1 step",
     21: "Don't place a greenery",
@@ -420,10 +420,7 @@ class CustomEnv(gym.Env):
             "starWarsExpansion": False,
             "underworldExpansion": False
         }
-        json_body = json.dumps(settings)
-        self.http_connection.request("PUT", "/game", body=json_body)
-        response = self.http_connection.getresponse()
-        result = json.loads(response.read().decode())
+        result = self.create_game(json.dumps(settings))
 
         self.player1 = Player(result["players"][0]["color"],
                               result["players"][0]["id"],
@@ -444,7 +441,21 @@ class CustomEnv(gym.Env):
             "available_initial_project_cards": self.available_initial_project_cards.sample(),
         }, {}
 
+    def create_game(self, payload):
+        self.http_connection.request("PUT", "/game", body=payload)
+        response = self.http_connection.getresponse()
+        result = json.loads(response.read().decode())
+        return result
+
+    def send_player_input(self, player_id, payload):
+        self.http_connection.request("POST", "/player/input?id=" + player_id, body=payload)
+        response = self.http_connection.getresponse()
+        result = json.loads(response.read().decode())
+        return result
+
     def normal_turn(self, action):
+
+        # this action is to be used on self.player_on_turn
 
         # get_game(player.id, http_connection)
         current_state = {
@@ -483,7 +494,8 @@ class CustomEnv(gym.Env):
 
         payload = None
 
-        run_id = 894568394
+        run_id = self.player_on_turn.run_id
+
 
         if "options" in current_state["waitingFor"]:
             available_options = current_state["waitingFor"]["options"]
@@ -577,7 +589,7 @@ class CustomEnv(gym.Env):
                     can_pay_with_microbes = False
                     if card_name in PLANT_CARDS_SET:
                         for p in current_state["players"]:
-                            if p["color"] == player.color:
+                            if p["color"] == self.player_on_turn.color:
                                 for card in p["tableau"]:
                                     if card["name"] == "Psychrophiles":
                                         can_pay_with_microbes = True
@@ -756,7 +768,7 @@ class CustomEnv(gym.Env):
                     can_pay_with_microbes = False
                     if card_name in PLANT_CARDS_SET:
                         for p in current_state["players"]:
-                            if p["color"] == player.color:
+                            if p["color"] == self.player_on_turn.color:
                                 for card in p["tableau"]:
                                     if card["name"] == "Psychrophiles":
                                         can_pay_with_microbes = True
@@ -815,6 +827,9 @@ class CustomEnv(gym.Env):
                     max = current_state["waitingFor"]["max"]
                     amount = min(selected_amount, max)
                     payload = self.create_amount_response(run_id, amount)
+
+        res = self.send_player_input(self.player_on_turn.id, payload)
+        # from this res create new observation
 
         # send_player_input(json.dumps(select_space_data), player.id, http_connection)
         return {
