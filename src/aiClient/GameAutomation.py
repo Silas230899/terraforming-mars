@@ -1,4 +1,5 @@
-from AiPlayer import create_game, Player, initial_research_phase, turn, draft, research_phase
+from AiPlayer import create_game, initial_research_phase, turn, draft, research_phase
+from Player import Player
 from ClientGame import ClientGame
 import http.client
 from multiprocessing import Process

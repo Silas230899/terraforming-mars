@@ -102,3 +102,4 @@ AMOUNT_OF_ENERGY_TO_SPEND = "amount_of_energy_to_spend"
 
 # "Select card(s) to buy" (for research phase)
 MULTIPLE_SELECTED_RESEARCH_CARDS = "multiple_selected_research_cards"
+DONT_BUY_CARD = "dont_buy_card"

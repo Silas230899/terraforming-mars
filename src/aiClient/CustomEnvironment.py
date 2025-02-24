@@ -10,6 +10,7 @@ import random
 
 from gymnasium.spaces import Box, Discrete, MultiBinary
 
+from Player import Player
 from action_observation_names import *
 
 BUILDING_CARDS_SET = {'Smelting Plant', 'SF Memorial', 'Self-Sufficient Settlement', 'Polar Industries', 'Mohole Excavation', 'Mohole', 'Mining Operations', 'Martian Industries', 'Lava Tube Settlement', 'House Printing', 'Early Settlement', 'Dome Farming', 'Cheung Shing MARS', 'AI Central', 'Aquifer Pumping', 'Artificial Lake', 'Biomass Combustors', 'Building Industries', 'Capital', 'Carbonate Processing', 'Colonizer Training Camp', 'Commercial District', 'Corporate Stronghold', 'Cupola City', 'Deep Well Heating', 'Development Center', 'Domed Crater', 'Electro Catapult', 'Eos Chasma National Park', 'Equatorial Magnetizer', 'Food Factory', 'Fueled Generators', 'Fuel Factory', 'Fusion Power', 'Geothermal Power', 'GHG Factories', 'Great Dam', 'Greenhouses', 'Heat Trappers', 'Immigrant City', 'Industrial Center', 'Industrial Microbes', 'Ironworks', 'Magnetic Field Dome', 'Magnetic Field Generators', 'Mars University', 'Martian Rails', 'Medical Lab', 'Mine', 'Mining Area', 'Mining Rights', 'Mining Rights', 'Mining Rights', 'Mohole Area', 'Natural Preserve', 'Noctis City', 'Noctis Farming', 'Nuclear Power', 'Olympus Conference', 'Open City', 'Ore Processor', 'Peroxide Power', 'Physics Complex', 'Power Infrastructure', 'Power Plant', 'Protected Valley', 'Rad-Chem Factory', 'Research Outpost', 'Rover Construction', 'Soil Factory', 'Solar Power', 'Space Elevator', 'Steelworks', 'Strip Mine', 'Tectonic Stress Power', 'Titanium Mine', 'Tropical Resort', 'Underground City', 'Underground Detonations', 'Urbanized Area', 'Water Splitting Plant', 'Windmills'}
@@ -201,6 +202,8 @@ class CustomEnv(gym.Env):
     player2 = None
     player3 = None
 
+    player_on_turn = None
+
     current_turn = None
     last_observation = None
 
@@ -330,10 +333,15 @@ class CustomEnv(gym.Env):
 
             # Select card(s) to buy
             MULTIPLE_SELECTED_RESEARCH_CARDS: MultiBinary(NUMBER_OF_CARDS),
+            DONT_BUY_CARD: Discrete(2), # zero means no, one means yes
         })
 
     def reset(self, seed=None, options=None):
         super().reset(seed=seed)
+
+        self.player1 = None
+        self.player2 = None
+        self.player3 = None
 
         #self.http_connection = http.client.HTTPConnection("localhost", 8080)
 
@@ -413,19 +421,21 @@ class CustomEnv(gym.Env):
             "underworldExpansion": False
         }
         json_body = json.dumps(settings)
-        #self.http_connection.request("PUT", "/game", body=json_body)
-        #response = self.http_connection.getresponse()
-        #result = json.loads(response.read().decode())
+        self.http_connection.request("PUT", "/game", body=json_body)
+        response = self.http_connection.getresponse()
+        result = json.loads(response.read().decode())
 
-        # self.player1 = Player(result["players"][0]["color"],
-        #                       result["players"][0]["id"],
-        #                       result["players"][0]["name"])
-        # self.player2 = Player(result["players"][1]["color"],
-        #                       result["players"][1]["id"],
-        #                       result["players"][1]["name"])
-        # self.player3 = Player(result["players"][2]["color"],
-        #                       result["players"][2]["id"],
-        #                       result["players"][2]["name"])
+        self.player1 = Player(result["players"][0]["color"],
+                              result["players"][0]["id"],
+                              result["players"][0]["name"])
+        self.player2 = Player(result["players"][1]["color"],
+                              result["players"][1]["id"],
+                              result["players"][1]["name"])
+        self.player3 = Player(result["players"][2]["color"],
+                              result["players"][2]["id"],
+                              result["players"][2]["name"])
+
+        self.player_on_turn = self.player1
 
         return {
             AVAILABLE_ACTION_OPTIONS: None,
@@ -685,13 +695,17 @@ class CustomEnv(gym.Env):
                     available_cards = current_state["waitingFor"]["cards"]
                     max_amount_of_cards = current_state["waitingFor"]["max"]
                     if max_amount_of_cards == 1:
-                        selected_card_index = action[SELECTED_CARD_INDEX]
-                        selected_card_from_all_name: str = CARD_NAMES_INT_STR[selected_card_index]
-                        selected_cards_names = [selected_card_from_all_name]
+                        selected_cards_names = []
+                        if action[DONT_BUY_CARD] == 1:
+                            selected_card_index = action[SELECTED_CARD_INDEX]
+                            selected_card_from_all_name: str = CARD_NAMES_INT_STR[selected_card_index]
+                            selected_cards_names = [selected_card_from_all_name]
+                        elif action[DONT_BUY_CARD] == 0:
+                            pass
                         payload = self.create_cards_response(run_id, selected_cards_names)
                     elif max_amount_of_cards == 4:
                         selected_cards_names = []
-                        selected_card_indices = action[MULTIPLE_SELECTED_CARDS]
+                        selected_card_indices = action[MULTIPLE_SELECTED_RESEARCH_CARDS]
                         for idx, binary in enumerate(selected_card_indices):
                             if binary == 1:
                                 selected_card_name: str = CARD_NAMES_INT_STR[idx]
