@@ -71,6 +71,9 @@ WHAT_STANDARD_PROJECT_TO_SELECT_HOW_TO_PAY_FOR = "what_standard_project_to_selec
 # Select a card to keep and pass the rest to ${0}
 PASS_REMAINING_DRAFT_CARDS_TO_WHOM = "pass_remaining_draft_cards_to_whom"
 
+# Initial Research Phase
+AVAILABLE_CORPORATIONS = "available_corporations"
+
 
 
 # action names:
@@ -103,3 +106,6 @@ AMOUNT_OF_ENERGY_TO_SPEND = "amount_of_energy_to_spend"
 # "Select card(s) to buy" (for research phase)
 MULTIPLE_SELECTED_RESEARCH_CARDS = "multiple_selected_research_cards"
 DONT_BUY_CARD = "dont_buy_card"
+
+# Initial Research Phase
+SELECTED_CORPORATION = "selected_corporation"

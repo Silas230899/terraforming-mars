@@ -27,8 +27,11 @@ class ClientGame:
                               new_game["players"][2]["name"])
 
     def start(self):
-        initial_research_phase(self.player1, self.http_connection)
+        res = initial_research_phase(self.player1, self.http_connection)
+
         initial_research_phase(self.player2, self.http_connection)
+        #print(json.dumps(res, indent=2))
+        exit(-1)
         res = initial_research_phase(self.player3, self.http_connection)
 
         while True:

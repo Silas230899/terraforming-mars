@@ -57,6 +57,7 @@ class HybridActorCriticPolicy(ActorCriticPolicy):
             SELECTED_PLAYER: AVAILABLE_PLAYERS,
             SELECTED_CARD_FROM_PLAYED_CARDS_INDEX: MULTIPLE_PLAYED_CARDS,
             SELECTED_STANDARD_PROJECT_INDEX: AVAILABLE_STANDARD_PROJECTS,
+            SELECTED_CORPORATION: AVAILABLE_CORPORATIONS,
         }
 
         self.binary_mask_mapping = {

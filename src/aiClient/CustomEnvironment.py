@@ -9,7 +9,9 @@ import json
 import random
 
 from gymnasium.spaces import Box, Discrete, MultiBinary
+from numpy import argmax
 
+import ppo
 from Player import Player
 from action_observation_names import *
 
@@ -194,6 +196,46 @@ CARDS_RESOURCES_CAN_BE_ADDED_TO = {
     "Decomposers": 5,
 } # unused
 
+ALL_CORPORATIONS_INDEX_NAME = {
+    0: "CrediCor",
+    1: "EcoLine",
+    2: "Helion",
+    3: "Interplanetary Cinematics",
+    4: "Inventrix",
+    5: "Mining Guild",
+    6: "PhoboLog",
+    7: "Tharsis Republic",
+    8: "Thorgate",
+    9: "United Nations Mars Initiative",
+    10: "Saturn Systems",
+    11: "Teractor",
+    12: "Cheung Shing MARS",
+    13: "Point Luna",
+    14: "Robinson Industries",
+    15: "Valley Trust",
+    16: "Vitor",
+}
+CORPORATIONS_STARTING_MC = {
+    "CrediCor": 57,
+    "EcoLine": 36,
+    "Helion": 42,
+    "Interplanetary Cinematics": 30,
+    "Inventrix": 45,
+    "Mining Guild": 30,
+    "PhoboLog": 23,
+    "Tharsis Republic": 40,
+    "Thorgate": 48,
+    "United Nations Mars Initiative": 40,
+    "Saturn Systems": 42,
+    "Teractor": 60,
+    "Cheung Shing MARS": 44,
+    "Point Luna": 38,
+    "Robinson Industries": 47,
+    "Valley Trust": 37,
+    "Vitor": 45,
+}
+NUMBER_OF_CORPORATIONS = 17
+
 
 class CustomEnv(gym.Env):
     http_connection = None
@@ -202,10 +244,14 @@ class CustomEnv(gym.Env):
     player2 = None
     player3 = None
 
-    player_on_turn = None
+    current_player = None
 
     current_turn = None
     last_observation = None
+
+    run_id = -1
+
+    policy_model: ppo.PPO
 
     def __init__(self):
         super(CustomEnv, self).__init__()
@@ -303,7 +349,10 @@ class CustomEnv(gym.Env):
             MAX_AMOUNT_OF_ENERGY_TO_SPEND: Box(0, 50, (1,), np.int8),
 
             # Select a card to keep and pass the rest to ${0}
-            PASS_REMAINING_DRAFT_CARDS_TO_WHOM: Discrete(NUMBER_PLAYERS)
+            PASS_REMAINING_DRAFT_CARDS_TO_WHOM: Discrete(NUMBER_PLAYERS),
+
+            # Initial Research Phase
+            AVAILABLE_CORPORATIONS: Discrete(NUMBER_OF_CORPORATIONS),
         })
 
         self.action_space = spaces.Dict({
@@ -334,6 +383,9 @@ class CustomEnv(gym.Env):
             # Select card(s) to buy
             MULTIPLE_SELECTED_RESEARCH_CARDS: MultiBinary(NUMBER_OF_CARDS),
             DONT_BUY_CARD: Discrete(2), # zero means no, one means yes
+
+            # Initial Research Phase
+            SELECTED_CORPORATION: Discrete(NUMBER_OF_CORPORATIONS),
         })
 
     def reset(self, seed=None, options=None):
@@ -432,14 +484,136 @@ class CustomEnv(gym.Env):
                               result["players"][2]["id"],
                               result["players"][2]["name"])
 
-        self.player_on_turn = self.player1
+        res_player1 = self.get_game(self.player1)
+        observation_player1 = self.create_observation_from_res(res_player1)
+        res_player2 = self.get_game(self.player2)
+        observation_player2 = self.create_observation_from_res(res_player2)
+        res_player3 = self.get_game(self.player3)
+        observation_player3 = self.create_observation_from_res(res_player3)
 
-        return {
-            AVAILABLE_ACTION_OPTIONS: None,
-            SELECTED_ACTION_INDEX: None,
+        self.run_id = res_player1["runId"]  # all players have the same run_id
+
+        self.current_player = self.get_current_player(res_player1["players"]) # the three res are not equal but show the same current player
+
+        # TODO current_player ist eig nicht richtig. es geht um die view, welcher spieler über das gesamte spiel betrachtet wird. das darf
+        # TODO sich nicht pro zug/runde ändern
+
+        match self.current_player:
+            case self.player1:
+                # calc player 2 and 3 now
+                action_player2, _ = self.policy_model.predict(observation_player2, deterministic=False)
+                _ = self.normal_turn(action_player2)
+                action_player3, _ = self.policy_model.predict(observation_player3, deterministic=False)
+                _ = self.normal_turn(action_player3)
+                return observation_player1, {}
+            case self.player2:
+                # calc player 1 and 3 now
+                action_player1, _ = self.policy_model.predict(observation_player1, deterministic=False)
+                _ = self.normal_turn(action_player1)
+                action_player3, _ = self.policy_model.predict(observation_player3, deterministic=False)
+                _ = self.normal_turn(action_player3)
+                return observation_player2, {}
+            case self.player3:
+                action_player1, _ = self.policy_model.predict(observation_player1, deterministic=False)
+                _ = self.normal_turn(action_player1)
+                action_player2, _ = self.policy_model.predict(observation_player2, deterministic=False)
+                _ = self.normal_turn(action_player2)
+                return observation_player3, {}
+
+        # return {
+        #     AVAILABLE_ACTION_OPTIONS: None,
+        #     SELECTED_ACTION_INDEX: None,
+        #     "available_corporations": self.available_corporations.sample(),
+        #     "available_initial_project_cards": self.available_initial_project_cards.sample(),
+        # }, {}
+
+    def get_current_player(self, players):
+        for player in players:
+            if player["isActive"]:
+                match player["color"]:
+                    case self.player1.color:
+                        return self.player1
+                    case self.player2.color:
+                        return self.player2
+                    case self.player3.color:
+                        return self.player3
+
+    def create_observation_from_res(self, res):
+        pass
+
+    def get_res_of_current_player(self, res_player1, res_player2, res_player3):
+        match self.current_player:
+            case self.player1:
+                return res_player1
+            case self.player2:
+                return res_player2
+            case self.player3:
+                return res_player3
+
+    def step(self, action):
+        res = None
+
+        res = self.normal_turn(action)
+
+        # create new observation
+
+
+        if current_phase == "initial_research":
+            action2, _ = self.policy_model.predict(self.last_observation, deterministic=False)
+
+
+            if self.current_player == self.player1:
+                res1 = self.normal_turn(action)
+                self.current_player = self.player2
+            elif self.current_player == self.player2:
+                res2 = self.normal_turn(action)
+                self.current_player = self.player3
+            elif self.current_player == self.player3:
+                res3 = self.normal_turn(action)
+                self.current_player = self.player1
+        elif current_phase == "action":
+            action6, _ = self.policy_model.predict(self.last_observation, deterministic=False)
+            pass
+        elif current_phase == "draft":
+            pass
+
+
+
+
+
+
+
+
+
+        match (self.last_observation["current_phase"]):
+            case PhasesEnum.DRAFTING.value:
+                pass
+            case PhasesEnum.ACTION.value, PhasesEnum.PRODUCTION.value, PhasesEnum.PRELUDES.value:
+                res = self.normal_turn(action)
+
+        # TODO herausfinden welcher player gerade dran ist, am besten als parameter
+        # Beispiel-Logik für Belohnung und Fertigkeitsstatus
+        reward = np.random.random()
+        done = reward > 0.95
+
+        next_phase = PhasesEnum.INITIAL_RESEARCH
+        match (res["game"]["phase"]):
+            case "research":
+                next_phase = PhasesEnum.RESEARCH
+            case "drafting":
+                next_phase = PhasesEnum.DRAFTING
+
+        current_phase_ordinal = next_phase.value
+        observation = {
+            "current_phase": current_phase_ordinal,
+            "dealt_project_cards": self.dealt_project_cards.sample(),
             "available_corporations": self.available_corporations.sample(),
             "available_initial_project_cards": self.available_initial_project_cards.sample(),
-        }, {}
+        }
+
+        self.current_player = self.player1 # je nach observation festlegen
+
+        return observation, reward, done, False, {}
 
     def create_game(self, payload):
         self.http_connection.request("PUT", "/game", body=payload)
@@ -452,6 +626,11 @@ class CustomEnv(gym.Env):
         response = self.http_connection.getresponse()
         result = json.loads(response.read().decode())
         return result
+
+    def get_game(self, player_id):
+        self.http_connection.request("GET", "/api/player?id=" + player_id)
+        response = self.http_connection.getresponse()
+        return json.loads(response.read().decode())
 
     def normal_turn(self, action):
 
@@ -494,176 +673,212 @@ class CustomEnv(gym.Env):
 
         payload = None
 
-        run_id = self.player_on_turn.run_id
+        run_id = self.current_player.run_id
 
 
         if "options" in current_state["waitingFor"]:
-            available_options = current_state["waitingFor"]["options"]
+            # this has to be handled seperately bc the options are not really options but all mandatory
+            if current_state["waitingFor"]["title"] == "Initial Research Phase":
+                selected_corporation_name = ALL_CORPORATIONS_INDEX_NAME[action[SELECTED_CORPORATION]]
+                available_cash_for_project_cards = CORPORATIONS_STARTING_MC[selected_corporation_name]
 
-            # TODO if index = standard project, check if is available and maybe choose other
-
-            # die available options müssen noch von den namen her auf die korrekten indizes gemapped werden
-            selected_option_from_all: str = ACTION_OPTIONS_INDEX_NAME[action[SELECTED_ACTION_OPTION_INDEX]]
-            selected_option_index = -1
-            for idx, option in enumerate(available_options):
-                if "message" in option["title"]:
-                    name = option["title"]["message"]
-                else:
-                    name = option["title"]
-                if name == selected_option_from_all:
-                    selected_option_index = idx
-                    break
-            selected_option = available_options[selected_option_index]
-
-            action_name = selected_option["title"]["message"] if "message" in selected_option["title"] else selected_option["title"]
-            match action_name:
-                case ("Pass for this generation",
-                      "End Turn",
-                      "Convert 8 heat into temperature",
-                      "Convert 8 plants into greenery",
-                      "Do nothing",
-                      "Skip removal",
-                      "Skip removing plants",
-                      "Increase your plant production 1 step",
-                      "Add a science resource to this card",
-                      "Do not remove resource",
-                      "Increase your energy production 2 steps",
-                      "Increase titanium production 1 step",
-                      "Increase megacredits production 1 step",
-                      "Increase steel production 1 step",
-                      "Increase plants production 1 step",
-                      "Increase heat production 1 step",
-                      "Increase energy production 1 step",
-                      "Do not steal",
-                      "Remove 2 microbes to raise oxygen level 1 step"
-                      "Add 1 microbe to this card",
-                      "Remove 3 microbes to increase your terraform rating 1 step",
-                      "Don't place a greenery",
-                      "Remove a science resource from this card to draw a card",
-                      "Spend 1 steel to gain 7 M€.",
-                      "Remove 2 microbes to raise temperature 1 step",
-                      "Gain 4 plants",
-                      "Spend 1 plant to gain 7 M€.",
-                      "Gain plant",
-                      "Gain 1 plant",
-                      "Gain 3 plants",
-                      "Gain 5 plants",
-                      "Don't remove M€ from adjacent player",
-                      "Take first action of ${0} corporation", #c = which_option["title"]["data"][0]["value"]
-                      "Remove ${0} plants from ${1}",
-                      "Remove ${0} ${1} from ${2}",
-                      "Steal ${0} M€ from ${1}",
-                      "Steal ${0} steel from ${1}",
-                      "Add ${0} microbes to ${1}",
-                      "Add resource to card ${0}",
-                      "Add ${0} animals to ${1}",
-                      "Fund ${0} award"):
-                    payload = self.create_or_resp_option(run_id, selected_option_index)
-                case "Play project card":
-                    available_cards = selected_option["cards"]
-                    selected_card_from_all_name: str = CARD_NAMES_INT_STR[action[SELECTED_CARD_INDEX]]
-                    selected_card = None
-                    for card in available_cards:
-                        if card["name"] == selected_card_from_all_name:
-                            selected_card = card
-                            break
-
-                    card_cost = selected_card["calculatedCost"]
-                    card_name = selected_card["name"]
-
-                    reserve_units = selected_card["reserveUnits"] if "reserveUnits" in selected_card else None
-                    reserve_heat = 0
-                    reserve_mc = 0
-                    reserve_titanium = 0
-                    reserve_steel = 0
-                    if reserve_units:
-                        reserve_heat = reserve_units["heat"]
-                        reserve_mc = reserve_units["megacredits"]
-                        reserve_steel = reserve_units["steel"]
-                        reserve_titanium = reserve_units["titanium"]
-
-                    payment_options = selected_option["paymentOptions"]
-                    can_pay_with_heat = payment_options["heat"]
-                    can_pay_with_steel = card_name in BUILDING_CARDS_SET  # building cards
-                    can_pay_with_titanium = card_name in SPACE_CARDS_SET  # space cards
-                    can_pay_with_microbes = False
-                    if card_name in PLANT_CARDS_SET:
-                        for p in current_state["players"]:
-                            if p["color"] == self.player_on_turn.color:
-                                for card in p["tableau"]:
-                                    if card["name"] == "Psychrophiles":
-                                        can_pay_with_microbes = True
-                                        break
+                available_cards = current_state["waitingFor"]["options"][2]["cards"]
+                selected_cards_indices = action[MULTIPLE_SELECTED_CARDS]
+                selected_project_cards = []
+                for card_index, selected_binary in enumerate(selected_cards_indices):
+                    if selected_binary == 1:
+                        selected_card_name: str = CARD_NAMES_INT_STR[card_index]
+                        for card in available_cards:
+                            if card["name"] == selected_card_name:
+                                selected_project_cards.append(card)
                                 break
 
-                    pay_heat, pay_mc, pay_steel, pay_titanium, pay_microbes = self.calc_payment_for_project_card(action,
-                                                                                                                 current_state,
-                                                                                                                 card_cost,
-                                                                                                                 can_pay_with_heat,
-                                                                                                                 can_pay_with_steel,
-                                                                                                                 can_pay_with_titanium,
-                                                                                                                 can_pay_with_microbes,
-                                                                                                                 reserve_heat,
-                                                                                                                 reserve_mc,
-                                                                                                                 reserve_titanium,
-                                                                                                                 reserve_steel)
 
-                    payload = self.create_or_resp_project_card_payment(run_id, selected_option_index, card_name, pay_heat, pay_mc, pay_steel, pay_titanium, pay_microbes)
-                case "Sell patents": # multiple cards
-                    selected_cards = []
-                    selected_card_indices = action[MULTIPLE_SELECTED_CARDS]
-                    for idx, binary in enumerate(selected_card_indices):
-                        if binary == 1:
-                            selected_card_name: str = CARD_NAMES_INT_STR[idx]
-                            selected_cards.append(selected_card_name)
-                    payload = self.create_or_resp_card_cards(run_id, selected_option_index, selected_cards)
-                case "Perform an action from a played card":
-                    available_cards = selected_option["cards"]
-                    selected_card_from_all_name: str = CARD_NAMES_INT_STR[action[SELECTED_CARD_FROM_PLAYED_CARDS_INDEX]]
-                    payload = self.create_or_resp_card_cards(run_id, selected_option_index, [selected_card_from_all_name])
-                case ("Select a card to discard", # single card
-                      "Add 3 microbes to a card",
-                      "Select card to add 2 microbes",
-                      "Select card to remove 2 Animal(s)",
-                      "Select card to add 2 animals",
-                      "Select card to add 4 animals",
-                      "Add 2 animals to a card"):
-                    available_cards = selected_option["cards"]
-                    selected_card_from_all_name: str = CARD_NAMES_INT_STR[action[SELECTED_CARD_INDEX]]
-                    payload = self.create_or_resp_card_cards(run_id, selected_option_index, [selected_card_from_all_name])
-                case ("Select space for greenery tile",
-                      "Convert ${0} plants into greenery"):
-                    available_spaces_ids = selected_option["spaces"]
-                    selected_space_index = action[SELECTED_SPACE_INDEX]
-                    selected_space_id = str(selected_space_index + 1) # TODO maybe "1" is not treated the same as "01"
-                    payload = self.create_or_resp_space_space_id(run_id, selected_option_index, selected_space_id)
-                case "Select adjacent player to remove 4 M€ from":
-                    available_players_colors = selected_option["players"]
-                    selected_player_index = action[SELECTED_PLAYER]
-                    selected_player_color = PLAYERS_ID_COLOR[selected_player_index]
-                    payload = self.create_or_resp_player_player(run_id, selected_option_index, selected_player_color)
-                case "Fund an award (${0} M€)":
-                    available_awards = selected_option["options"]
-                    selected_award_from_all_name: str = AWARDS_INT_STR[action[SELECTED_AWARD_INDEX]]
-                    selected_award_index = -1
-                    for idx, award in enumerate(available_awards):
-                        if award["name"] == selected_award_from_all_name:
-                            selected_award_index = idx
-                            break
-                    payload = self.create_or_resp_or_resp_option(run_id, selected_option_index, selected_award_index)
-                case "Standard projects":
-                    # wenn das SP nicht verfügbar ist, darf es gar nicht erst als option im beobachtungsraum sein
-                    selected_standard_project_name = STANDARD_PROJECTS_INDEX_NAME[action[SELECTED_STANDARD_PROJECT_INDEX]]
-                    self.create_or_resp_card_cards(run_id, selected_option_index, [selected_standard_project_name])
-                case "Claim a milestone":
-                    available_milestones = selected_option["options"]
-                    selected_milestone_from_all_name: str = MILESTONES_INT_STR[action[SELECTED_MILESTONE_INDEX]]
-                    selected_milestone_index = -1
-                    for idx, milestone in enumerate(available_milestones):
-                        if milestone["name"] == selected_milestone_from_all_name:
-                            selected_milestone_index = idx
-                            break
-                    self.create_or_resp_or_resp_option(run_id, selected_option_index, selected_milestone_index)
+                while True:
+                    cost_of_card_selection = sum(map(lambda card: card["calculatedCost"], selected_project_cards))
+                    if cost_of_card_selection > available_cash_for_project_cards:
+                        most_expensive_card_index = argmax(map(lambda card: card["calculatedCost"], selected_project_cards))
+                        selected_project_cards.pop(most_expensive_card_index)
+                    else:
+                        break
+
+                selected_project_card_names = list(map(lambda card: card["name"], selected_project_cards))
+
+                selected_prelude_cards_indices = action[TWO_SELECTED_CARDS_INDICES]
+                selected_prelude_cards_names = []
+                for card_index, selected_binary in enumerate(selected_prelude_cards_indices):
+                    if selected_binary == 1:
+                        selected_card_name: str = CARD_NAMES_INT_STR[card_index]
+                        selected_prelude_cards_names.append(selected_card_name)
+
+                payload = self.create_initial_cards_card_card_card_response(run_id, selected_corporation_name, selected_prelude_cards_names, selected_project_card_names)
+            else: # wenn optionen ganz normal tatsächlich optionen sind
+                available_options = current_state["waitingFor"]["options"]
+
+                # TODO if index = standard project, check if is available and maybe choose other
+
+                # die available options müssen noch von den namen her auf die korrekten indizes gemapped werden
+                selected_option_from_all: str = ACTION_OPTIONS_INDEX_NAME[action[SELECTED_ACTION_OPTION_INDEX]]
+                selected_option_index = -1
+                for idx, option in enumerate(available_options):
+                    if "message" in option["title"]:
+                        name = option["title"]["message"]
+                    else:
+                        name = option["title"]
+                    if name == selected_option_from_all:
+                        selected_option_index = idx
+                        break
+                selected_option = available_options[selected_option_index]
+
+                action_name = selected_option["title"]["message"] if "message" in selected_option["title"] else selected_option["title"]
+                match action_name:
+                    case ("Pass for this generation",
+                          "End Turn",
+                          "Convert 8 heat into temperature",
+                          "Convert 8 plants into greenery",
+                          "Do nothing",
+                          "Skip removal",
+                          "Skip removing plants",
+                          "Increase your plant production 1 step",
+                          "Add a science resource to this card",
+                          "Do not remove resource",
+                          "Increase your energy production 2 steps",
+                          "Increase titanium production 1 step",
+                          "Increase megacredits production 1 step",
+                          "Increase steel production 1 step",
+                          "Increase plants production 1 step",
+                          "Increase heat production 1 step",
+                          "Increase energy production 1 step",
+                          "Do not steal",
+                          "Remove 2 microbes to raise oxygen level 1 step"
+                          "Add 1 microbe to this card",
+                          "Remove 3 microbes to increase your terraform rating 1 step",
+                          "Don't place a greenery",
+                          "Remove a science resource from this card to draw a card",
+                          "Spend 1 steel to gain 7 M€.",
+                          "Remove 2 microbes to raise temperature 1 step",
+                          "Gain 4 plants",
+                          "Spend 1 plant to gain 7 M€.",
+                          "Gain plant",
+                          "Gain 1 plant",
+                          "Gain 3 plants",
+                          "Gain 5 plants",
+                          "Don't remove M€ from adjacent player",
+                          "Take first action of ${0} corporation", #c = which_option["title"]["data"][0]["value"]
+                          "Remove ${0} plants from ${1}",
+                          "Remove ${0} ${1} from ${2}",
+                          "Steal ${0} M€ from ${1}",
+                          "Steal ${0} steel from ${1}",
+                          "Add ${0} microbes to ${1}",
+                          "Add resource to card ${0}",
+                          "Add ${0} animals to ${1}",
+                          "Fund ${0} award"):
+                        payload = self.create_or_resp_option(run_id, selected_option_index)
+                    case "Play project card":
+                        available_cards = selected_option["cards"]
+                        selected_card_from_all_name: str = CARD_NAMES_INT_STR[action[SELECTED_CARD_INDEX]]
+                        selected_card = None
+                        for card in available_cards:
+                            if card["name"] == selected_card_from_all_name:
+                                selected_card = card
+                                break
+
+                        card_cost = selected_card["calculatedCost"]
+                        card_name = selected_card["name"]
+
+                        reserve_units = selected_card["reserveUnits"] if "reserveUnits" in selected_card else None
+                        reserve_heat = 0
+                        reserve_mc = 0
+                        reserve_titanium = 0
+                        reserve_steel = 0
+                        if reserve_units:
+                            reserve_heat = reserve_units["heat"]
+                            reserve_mc = reserve_units["megacredits"]
+                            reserve_steel = reserve_units["steel"]
+                            reserve_titanium = reserve_units["titanium"]
+
+                        payment_options = selected_option["paymentOptions"]
+                        can_pay_with_heat = payment_options["heat"]
+                        can_pay_with_steel = card_name in BUILDING_CARDS_SET  # building cards
+                        can_pay_with_titanium = card_name in SPACE_CARDS_SET  # space cards
+                        can_pay_with_microbes = False
+                        if card_name in PLANT_CARDS_SET:
+                            for p in current_state["players"]:
+                                if p["color"] == self.current_player.color:
+                                    for card in p["tableau"]:
+                                        if card["name"] == "Psychrophiles":
+                                            can_pay_with_microbes = True
+                                            break
+                                    break
+
+                        pay_heat, pay_mc, pay_steel, pay_titanium, pay_microbes = self.calc_payment_for_project_card(action,
+                                                                                                                     current_state,
+                                                                                                                     card_cost,
+                                                                                                                     can_pay_with_heat,
+                                                                                                                     can_pay_with_steel,
+                                                                                                                     can_pay_with_titanium,
+                                                                                                                     can_pay_with_microbes,
+                                                                                                                     reserve_heat,
+                                                                                                                     reserve_mc,
+                                                                                                                     reserve_titanium,
+                                                                                                                     reserve_steel)
+
+                        payload = self.create_or_resp_project_card_payment(run_id, selected_option_index, card_name, pay_heat, pay_mc, pay_steel, pay_titanium, pay_microbes)
+                    case "Sell patents": # multiple cards
+                        selected_project_cards = []
+                        selected_card_indices = action[MULTIPLE_SELECTED_CARDS]
+                        for idx, binary in enumerate(selected_card_indices):
+                            if binary == 1:
+                                selected_card_name: str = CARD_NAMES_INT_STR[idx]
+                                selected_project_cards.append(selected_card_name)
+                        payload = self.create_or_resp_card_cards(run_id, selected_option_index, selected_project_cards)
+                    case "Perform an action from a played card":
+                        available_cards = selected_option["cards"]
+                        selected_card_from_all_name: str = CARD_NAMES_INT_STR[action[SELECTED_CARD_FROM_PLAYED_CARDS_INDEX]]
+                        payload = self.create_or_resp_card_cards(run_id, selected_option_index, [selected_card_from_all_name])
+                    case ("Select a card to discard", # single card
+                          "Add 3 microbes to a card",
+                          "Select card to add 2 microbes",
+                          "Select card to remove 2 Animal(s)",
+                          "Select card to add 2 animals",
+                          "Select card to add 4 animals",
+                          "Add 2 animals to a card"):
+                        available_cards = selected_option["cards"]
+                        selected_card_from_all_name: str = CARD_NAMES_INT_STR[action[SELECTED_CARD_INDEX]]
+                        payload = self.create_or_resp_card_cards(run_id, selected_option_index, [selected_card_from_all_name])
+                    case ("Select space for greenery tile",
+                          "Convert ${0} plants into greenery"):
+                        available_spaces_ids = selected_option["spaces"]
+                        selected_space_index = action[SELECTED_SPACE_INDEX]
+                        selected_space_id = str(selected_space_index + 1) # TODO maybe "1" is not treated the same as "01"
+                        payload = self.create_or_resp_space_space_id(run_id, selected_option_index, selected_space_id)
+                    case "Select adjacent player to remove 4 M€ from":
+                        available_players_colors = selected_option["players"]
+                        selected_player_index = action[SELECTED_PLAYER]
+                        selected_player_color = PLAYERS_ID_COLOR[selected_player_index]
+                        payload = self.create_or_resp_player_player(run_id, selected_option_index, selected_player_color)
+                    case "Fund an award (${0} M€)":
+                        available_awards = selected_option["options"]
+                        selected_award_from_all_name: str = AWARDS_INT_STR[action[SELECTED_AWARD_INDEX]]
+                        selected_award_index = -1
+                        for idx, award in enumerate(available_awards):
+                            if award["name"] == selected_award_from_all_name:
+                                selected_award_index = idx
+                                break
+                        payload = self.create_or_resp_or_resp_option(run_id, selected_option_index, selected_award_index)
+                    case "Standard projects":
+                        # wenn das SP nicht verfügbar ist, darf es gar nicht erst als option im beobachtungsraum sein
+                        selected_standard_project_name = STANDARD_PROJECTS_INDEX_NAME[action[SELECTED_STANDARD_PROJECT_INDEX]]
+                        self.create_or_resp_card_cards(run_id, selected_option_index, [selected_standard_project_name])
+                    case "Claim a milestone":
+                        available_milestones = selected_option["options"]
+                        selected_milestone_from_all_name: str = MILESTONES_INT_STR[action[SELECTED_MILESTONE_INDEX]]
+                        selected_milestone_index = -1
+                        for idx, milestone in enumerate(available_milestones):
+                            if milestone["name"] == selected_milestone_from_all_name:
+                                selected_milestone_index = idx
+                                break
+                        self.create_or_resp_or_resp_option(run_id, selected_option_index, selected_milestone_index)
         else:
             message = current_state["waitingFor"]["title"]["message"] if "message" in current_state["waitingFor"]["title"] else current_state["waitingFor"]["title"]
             match message:
@@ -768,7 +983,7 @@ class CustomEnv(gym.Env):
                     can_pay_with_microbes = False
                     if card_name in PLANT_CARDS_SET:
                         for p in current_state["players"]:
-                            if p["color"] == self.player_on_turn.color:
+                            if p["color"] == self.current_player.color:
                                 for card in p["tableau"]:
                                     if card["name"] == "Psychrophiles":
                                         can_pay_with_microbes = True
@@ -828,15 +1043,11 @@ class CustomEnv(gym.Env):
                     amount = min(selected_amount, max)
                     payload = self.create_amount_response(run_id, amount)
 
-        res = self.send_player_input(self.player_on_turn.id, payload)
+        res = self.send_player_input(self.current_player.id, payload)
         # from this res create new observation
 
         # send_player_input(json.dumps(select_space_data), player.id, http_connection)
-        return {
-            "game": {
-                "phase": "action"
-            }
-        }
+        return res
 
     def calc_payment_for_project_card(self,
                                       action,
@@ -935,36 +1146,6 @@ class CustomEnv(gym.Env):
 
         return pay_heat, pay_mc, pay_steel, pay_titanium, pay_microbes
 
-    def step(self, action):
-        res = None
-        match (self.last_observation["current_phase"]):
-            case PhasesEnum.DRAFTING.value:
-                pass
-            case PhasesEnum.ACTION.value, PhasesEnum.PRODUCTION.value, PhasesEnum.PRELUDES.value:
-                res = self.normal_turn(action)
-
-        # TODO herausfinden welcher player gerade dran ist, am besten als parameter
-        # Beispiel-Logik für Belohnung und Fertigkeitsstatus
-        reward = np.random.random()
-        done = reward > 0.95
-
-        next_phase = PhasesEnum.INITIAL_RESEARCH
-        match (res["game"]["phase"]):
-            case "research":
-                next_phase = PhasesEnum.RESEARCH
-            case "drafting":
-                next_phase = PhasesEnum.DRAFTING
-
-        current_phase_ordinal = next_phase.value
-        observation = {
-            "current_phase": current_phase_ordinal,
-            "dealt_project_cards": self.dealt_project_cards.sample(),
-            "available_corporations": self.available_corporations.sample(),
-            "available_initial_project_cards": self.available_initial_project_cards.sample(),
-        }
-
-        return observation, reward, done, False, {}
-
     def create_or_resp_option(self, run_id, index):
         return {
             "runId": run_id,
@@ -973,6 +1154,23 @@ class CustomEnv(gym.Env):
             "response": {
                 "type": "option"
             }
+        }
+
+    def create_initial_cards_card_card_card_response(self, run_id, corporation_card_name, prelude_cards_names, project_cards_names):
+        return {
+            "runId": run_id,
+            "type": "initialCards",
+            "responses": [
+                {
+                    "type": "card",
+                    "cards": [corporation_card_name]
+                }, {
+                    "type": "card",
+                    "cards": prelude_cards_names
+                }, {
+                    "type": "card",
+                    "cards": project_cards_names
+                }]
         }
 
     def create_or_resp_project_card_payment(self, run_id, index, card_name, heat, mc, steel, titanium, microbes):

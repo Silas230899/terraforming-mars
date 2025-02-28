@@ -104,6 +104,7 @@ def send_player_input(json_body, player_id, http_connection):
 # research phase
 def initial_research_phase(player, http_connection):
     game = get_game(player.id, http_connection)
+    print(json.dumps(game, indent=2))
     player.run_id = game["runId"]
     # print("run id: " + player.run_id + " player id: " + player.id)
     #print(json.dumps(game, indent=4))
