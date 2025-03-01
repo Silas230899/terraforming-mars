@@ -244,7 +244,8 @@ class CustomEnv(gym.Env):
     player2 = None
     player3 = None
 
-    current_player = None
+    player_on_turn = None
+    observed_player = None
 
     current_turn = None
     last_observation = None
@@ -485,20 +486,23 @@ class CustomEnv(gym.Env):
                               result["players"][2]["name"])
 
         res_player1 = self.get_game(self.player1)
-        observation_player1 = self.create_observation_from_res(res_player1)
         res_player2 = self.get_game(self.player2)
-        observation_player2 = self.create_observation_from_res(res_player2)
         res_player3 = self.get_game(self.player3)
-        observation_player3 = self.create_observation_from_res(res_player3)
 
         self.run_id = res_player1["runId"]  # all players have the same run_id
 
-        self.current_player = self.get_current_player(res_player1["players"]) # the three res are not equal but show the same current player
+        self.player_on_turn = self.get_current_player(res_player1["players"]) # the three res are not equal but show the same current player
+
+        self.observed_player = random.choice([self.player1, self.player2, self.player3])
 
         # TODO current_player ist eig nicht richtig. es geht um die view, welcher spieler über das gesamte spiel betrachtet wird. das darf
         # TODO sich nicht pro zug/runde ändern
 
-        match self.current_player:
+        observation_player1 = self.create_observation_from_res(res_player1)
+        observation_player2 = self.create_observation_from_res(res_player2)
+        observation_player3 = self.create_observation_from_res(res_player3)
+
+        match self.observed_player:
             case self.player1:
                 # calc player 2 and 3 now
                 action_player2, _ = self.policy_model.predict(observation_player2, deterministic=False)
@@ -527,7 +531,7 @@ class CustomEnv(gym.Env):
         #     "available_initial_project_cards": self.available_initial_project_cards.sample(),
         # }, {}
 
-    def get_current_player(self, players):
+    def get_current_player(self, players) -> Player:
         for player in players:
             if player["isActive"]:
                 match player["color"]:
@@ -541,41 +545,57 @@ class CustomEnv(gym.Env):
     def create_observation_from_res(self, res):
         pass
 
-    def get_res_of_current_player(self, res_player1, res_player2, res_player3):
-        match self.current_player:
-            case self.player1:
-                return res_player1
-            case self.player2:
-                return res_player2
-            case self.player3:
-                return res_player3
-
     def step(self, action):
         res = None
 
         res = self.normal_turn(action)
+        obs = self.create_observation_from_res(res)
 
-        # create new observation
+        current_phase = "initial_research" # calc from res
+
+        if current_phase == "drafting":
+            all_players = [self.player1, self.player2, self.player3]
+            all_players.remove(self.observed_player)
+            res1 = self.get_game(all_players[0])
+            obs1 = self.create_observation_from_res(res1)
+            act1, _ = self.policy_model.predict(obs1, deterministic=False)
+            _ = self.normal_turn(act1)
+            res2 = self.get_game(all_players[1])
+            obs2 = self.create_observation_from_res(res2)
+            act2, _ = self.policy_model.predict(obs2, deterministic=False)
+            _ = self.normal_turn(act2)
+            # return obs usw
 
 
-        if current_phase == "initial_research":
-            action2, _ = self.policy_model.predict(self.last_observation, deterministic=False)
 
 
-            if self.current_player == self.player1:
-                res1 = self.normal_turn(action)
-                self.current_player = self.player2
-            elif self.current_player == self.player2:
-                res2 = self.normal_turn(action)
-                self.current_player = self.player3
-            elif self.current_player == self.player3:
-                res3 = self.normal_turn(action)
-                self.current_player = self.player1
-        elif current_phase == "action":
-            action6, _ = self.policy_model.predict(self.last_observation, deterministic=False)
-            pass
-        elif current_phase == "draft":
-            pass
+            res_player1 = self.get_game(self.player1)
+            res_player2 = self.get_game(self.player2)
+            res_player3 = self.get_game(self.player3)
+            observation_player1 = self.create_observation_from_res(res_player1)
+            observation_player2 = self.create_observation_from_res(res_player2)
+            observation_player3 = self.create_observation_from_res(res_player3)
+            match self.observed_player:
+                case self.player1:
+                    # calc player 2 and 3 now
+                    action_player2, _ = self.policy_model.predict(observation_player2, deterministic=False)
+                    _ = self.normal_turn(action_player2)
+                    action_player3, _ = self.policy_model.predict(observation_player3, deterministic=False)
+                    _ = self.normal_turn(action_player3)
+                    # return
+                case self.player2:
+                    pass
+                case self.player3:
+                    pass
+        else:
+            curr_p = self.get_current_player(res["players"])
+            # play turns of other players
+            while self.player_on_turn != self.observed_player:
+                pass # do the turn of the other players (is not necessarily two
+
+            game = self.get_game(curr_p.id)
+            obs = self.create_observation_from_res(game)
+            # return
 
 
 
@@ -611,7 +631,7 @@ class CustomEnv(gym.Env):
             "available_initial_project_cards": self.available_initial_project_cards.sample(),
         }
 
-        self.current_player = self.player1 # je nach observation festlegen
+        self.player_on_turn = self.player1 # je nach observation festlegen
 
         return observation, reward, done, False, {}
 
@@ -673,7 +693,7 @@ class CustomEnv(gym.Env):
 
         payload = None
 
-        run_id = self.current_player.run_id
+        run_id = self.player_on_turn.run_id
 
 
         if "options" in current_state["waitingFor"]:
@@ -804,7 +824,7 @@ class CustomEnv(gym.Env):
                         can_pay_with_microbes = False
                         if card_name in PLANT_CARDS_SET:
                             for p in current_state["players"]:
-                                if p["color"] == self.current_player.color:
+                                if p["color"] == self.player_on_turn.color:
                                     for card in p["tableau"]:
                                         if card["name"] == "Psychrophiles":
                                             can_pay_with_microbes = True
@@ -983,7 +1003,7 @@ class CustomEnv(gym.Env):
                     can_pay_with_microbes = False
                     if card_name in PLANT_CARDS_SET:
                         for p in current_state["players"]:
-                            if p["color"] == self.current_player.color:
+                            if p["color"] == self.player_on_turn.color:
                                 for card in p["tableau"]:
                                     if card["name"] == "Psychrophiles":
                                         can_pay_with_microbes = True
@@ -1043,7 +1063,7 @@ class CustomEnv(gym.Env):
                     amount = min(selected_amount, max)
                     payload = self.create_amount_response(run_id, amount)
 
-        res = self.send_player_input(self.current_player.id, payload)
+        res = self.send_player_input(self.player_on_turn.id, payload)
         # from this res create new observation
 
         # send_player_input(json.dumps(select_space_data), player.id, http_connection)
