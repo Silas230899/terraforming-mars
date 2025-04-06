@@ -2,6 +2,7 @@
 AVAILABLE_ACTION_OPTIONS = "available_action_options"
 SELECTED_ACTION_INDEX = "selected_action_index"
 AVAILABLE_CARDS = "available_cards"
+AVAILABLE_PROJECT_CARDS = "available_project_cards"
 AVAILABLE_HEAT = "available_heat"
 AVAILABLE_MC = "available_mc"
 AVAILABLE_STEEL = "available_steel"
@@ -73,6 +74,34 @@ PASS_REMAINING_DRAFT_CARDS_TO_WHOM = "pass_remaining_draft_cards_to_whom"
 
 # Initial Research Phase
 AVAILABLE_CORPORATIONS = "available_corporations"
+
+ACTIONS_TAKEN_THIS_ROUND = "actionsTakenThisRound"
+AVAILABLE_BLUE_CARD_ACTION_COUNT = "availableBlueCardActionCount"
+CARDS_IN_HAND_NUMBER = "cardsInHandNumber"
+CITIES_COUNT = "citiesCount"
+AVAILABLE_ENERGY = "availableEnergy"
+ENERGY_PRODUCTION = "energyProduction"
+HEAT_PRODUCTION = "heatProduction"
+MEGA_CREDIT_PRODUCTION = "megaCreditProduction"
+AVAILABLE_PLANTS = "plants"
+PLANT_PRODUCTION = "plantProduction"
+PLANTS_PROTECTED = "plants_protected"
+PLANT_PRODUCTION_PROTECTED = "plant_production_protected"
+STEEL_PRODUCTION = "steelProduction"
+TAGS = "tags"
+TERRAFORM_RATING = "terraformRating"
+TITANIUM_PRODUCTION = "titaniumProduction"
+TOTAL_VICTORY_POINTS = "total_victory_points"
+PICKED_CORPORATION = "picked_corporation"
+CARDS_IN_HAND = "cards_in_hand"
+DEALT_CARDS = "dealt_cards"
+GENERATION = "generation"
+OXYGEN_LEVEL = "oxygenLevel"
+TEMPERATURE = "temperature"
+CURRENT_PHASE = "current_phase"
+OCCUPIED_SPACES = "occupied_spaces"
+
+
 
 
 

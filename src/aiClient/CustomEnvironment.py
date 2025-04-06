@@ -22,16 +22,21 @@ SPACE_CARDS_SET = {'Space Hotels', 'Point Luna', 'Orbital Construction Yard', 'S
 PLANT_CARDS_SET = {'Biosphere Support', 'Dome Farming', 'Ecology Experts', 'Experimental Forest', 'Adapted Lichen', 'Advanced Ecosystems', 'Algae', 'Arctic Algae', 'Bushes', 'Ecological Zone', 'Eos Chasma National Park', 'Farming', 'Grass', 'Greenhouses', 'Heather', 'Kelp Farming', 'Lichen', 'Mangrove', 'Moss', 'Nitrophilic Moss', 'Noctis Farming', 'Plantation', 'Protected Valley', 'Trees', 'Tundra Farming'}
 
 NUMBER_CORPORATIONS = 12
+NUMBER_CORPORATIONS_DISCRETE = NUMBER_CORPORATIONS + 1
 NUMBER_PLAYERS = 3
-# NUMBER_OF_CARDS = 211 + 2 + 6 + 50 + 14 # 283
-def NUMBER_OF_CARDS(): return len(CARD_NAMES_INT_STR.values())
-NUMBER_ALL_ACTION_OPTIONS = 57
-NUMBER_ALL_ACTIONS = 38 # without action options
+NUMBER_PLAYERS_DISCRETE = 4
+
+NONE_PLAYER_INDEX = 3
+
 NUMBER_SPACES = 68 # indices 01 to 69
 
 def NUMBER_OF_AWARDS(): return len(AWARDS_INT_STR.values())
+NUMBER_OF_AWARDS_DISCRETE = NUMBER_OF_AWARDS() + 1
+NONE_AWARD_INDEX = 5
 def NUMBER_OF_MILESTONES(): return len(MILESTONES_INT_STR.values())
 def NUMBER_OF_STANDARD_PROJECTS(): return len(STANDARD_PROJECTS_INDEX_NAME.values())
+NUMBER_OF_STANDARD_PROJECTS_DISCRETE = NUMBER_OF_STANDARD_PROJECTS() + 1
+NONE_STANDARD_PROJECT_INDEX = 5
 
 class PhasesEnum(Enum):
     INITIAL_RESEARCH = 0,
@@ -42,10 +47,13 @@ class PhasesEnum(Enum):
     END = 5,
     PRELUDES = 6,
 
-ACTION_OPTIONS: Dict[str, int] = {
-    "Pass for this generation": 0,
-    "End turn": 1,
-
+PHASES_STR_INT: Dict[str, int] = {
+    "initial_research": 0,
+    "preludes": 1,
+    "action": 2,
+    "production": 3,
+    "drafting": 4,
+    "end": 5,
 }
 
 AWARDS_INT_STR: Dict[int, str] = {
@@ -76,6 +84,111 @@ PLAYERS_ID_COLOR: Dict[int, str] = {
     0: "red",
     1: "green",
     2: "yellow"
+}
+
+SELECTED_ACTION_OPTION_NAME_INDEX: Dict[str, int] = {
+    "Select space for ${0} tile": 0,
+    "Select space for ocean tile": 1,
+    "Select space reserved for ocean to place greenery tile": 3,
+    "Select a space with a steel or titanium bonus": 4,
+    "Select space adjacent to a city tile": 5,
+    "Select place next to no other tile for city": 6,
+    "Select space next to greenery for special tile": 7,
+    "Select either Tharsis Tholus, Ascraeus Mons, Pavonis Mons or Arsia Mons": 8,
+    "Select a space with a steel or titanium bonus adjacent to one of your tiles": 9,
+    "Select space next to at least 2 other city tiles": 10,
+    "Select a land space to place an ocean tile": 11,
+    "Select space for city tile": 12,
+    "Select space for greenery tile": 13,
+    "Select space for ocean from temperature increase": 14,
+    "Select space for claim": 15,
+    "Select space for first ocean": 16,
+    "Select space for second ocean": 17,
+    "Select space for special city tile": 18,
+    "Select player to decrease ${0} production by ${1} step(s)": 19,
+    "Select card to add ${0} ${1}": 20,
+    "Select builder card to copy": 21,
+    "Select 1 card(s) to keep": 22,
+    "Select card to remove 1 Microbe(s)": 23,
+    "Select card to remove 1 Animal(s)": 24,
+    "Select prelude card to play": 25,
+    "Select a card to keep and pass the rest to ${0}": 26,
+    "Select card(s) to buy": 27,
+    "Select 2 card(s) to keep": 28,
+    "You cannot afford any cards": 29,
+    "Play project card": 30,
+    "Select how to pay for the ${0} standard project": 31,
+    "Select how to spend ${0} M€": 32,
+    "Select how to spend ${0} M€ for ${1} cards": 33,
+    "Select how to pay for ${0} action": 34,
+    "Select how to pay for award": 35,
+    "Select how to pay for action": 36,
+    "Select how to pay for milestone": 37,
+    "Select amount of heat production to decrease": 38,
+    "Select amount of energy to spend": 2,
+    "Initial Research Phase": 39,
+    "None": 40,
+}
+NUMBER_ALL_ACTIONS = len(SELECTED_ACTION_OPTION_NAME_INDEX) # without action options
+
+ACTION_OPTIONS_NAME_INDEX: Dict[str, int]= {
+"Pass for this generation": 0,
+"End turn": 1,
+"Convert 8 heat into temperature": 2,
+"Convert 8 plants into greenery": 3,
+"Do nothing": 4,
+"Skip removal": 5,
+"Skip removing plants": 6,
+"Increase your plant production 1 step": 7,
+"Add a science resource to this card": 8,
+"Do not remove resource": 9,
+"Increase your energy production 2 steps": 10,
+"Increase titanium production 1 step": 11,
+"Increase megacredits production 1 step": 12,
+"Increase steel production 1 step": 13,
+"Increase plants production 1 step": 14,
+"Increase heat production 1 step": 15,
+"Increase energy production 1 step": 16,
+"Do not steal": 17,
+"Remove 2 microbes to raise oxygen level 1 step": 18,
+"Add 1 microbe to this card": 19,
+"Remove 3 microbes to increase your terraform rating 1 step": 20,
+"Don't place a greenery": 21,
+"Remove a science resource from this card to draw a card": 22,
+"Spend 1 steel to gain 7 M€.": 23,
+"Remove 2 microbes to raise temperature 1 step": 24,
+"Gain 4 plants": 25,
+"Spend 1 plant to gain 7 M€.": 26,
+"Gain plant": 27,
+"Gain 1 plant": 28,
+"Gain 3 plants": 29,
+"Gain 5 plants": 30,
+"Don't remove M€ from adjacent player": 31,
+"Take first action of ${0} corporation": 32,
+"Remove ${0} plants from ${1}": 33,
+"Remove ${0} ${1} from ${2}": 34,
+"Steal ${0} M€ from ${1}": 35,
+"Steal ${0} steel from ${1}": 36,
+"Add ${0} microbes to ${1}": 37,
+"Add resource to card ${0}": 38,
+"Add ${0} animals to ${1}": 39,
+"Fund ${0} award": 40,
+"Play project card": 41,
+"Sell patents": 42,
+"Perform an action from a played card": 43,
+"Select a card to discard": 44,
+"Add 3 microbes to a card": 45,
+"Select card to add 2 microbes": 46,
+"Select card to remove 2 Animal(s)": 47,
+"Select card to add 2 animals": 48,
+"Select card to add 4 animals": 49,
+"Add 2 animals to a card": 50,
+"Select space for greenery tile": 51,
+"Convert ${0} plants into greenery": 52,
+"Select adjacent player to remove 4 M€ from": 53,
+"Fund an award (${0} M€)": 54,
+"Standard projects": 55,
+"Claim a milestone": 56,
 }
 
 ACTION_OPTIONS_INDEX_NAME: Dict[int, str] = {
@@ -137,6 +250,8 @@ ACTION_OPTIONS_INDEX_NAME: Dict[int, str] = {
     55: "Standard projects",
     56: "Claim a milestone",
 }
+
+NUMBER_ALL_ACTION_OPTIONS = len(ACTION_OPTIONS_INDEX_NAME)
 
 CARD_NAMES_INT_STR: Dict[int, str] = {
 0: "Sell Patents",
@@ -441,29 +556,32 @@ CARD_NAMES_INT_STR: Dict[int, str] = {
 299: "Snow Algae"
 }
 
+# NUMBER_OF_CARDS = 211 + 2 + 6 + 50 + 14 # 283
+NUMBER_OF_CARDS = len(CARD_NAMES_INT_STR)
+
 TILE_NAMES_OF_SELECTABLE_SPACES: Dict[str, int] = {
     "Mohole Area": 0,
     "Nuclear Zone": 1,
     "Commercial District": 2,
     "Restricted Area": 3,
-    "Natural Preserve": 4
+    "Natural Preserve": 4,
+    "None": 5
 }
-NUMBER_OF_TILES_TO_SELECT_SPACE_FOR = 5
 
 CORPORATIONS_WITH_FIRST_ACTION: Dict[str, int] = {
     "Valley Trust": 0,
     "Inventrix": 1,
     "Vitor": 2,
     "Tharsis Republic": 3,
+    "None": 4,
 }
-NUMBER_OF_CORPORATIONS_WITH_FIRST_ACTION = 4
 
 REMOVABLE_RESOURCES_NAMES = {
     "M€": 0,
     "steel": 1,
     "titanium": 2,
+    "None": 3
 }
-NUMBER_OF_REMOVABLE_RESOURCES = 3
 
 DECREASABLE_PRODUCTIONS_NAMES = {
     "megacredits": 0,
@@ -471,9 +589,9 @@ DECREASABLE_PRODUCTIONS_NAMES = {
     "titanium": 2,
     "heat": 3,
     "plants": 4,
-    "energy": 5
+    "energy": 5,
+    "None": 6
 }
-NUMBER_OF_DECREASABLE_PRODUCTIONS = 6
 
 CARDS_MICROBES_CAN_BE_ADDED_TO = {
     "Psychrophiles": 0,
@@ -482,8 +600,8 @@ CARDS_MICROBES_CAN_BE_ADDED_TO = {
     "Tardigrades": 3,
     "Ants": 4,
     "Decomposers": 5,
+    "None": 6
 }
-NUMBER_OF_CARDS_MICROBES_CAN_BE_ADDED_TO = 6
 
 CARDS_RESOURCES_CAN_BE_ADDED_TO = {
     "Regolith Eaters": 0,
@@ -535,6 +653,12 @@ CORPORATIONS_STARTING_MC = {
 NUMBER_OF_CORPORATIONS = 17
 
 
+def build_box_i8(value):
+    return np.array([value], dtype=np.int8)
+
+def build_discrete_i8(value):
+    return np.int8(value)
+
 class CustomEnv(gym.Env):
     http_connection = None
 
@@ -579,12 +703,13 @@ class CustomEnv(gym.Env):
         self.observation_space = spaces.Dict({
             AVAILABLE_ACTION_OPTIONS: MultiBinary(NUMBER_ALL_ACTION_OPTIONS),
             SELECTED_ACTION_INDEX: Discrete(NUMBER_ALL_ACTIONS),
-            AVAILABLE_CARDS: MultiBinary(NUMBER_OF_CARDS()),
-            AVAILABLE_HEAT: Box(0, 500, (1,), np.int8),
-            AVAILABLE_MC: Box(0, 500, (1,), np.int8),
-            AVAILABLE_STEEL: Box(0, 500, (1,), np.int8),
-            AVAILABLE_TITANIUM: Box(0, 500, (1,), np.int8),
-            AVAILABLE_MICROBES: Box(0, 500, (1,), np.int8),
+            AVAILABLE_CARDS: MultiBinary(NUMBER_OF_CARDS), # to choose from
+            # AVAILABLE_PROJECT_CARDS: MultiBinary(NUMBER_OF_CARDS),
+            AVAILABLE_HEAT: Box(0, 500, (1,), np.int16),
+            AVAILABLE_MC: Box(0, 500, (1,), np.int16),
+            AVAILABLE_STEEL: Box(0, 500, (1,), np.int16),
+            AVAILABLE_TITANIUM: Box(0, 500, (1,), np.int16),
+            AVAILABLE_MICROBES: Box(0, 500, (1,), np.int16),
             STEEL_VALUE: Box(0, 3, (1,), np.int8),
             TITANIUM_VALUE: Box(0, 3, (1,), np.int8),
             RESERVE_HEAT: Box(0, 50, (1,), np.int8),
@@ -593,53 +718,53 @@ class CustomEnv(gym.Env):
             RESERVE_TITANIUM: Box(0, 50, (1,), np.int8),
             AVAILABLE_SPACES: MultiBinary(NUMBER_SPACES),
             AVAILABLE_PLAYERS: MultiBinary(NUMBER_PLAYERS),
-            MULTIPLE_PLAYED_CARDS: MultiBinary(NUMBER_OF_CARDS()),
+            MULTIPLE_PLAYED_CARDS: MultiBinary(NUMBER_OF_CARDS),
             AVAILABLE_MILESTONES: MultiBinary(NUMBER_OF_MILESTONES()),
             AVAILABLE_AWARDS: MultiBinary(NUMBER_OF_AWARDS()),
             AVAILABLE_STANDARD_PROJECTS: MultiBinary(NUMBER_OF_STANDARD_PROJECTS()),
 
             # for "Take first action of ${0} corporation"
-            CORPORATION_TO_TAKE_FIRST_ACTION_OF: Discrete(NUMBER_OF_CORPORATIONS_WITH_FIRST_ACTION),
+            CORPORATION_TO_TAKE_FIRST_ACTION_OF: Discrete(len(CORPORATIONS_WITH_FIRST_ACTION)),
 
             # "Remove ${0} plants from ${1}"
             AMOUNT_OF_PLANTS_TO_REMOVE: Box(0, 8, (1,), np.int8),
-            PLAYER_TO_REMOVE_PLANTS_FROM: Discrete(NUMBER_PLAYERS),
+            PLAYER_TO_REMOVE_PLANTS_FROM: Discrete(NUMBER_PLAYERS_DISCRETE),
 
             # "Remove ${0} ${1} from ${2}"
-            RESOURCE_TO_REMOVE: Discrete(NUMBER_OF_REMOVABLE_RESOURCES),
+            RESOURCE_TO_REMOVE: Discrete(len(REMOVABLE_RESOURCES_NAMES)),
             AMOUNT_OF_RESOURCE_TO_REMOVE: Box(0, 8, (1,), np.int8),
-            PLAYER_TO_REMOVE_RESOURCE_FROM: Discrete(NUMBER_PLAYERS),
+            PLAYER_TO_REMOVE_RESOURCE_FROM: Discrete(NUMBER_PLAYERS_DISCRETE),
 
             # "Steal ${0} M€ from ${1}"
             AMOUNT_OF_MC_TO_STEAL: Box(0, 100, (1,), np.int8),
-            PLAYER_TO_STEAL_MC_FROM: Discrete(NUMBER_PLAYERS),
+            PLAYER_TO_STEAL_MC_FROM: Discrete(NUMBER_PLAYERS_DISCRETE),
 
             # "Steal ${0} steel from ${1}"
             AMOUNT_OF_STEEL_TO_STEAL: Box(0, 2, (1,), np.int8),
-            PLAYER_TO_STEAL_STEEL_FROM: Discrete(NUMBER_PLAYERS),
+            PLAYER_TO_STEAL_STEEL_FROM: Discrete(NUMBER_PLAYERS_DISCRETE),
 
             # "Add ${0} microbes to ${1}"
             AMOUNT_OF_MICROBES_TO_ADD: Box(0, 3, (1,), np.int8),
-            CARD_TO_ADD_MICROBES_TO: Discrete(NUMBER_OF_CARDS_MICROBES_CAN_BE_ADDED_TO),
+            CARD_TO_ADD_MICROBES_TO: Discrete(len(CARDS_MICROBES_CAN_BE_ADDED_TO)),
 
             # "Fund ${0} award"
-            WHAT_AWARD_TO_FUND: Discrete(NUMBER_OF_AWARDS()),
+            WHAT_AWARD_TO_FUND: Discrete(NUMBER_OF_AWARDS_DISCRETE),
 
             # Convert ${0} plants into greenery
-            HOW_MANY_PLANTS_TO_CONVERT_INTO_GREENERY: Box(7, 8, (1,), np.int8),
+            HOW_MANY_PLANTS_TO_CONVERT_INTO_GREENERY: Box(0, 8, (1,), np.int8),
 
             # Fund an award (${0} M€)
-            FUND_AWARD_COST: Discrete(3), # 8, 14, 20
+            FUND_AWARD_COST: Discrete(4), # none, 8, 14, 20
 
             # Select space for ${0} tile
-            TILE_TO_SELECT_SPACE_FOR: Discrete(NUMBER_OF_TILES_TO_SELECT_SPACE_FOR),
+            TILE_TO_SELECT_SPACE_FOR: Discrete(len(TILE_NAMES_OF_SELECTABLE_SPACES)),
 
             # Select player to decrease ${0} production by ${1} step(s)
-            PRODUCTION_TO_DECREASE: Discrete(NUMBER_OF_DECREASABLE_PRODUCTIONS),
+            PRODUCTION_TO_DECREASE: Discrete(len(DECREASABLE_PRODUCTIONS_NAMES)),
             STEPS_TO_DECREASE_PRODUCTION: Box(0, 8, (1,), np.int8),
 
             # Select how to pay for the ${0} standard project
-            WHAT_STANDARD_PROJECT_TO_SELECT_HOW_TO_PAY_FOR: Discrete(NUMBER_OF_STANDARD_PROJECTS()),
+            WHAT_STANDARD_PROJECT_TO_SELECT_HOW_TO_PAY_FOR: Discrete(NUMBER_OF_STANDARD_PROJECTS_DISCRETE),
 
             # Select amount of heat production to decrease
             MAX_AMOUNT_OF_HEAT_PRODUCTION_TO_DECREASE: Box(0, 50, (1,), np.int8),
@@ -648,30 +773,57 @@ class CustomEnv(gym.Env):
             MAX_AMOUNT_OF_ENERGY_TO_SPEND: Box(0, 50, (1,), np.int8),
 
             # Select a card to keep and pass the rest to ${0}
-            PASS_REMAINING_DRAFT_CARDS_TO_WHOM: Discrete(NUMBER_PLAYERS),
+            PASS_REMAINING_DRAFT_CARDS_TO_WHOM: Discrete(NUMBER_PLAYERS_DISCRETE),
 
             # Initial Research Phase
-            AVAILABLE_CORPORATIONS: Discrete(NUMBER_OF_CORPORATIONS),
+            AVAILABLE_CORPORATIONS: MultiBinary(NUMBER_OF_CORPORATIONS),
+
+            # others
+            ACTIONS_TAKEN_THIS_ROUND: Box(0, 127, (1,), np.int8),
+            AVAILABLE_BLUE_CARD_ACTION_COUNT: Box(0, 127, (1,), np.int8),
+            CARDS_IN_HAND_NUMBER: Box(0, 127, (1,), np.int8),
+            CITIES_COUNT: Box(0, 127, (1,), np.int8),
+            AVAILABLE_ENERGY: Box(0, 500, (1,), np.int16),
+            ENERGY_PRODUCTION: Box(0, 127, (1,), np.int8),
+            HEAT_PRODUCTION: Box(0, 127, (1,), np.int8),
+            MEGA_CREDIT_PRODUCTION: Box(0, 127, (1,), np.int8),
+            AVAILABLE_PLANTS: Box(0, 500, (1,), np.int16),
+            PLANT_PRODUCTION: Box(0, 127, (1,), np.int8),
+            PLANTS_PROTECTED: MultiBinary(1),
+            PLANT_PRODUCTION_PROTECTED: MultiBinary(1),
+            STEEL_PRODUCTION: Box(0, 127, (1,), np.int8),
+            TAGS: Box(0, 127, (11,), np.int8), # city, event, earth, plant, space, jovia, science, building, power, microbe, animal
+            TERRAFORM_RATING: Box(0, 511, (1,), np.int16),
+            TITANIUM_PRODUCTION: Box(0, 127, (1,), np.int8),
+            TOTAL_VICTORY_POINTS: Box(0, 511, (1,), np.int16),
+            PICKED_CORPORATION: Discrete(NUMBER_CORPORATIONS_DISCRETE), # last is none
+            CARDS_IN_HAND: MultiBinary(len(CARD_NAMES_INT_STR)),
+            DEALT_CARDS: MultiBinary(len(CARD_NAMES_INT_STR)),
+            GENERATION: Box(0, 127, (1,), np.int8),
+            OXYGEN_LEVEL: Box(0, 127, (1,), np.int8),
+            TEMPERATURE: Box(-30, 100, (1,), np.int8),
+            CURRENT_PHASE: Discrete(len(PHASES_STR_INT)),
+            OCCUPIED_SPACES: MultiBinary(NUMBER_SPACES)
         })
 
         self.action_space = spaces.Dict({
             SELECTED_ACTION_OPTION_INDEX: Discrete(NUMBER_ALL_ACTION_OPTIONS),
-            SELECTED_CARD_INDEX: Discrete(NUMBER_OF_CARDS()),
+            SELECTED_CARD_INDEX: Discrete(NUMBER_OF_CARDS),
             PAY_HEAT_PERCENTAGE: Box(0, 1, (1,), np.float32),
             PAY_MC_PERCENTAGE: Box(low=0, high=1, shape=(1,), dtype=np.float32),
             PAY_STEEL_PERCENTAGE: Box(0, 1, (1,), np.float32),
             PAY_TITANIUM_PERCENTAGE: Box(0, 1, (1,), np.float32),
             PAY_MICROBES_PERCENTAGE: Box(0, 1, (1,), np.float32),
-            MULTIPLE_SELECTED_CARDS: MultiBinary(NUMBER_OF_CARDS()),
+            MULTIPLE_SELECTED_CARDS: MultiBinary(NUMBER_OF_CARDS),
             SELECTED_SPACE_INDEX: Discrete(NUMBER_SPACES),
-            SELECTED_PLAYER: Discrete(NUMBER_PLAYERS),
-            SELECTED_CARD_FROM_PLAYED_CARDS_INDEX: Discrete(NUMBER_OF_CARDS()),
+            SELECTED_PLAYER: Discrete(NUMBER_PLAYERS_DISCRETE),
+            SELECTED_CARD_FROM_PLAYED_CARDS_INDEX: Discrete(NUMBER_OF_CARDS),
             SELECTED_MILESTONE_INDEX: Discrete(NUMBER_OF_MILESTONES()),
-            SELECTED_AWARD_INDEX: Discrete(NUMBER_OF_AWARDS()),
+            SELECTED_AWARD_INDEX: Discrete(NUMBER_OF_AWARDS_DISCRETE),
             SELECTED_STANDARD_PROJECT_INDEX: Discrete(NUMBER_OF_STANDARD_PROJECTS()),
 
             # Select 2 card(s) to keep
-            TWO_SELECTED_CARDS_INDICES: MultiBinary(NUMBER_OF_CARDS()),
+            TWO_SELECTED_CARDS_INDICES: MultiBinary(NUMBER_OF_CARDS),
 
             # Select amount of heat production to decrease
             AMOUNT_OF_HEAT_PRODUCTION_TO_DECREASE: Box(0, 50, (1,), np.int8),
@@ -680,7 +832,7 @@ class CustomEnv(gym.Env):
             AMOUNT_OF_ENERGY_TO_SPEND: Box(0, 50, (1,), np.int8),
 
             # Select card(s) to buy
-            MULTIPLE_SELECTED_RESEARCH_CARDS: MultiBinary(NUMBER_OF_CARDS()),
+            MULTIPLE_SELECTED_RESEARCH_CARDS: MultiBinary(NUMBER_OF_CARDS),
             DONT_BUY_CARD: Discrete(2), # zero means no, one means yes
 
             # Initial Research Phase
@@ -695,6 +847,8 @@ class CustomEnv(gym.Env):
         self.player3 = None
 
         #self.http_connection = http.client.HTTPConnection("localhost", 8080)
+
+        # ai should always play the same color
 
         settings = {
             "players": [
@@ -789,36 +943,42 @@ class CustomEnv(gym.Env):
 
         self.run_id = res_player1["runId"]  # all players have the same run_id
 
-        self.player_on_turn = self.get_current_player(res_player1["players"]) # the three res are not equal but show the same current player
+        # self.player_on_turn = self.get_current_player(res_player1["players"]) # the three res are not equal but show the same current player
 
-        self.observed_player = random.choice([self.player1, self.player2, self.player3])
+        self.observed_player = random.choice([self.player1, self.player2, self.player3]) # TODO ai should always play the same color
 
         # TODO current_player ist eig nicht richtig. es geht um die view, welcher spieler über das gesamte spiel betrachtet wird. das darf
         # TODO sich nicht pro zug/runde ändern
+
+        # für rot: gelb links, grün rechts
+        # für grün: rot links, gelb rechts
+        # für gelb: grün links, rot rechts
 
         observation_player1 = self.create_observation_from_res(res_player1)
         observation_player2 = self.create_observation_from_res(res_player2)
         observation_player3 = self.create_observation_from_res(res_player3)
 
+
+        # weil die ergebnisse der spieler nicht voneinander abhängen ist die reihenfolge hier beliebig
         match self.observed_player:
             case self.player1:
                 # calc player 2 and 3 now
-                action_player2, _ = self.policy_model.predict(observation_player2, deterministic=False)
+                action_player2, _ = self.policy_model.predict(observation_player2)
                 _ = self.normal_turn(action_player2)
-                action_player3, _ = self.policy_model.predict(observation_player3, deterministic=False)
+                action_player3, _ = self.policy_model.predict(observation_player3)
                 _ = self.normal_turn(action_player3)
                 return observation_player1, {}
             case self.player2:
                 # calc player 1 and 3 now
-                action_player1, _ = self.policy_model.predict(observation_player1, deterministic=False)
+                action_player1, _ = self.policy_model.predict(observation_player1)
                 _ = self.normal_turn(action_player1)
-                action_player3, _ = self.policy_model.predict(observation_player3, deterministic=False)
+                action_player3, _ = self.policy_model.predict(observation_player3)
                 _ = self.normal_turn(action_player3)
                 return observation_player2, {}
             case self.player3:
-                action_player1, _ = self.policy_model.predict(observation_player1, deterministic=False)
+                action_player1, _ = self.policy_model.predict(observation_player1)
                 _ = self.normal_turn(action_player1)
-                action_player2, _ = self.policy_model.predict(observation_player2, deterministic=False)
+                action_player2, _ = self.policy_model.predict(observation_player2)
                 _ = self.normal_turn(action_player2)
                 return observation_player3, {}
 
@@ -839,9 +999,169 @@ class CustomEnv(gym.Env):
                         return self.player2
                     case self.player3.color:
                         return self.player3
+                    case _:
+                        print("error getting current player")
+                        exit(-1)
 
     def create_observation_from_res(self, res):
-        pass
+        res = {
+            "waitingFor": {
+                "title1": {
+                    "message": "Select space for ${0} tile"
+                },
+                "title2": "Select space for ocean tile",
+                "options": [
+                    {
+                        "title": "Standard projects"
+                    },
+                    {
+                        "title": "Pass for this generation"
+                    },
+                    {
+                        "title": {
+                            "message": "Mollo"
+                        }
+                    },
+                    {
+                        "title": "Sell patents",
+                        "cards": [
+                            {
+                                "name": "Testname1",
+                                "calculatedCost": 15
+                            }
+                        ]
+                    }
+                ]
+            },
+            "thisPlayer": {
+                "megaCredits": 15
+            }
+        }
+
+        this_player = res["thisPlayer"]
+        game = res["game"]
+        # waiting_for = res["waitingFor"]
+        protected_resources = this_player["protectedResources"]
+
+        microbes = res["waitingFor"]["microbes"] if "waitingFor" in res and "microbes" in res["waitingFor"] else 0
+        reserve_heat = protected_resources["heat"] if protected_resources["heat"] is not "off" else 0
+        reserve_mc = protected_resources["megacredits"] if protected_resources["megacredits"] is not "off" else 0
+        reserve_steel = protected_resources["steel"] if protected_resources["steel"] is not "off" else 0
+        reserve_titanium = protected_resources["titanium"] if protected_resources["titanium"] is not "off" else 0
+
+        plants_protected = np.zeros(1, dtype=np.int8) if this_player["protectedResources"]["plants"] == "off" else np.ones(1, dtype=np.int8)
+        plant_production_protected = np.zeros(1, dtype=np.int8) if this_player["protectedProduction"]["plants"] == "off" else np.ones(1, dtype=np.int8)
+
+        tags_dict = {
+            "city": 0,
+            "event": 1,
+            "earth": 2,
+            "plant": 3,
+            "space": 4,
+            "jovian": 5,
+            "science": 6,
+            "building": 7,
+            "power": 8,
+            "microbe": 9,
+            "animal": 10
+        }
+        for tag in this_player["tags"]:
+            tags_dict[tag["tag"]] = tag["count"]
+        tags_array = tags_dict.values()
+
+        picked_corporation = -1 # TODO can be calculated once and saved globally
+
+        current_phase = -1
+
+        available_action_options = np.zeros(NUMBER_ALL_ACTION_OPTIONS, dtype=np.int8)
+        if "options" in res["waitingFor"] and res["waitingFor"]["title"] is not "Initial Research Phase":
+            for option in res["waitingFor"]["options"]:
+                action_name = option["title"]["message"] if "message" in option["title"] else option["title"]
+                index = ACTION_OPTIONS_NAME_INDEX[action_name]
+                available_action_options[index] = 1
+
+        selected_action_index = SELECTED_ACTION_OPTION_NAME_INDEX["None"]
+        if "options" not in res["waitingFor"] or ("options" in res["waitingFor"] and res["waitingFor"]["title"] is "Initial Research Phase"):
+            message = res["waitingFor"]["title"]["message"] if "message" in res["waitingFor"]["title"] else res["waitingFor"]["title"]
+            selected_action_index = SELECTED_ACTION_OPTION_NAME_INDEX[message]
+
+        available_cards = np.zeros(NUMBER_OF_CARDS, dtype=np.int16)
+        if "options" in res["waitingFor"] and res["waitingFor"]["title"] is not "Initial Research Phase":
+            pass
+
+
+        observation = {
+            AVAILABLE_ACTION_OPTIONS: available_action_options,
+            SELECTED_ACTION_INDEX: build_discrete_i8(selected_action_index),
+            AVAILABLE_CARDS: available_cards,
+            AVAILABLE_HEAT: np.array([this_player["heat"]], dtype=np.int16),
+            AVAILABLE_MC: np.array([this_player["megaCredits"]], dtype=np.int16),
+            AVAILABLE_STEEL: np.array([this_player["steel"]], dtype=np.int16),
+            AVAILABLE_TITANIUM: np.array([this_player["titanium"]], dtype=np.int16),
+            AVAILABLE_MICROBES: np.array([microbes], dtype=np.int16),
+            STEEL_VALUE: build_box_i8(this_player["steelValue"]),
+            TITANIUM_VALUE: build_box_i8(this_player["titaniumValue"]),
+            RESERVE_HEAT: build_box_i8(reserve_heat),
+            RESERVE_MC: build_box_i8(reserve_mc),
+            RESERVE_STEEL: build_box_i8(reserve_steel),
+            RESERVE_TITANIUM: build_box_i8(reserve_titanium),
+            AVAILABLE_SPACES: np.zeros(NUMBER_SPACES, dtype=np.int8),
+            AVAILABLE_PLAYERS: np.zeros(NUMBER_PLAYERS, dtype=np.int8),
+            MULTIPLE_PLAYED_CARDS: np.zeros(NUMBER_OF_CARDS, dtype=np.int16),
+            AVAILABLE_MILESTONES: np.zeros(NUMBER_OF_MILESTONES(), dtype=np.int8),
+            AVAILABLE_AWARDS: np.zeros(NUMBER_OF_AWARDS(), dtype=np.int8),
+            AVAILABLE_STANDARD_PROJECTS: np.zeros(NUMBER_OF_STANDARD_PROJECTS(), dtype=np.int8),
+            CORPORATION_TO_TAKE_FIRST_ACTION_OF: np.int8(CORPORATIONS_WITH_FIRST_ACTION["None"]),
+            AMOUNT_OF_PLANTS_TO_REMOVE: build_box_i8(0),
+            PLAYER_TO_REMOVE_PLANTS_FROM: np.int8(NONE_PLAYER_INDEX),
+            RESOURCE_TO_REMOVE: np.int8(REMOVABLE_RESOURCES_NAMES["None"]),
+            AMOUNT_OF_RESOURCE_TO_REMOVE: build_box_i8(0),
+            PLAYER_TO_REMOVE_RESOURCE_FROM: np.int8(NONE_PLAYER_INDEX),
+            AMOUNT_OF_MC_TO_STEAL: build_box_i8(0),
+            PLAYER_TO_STEAL_MC_FROM: build_discrete_i8(NONE_PLAYER_INDEX),
+            AMOUNT_OF_STEEL_TO_STEAL: build_box_i8(0),
+            PLAYER_TO_STEAL_STEEL_FROM: build_discrete_i8(NONE_PLAYER_INDEX),
+            AMOUNT_OF_MICROBES_TO_ADD: build_box_i8(0),
+            CARD_TO_ADD_MICROBES_TO: build_discrete_i8(CARDS_MICROBES_CAN_BE_ADDED_TO["None"]),
+            WHAT_AWARD_TO_FUND: build_discrete_i8(NONE_AWARD_INDEX),
+            HOW_MANY_PLANTS_TO_CONVERT_INTO_GREENERY: build_box_i8(0),
+            FUND_AWARD_COST: build_discrete_i8(0), # 0 (none), 8, 14, 20
+            TILE_TO_SELECT_SPACE_FOR: build_discrete_i8(TILE_NAMES_OF_SELECTABLE_SPACES["None"]),
+            PRODUCTION_TO_DECREASE: build_discrete_i8(DECREASABLE_PRODUCTIONS_NAMES["None"]),
+            STEPS_TO_DECREASE_PRODUCTION: build_box_i8(0),
+            WHAT_STANDARD_PROJECT_TO_SELECT_HOW_TO_PAY_FOR: build_discrete_i8(NONE_STANDARD_PROJECT_INDEX),
+            MAX_AMOUNT_OF_HEAT_PRODUCTION_TO_DECREASE: build_box_i8(0),
+            MAX_AMOUNT_OF_ENERGY_TO_SPEND: build_box_i8(0),
+            PASS_REMAINING_DRAFT_CARDS_TO_WHOM: build_discrete_i8(NONE_PLAYER_INDEX),
+            AVAILABLE_CORPORATIONS: np.zeros(NUMBER_OF_CORPORATIONS, dtype=np.int8),
+            ACTIONS_TAKEN_THIS_ROUND: build_box_i8(this_player[ACTIONS_TAKEN_THIS_ROUND]),
+            AVAILABLE_BLUE_CARD_ACTION_COUNT: build_box_i8(this_player[AVAILABLE_BLUE_CARD_ACTION_COUNT]),
+            CARDS_IN_HAND_NUMBER: build_box_i8(this_player[CARDS_IN_HAND_NUMBER]),
+            CITIES_COUNT: build_box_i8(this_player[CITIES_COUNT]),
+            AVAILABLE_ENERGY: np.array([this_player["energy"]], dtype=np.int16),
+            ENERGY_PRODUCTION: build_box_i8(this_player[ENERGY_PRODUCTION]),
+            HEAT_PRODUCTION: build_box_i8(this_player[HEAT_PRODUCTION]),
+            MEGA_CREDIT_PRODUCTION: build_box_i8(this_player[MEGA_CREDIT_PRODUCTION]),
+            AVAILABLE_PLANTS: np.array([this_player[AVAILABLE_PLANTS]], dtype=np.int16),
+            PLANT_PRODUCTION: build_box_i8(this_player[PLANT_PRODUCTION]),
+            PLANTS_PROTECTED: plants_protected,
+            PLANT_PRODUCTION_PROTECTED: plant_production_protected,
+            STEEL_PRODUCTION: build_box_i8(this_player[STEEL_PRODUCTION]),
+            TAGS: np.array(tags_array, dtype=np.int8),
+            TERRAFORM_RATING: np.array([this_player[TERRAFORM_RATING]], dtype=np.int16),
+            TITANIUM_PRODUCTION: build_box_i8(this_player[TITANIUM_PRODUCTION]),
+            TOTAL_VICTORY_POINTS: np.array([this_player["victoryPointsBreakdown"]["total"]], dtype=np.int16),
+            PICKED_CORPORATION: build_discrete_i8(picked_corporation),
+            CARDS_IN_HAND: np.zeros(len(CARD_NAMES_INT_STR), dtype=np.int8),
+            DEALT_CARDS: np.zeros(len(CARD_NAMES_INT_STR), dtype=np.int8),
+            GENERATION: build_box_i8(game[GENERATION]),
+            OXYGEN_LEVEL: build_box_i8(game[OXYGEN_LEVEL]),
+            TEMPERATURE: build_box_i8(game[TEMPERATURE]),
+            CURRENT_PHASE: build_discrete_i8(current_phase),
+            OCCUPIED_SPACES: np.zeros(NUMBER_SPACES, dtype=np.int8),
+        }
+
+        return observation
 
     def step(self, action):
         res = None
