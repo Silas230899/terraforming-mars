@@ -31,7 +31,7 @@ class ClientGame:
 
         initial_research_phase(self.player2, self.http_connection)
         #print(json.dumps(res, indent=2))
-        exit(-1)
+        #exit(-1)
         res = initial_research_phase(self.player3, self.http_connection)
 
         while True:

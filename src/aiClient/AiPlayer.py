@@ -104,7 +104,7 @@ def send_player_input(json_body, player_id, http_connection):
 # research phase
 def initial_research_phase(player, http_connection):
     game = get_game(player.id, http_connection)
-    print(json.dumps(game, indent=2))
+    #print(json.dumps(game, indent=2))
     player.run_id = game["runId"]
     # print("run id: " + player.run_id + " player id: " + player.id)
     #print(json.dumps(game, indent=4))
@@ -1485,6 +1485,7 @@ def turn(player, http_connection):
                     break
         else:
             break
+        #print("draw again bc:", which_option["cards"][which_standard_project])
 
     if which_option["title"] == "Pass for this generation":
         pass_data = {
@@ -1687,6 +1688,7 @@ def turn(player, http_connection):
     elif which_option["title"] == "Standard projects":
         # TODO only select standard project if resources are available
         selected_standard_project = which_option["cards"][which_standard_project]["name"]
+        #print(which_option["cards"])
         standard_project_data = {
             "runId": player.run_id,
             "type": "or",
@@ -1711,6 +1713,7 @@ def turn(player, http_connection):
             #exit(-1)
             # maybe this is because no more space is available for a city
             print("No space left to place " + selected_standard_project + " 9sv8z9abüaöe9b " + res["message"])
+            #exit(1)
             return turn(player, http_connection)
         return res
     elif which_option["title"] == "Sell patents":

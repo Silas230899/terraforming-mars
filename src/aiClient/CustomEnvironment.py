@@ -28,13 +28,13 @@ NUMBER_PLAYERS_DISCRETE = 4
 
 NONE_PLAYER_INDEX = 3
 
-NUMBER_SPACES = 68 # indices 01 to 69
+NUMBER_SPACES = 63 # indices 01 to 63
 
-def NUMBER_OF_AWARDS(): return len(AWARDS_INT_STR.values())
+def NUMBER_OF_AWARDS(): return len(AWARDS_INT_STR)
 NUMBER_OF_AWARDS_DISCRETE = NUMBER_OF_AWARDS() + 1
 NONE_AWARD_INDEX = 5
-def NUMBER_OF_MILESTONES(): return len(MILESTONES_INT_STR.values())
-def NUMBER_OF_STANDARD_PROJECTS(): return len(STANDARD_PROJECTS_INDEX_NAME.values())
+def NUMBER_OF_MILESTONES(): return len(MILESTONES_INT_STR)
+def NUMBER_OF_STANDARD_PROJECTS(): return len(STANDARD_PROJECTS_INDEX_NAME)
 NUMBER_OF_STANDARD_PROJECTS_DISCRETE = NUMBER_OF_STANDARD_PROJECTS() + 1
 NONE_STANDARD_PROJECT_INDEX = 5
 
@@ -64,12 +64,28 @@ AWARDS_INT_STR: Dict[int, str] = {
     4: "Banker",
 }
 
+AWARDS_STR_INT = {
+    "Miner": 0,
+    "Scientist": 1,
+    "Landlord": 2,
+    "Thermalist": 3,
+    "Banker": 4,
+}
+
 MILESTONES_INT_STR: Dict[int, str] = {
     0: "Gardener",
     1: "Mayor",
     2: "Terraformer",
     3: "Planner",
     4: "Builder",
+}
+
+MILESTONES_STR_INT: Dict[str, int] = {
+    "Gardener": 0,
+    "Mayor": 1,
+    "Terraformer": 2,
+    "Planner": 3,
+    "Builder": 4,
 }
 
 STANDARD_PROJECTS_INDEX_NAME: Dict[int, str] = {
@@ -80,11 +96,29 @@ STANDARD_PROJECTS_INDEX_NAME: Dict[int, str] = {
     4: "City"
 }
 
-PLAYERS_ID_COLOR: Dict[int, str] = {
-    0: "red",
-    1: "green",
-    2: "yellow"
+STANDARD_PROJECTS_NAME_INDEX = {
+    "Power Plant:SP": 0,
+    "Asteroid:SP": 1,
+    "Aquifer": 2,
+    "Greenery": 3,
+    "City": 4,
 }
+
+def get_index_of_player_color_by_current_player_color(color_of_player, color_of_current_player):
+    color_order = {
+        "red": ["yellow", "red", "green"],
+        "green": ["red", "green", "yellow"],
+        "yellow": ["green", "yellow", "red"]
+    }
+    return color_order[color_of_current_player].index(color_of_player)
+
+def get_color_of_player_index_by_current_player_color(index_of_player, color_of_current_player):
+    color_order = {
+        "red": ["yellow", "red", "green"],
+        "green": ["red", "green", "yellow"],
+        "yellow": ["green", "yellow", "red"]
+    }
+    return color_order[color_of_current_player][index_of_player]
 
 SELECTED_ACTION_OPTION_NAME_INDEX: Dict[str, int] = {
     "Select space for ${0} tile": 0,
@@ -252,6 +286,309 @@ ACTION_OPTIONS_INDEX_NAME: Dict[int, str] = {
 }
 
 NUMBER_ALL_ACTION_OPTIONS = len(ACTION_OPTIONS_INDEX_NAME)
+
+CARD_NAMES_STR_INT: Dict[str, int] = {
+"Sell Patents": 0,
+"Power Plant:SP": 1,
+"Asteroid:SP": 2,
+"Buffer Gas": 3,
+"Aquifer": 4,
+"Greenery": 5,
+"City": 6,
+"Convert Plants": 7,
+"Convert Heat": 8,
+"Acquired Company": 9,
+"Adaptation Technology": 10,
+"Adapted Lichen": 11,
+"Advanced Alloys": 12,
+"Advanced Ecosystems": 13,
+"Aerobraked Ammonia Asteroid": 14,
+"AI Central": 15,
+"Air Raid": 16,
+"Algae": 17,
+"Anti-Gravity Technology": 18,
+"Ants": 19,
+"Aquifer Pumping": 20,
+"Aquifer Turbines": 21,
+"ArchaeBacteria": 22,
+"Artificial Lake": 23,
+"Artificial Photosynthesis": 24,
+"Arctic Algae": 25,
+"Asteroid": 26,
+"Asteroid Mining": 27,
+"Asteroid Mining Consortium": 28,
+"Breathing Filters": 29,
+"Bribed Committee": 30,
+"Beam From A Thorium Asteroid": 31,
+"Big Asteroid": 32,
+"Biomass Combustors": 33,
+"Birds": 34,
+"Black Polar Dust": 35,
+"Building Industries": 36,
+"Bushes": 37,
+"Business Contacts": 38,
+"Business Network": 39,
+"Callisto Penal Mines": 40,
+"Carbonate Processing": 41,
+"Capital": 42,
+"Caretaker Contract": 43,
+"Cartel": 44,
+"CEO's Favorite Project": 45,
+"Cloud Seeding": 46,
+"Colonizer Training Camp": 47,
+"Comet": 48,
+"Commercial District": 49,
+"Convoy From Europa": 50,
+"Corporate Stronghold": 51,
+"Cupola City": 52,
+"Decomposers": 53,
+"Deep Well Heating": 54,
+"Deimos Down": 55,
+"Designed Microorganisms": 56,
+"Development Center": 57,
+"Dirigibles": 58,
+"Dome Farming": 59,
+"Domed Crater": 60,
+"Dust Seals": 61,
+"Early Settlement": 62,
+"Earth Catapult": 63,
+"Earth Office": 64,
+"Eccentric Sponsor": 65,
+"Ecological Zone": 66,
+"Ecology Experts": 67,
+"Electro Catapult": 68,
+"Energy Saving": 69,
+"Energy Tapping": 70,
+"Eos Chasma National Park": 71,
+"Equatorial Magnetizer": 72,
+"Extreme-Cold Fungus": 73,
+"Farming": 74,
+"Fish": 75,
+"Flooding": 76,
+"Food Factory": 77,
+"Fuel Factory": 78,
+"Fueled Generators": 79,
+"Fusion Power": 80,
+"Ganymede Colony": 81,
+"Gene Repair": 82,
+"Geothermal Power": 83,
+"GHG Producing Bacteria": 84,
+"GHG Factories": 85,
+"Giant Ice Asteroid": 86,
+"Giant Space Mirror": 87,
+"Grass": 88,
+"Great Aquifer": 89,
+"Great Dam": 90,
+"Great Escarpment Consortium": 91,
+"Greenhouses": 92,
+"Gyropolis": 93,
+"Hackers": 94,
+"Heather": 95,
+"Heat Trappers": 96,
+"Herbivores": 97,
+"Hired Raiders": 98,
+"House Printing": 99,
+"Ice Asteroid": 100,
+"Ice Cap Melting": 101,
+"Immigrant City": 102,
+"Immigration Shuttles": 103,
+"Imported GHG": 104,
+"Imported Hydrogen": 105,
+"Imported Nitrogen": 106,
+"Import of Advanced GHG": 107,
+"Indentured Workers": 108,
+"Industrial Microbes": 109,
+"Insects": 110,
+"Insulation": 111,
+"Interstellar Colony Ship": 112,
+"Invention Contest": 113,
+"Inventors' Guild": 114,
+"Investment Loan": 115,
+"Io Mining Industries": 116,
+"Ironworks": 117,
+"Kelp Farming": 118,
+"Lagrange Observatory": 119,
+"Lake Marineris": 120,
+"Land Claim": 121,
+"Large Convoy": 122,
+"Lava Flows": 123,
+"Lava Tube Settlement": 124,
+"Lichen": 125,
+"Lightning Harvest": 126,
+"Livestock": 127,
+"Local Heat Trapping": 128,
+"Lunar Beam": 129,
+"Magnetic Field Dome": 130,
+"Magnetic Field Generators": 131,
+"Martian Industries": 132,
+"Mangrove": 133,
+"Mars University": 134,
+"Martian Rails": 135,
+"Mass Converter": 136,
+"Media Archives": 137,
+"Media Group": 138,
+"Medical Lab": 139,
+"Methane From Titan": 140,
+"Micro-Mills": 141,
+"Mine": 142,
+"Mineral Deposit": 143,
+"Miranda Resort": 144,
+"Mining Area": 145,
+"Mining Expedition": 146,
+"Mining Operations": 147,
+"Mining Quota": 148,
+"Mining Rights": 149,
+"Mohole": 150,
+"Mohole Area": 151,
+"Mohole Excavation": 152,
+"Moss": 153,
+"Natural Preserve": 154,
+"Nitrite Reducing Bacteria": 155,
+"Nitrogen-Rich Asteroid": 156,
+"Nitrophilic Moss": 157,
+"Noctis City": 158,
+"Noctis Farming": 159,
+"Nuclear Power": 160,
+"Nuclear Zone": 161,
+"Olympus Conference": 162,
+"Omnicourt": 163,
+"Open City": 164,
+"Optimal Aerobraking": 165,
+"Ore Processor": 166,
+"Permafrost Extraction": 167,
+"Peroxide Power": 168,
+"Pets": 169,
+"Phobos Space Haven": 170,
+"Physics Complex": 171,
+"Plantation": 172,
+"Polar Industries": 173,
+"Power Grid": 174,
+"Power Infrastructure": 175,
+"Power Plant": 176,
+"Power Supply Consortium": 177,
+"Predators": 178,
+"Protected Habitats": 179,
+"Protected Valley": 180,
+"Psychrophiles": 181,
+"Quantum Extractor": 182,
+"Rad-Chem Factory": 183,
+"Rad-Suits": 184,
+"Regolith Eaters": 185,
+"Release of Inert Gases": 186,
+"Research": 187,
+"Research Outpost": 188,
+"Restricted Area": 189,
+"Robotic Workforce": 190,
+"Rover Construction": 191,
+"Sabotage": 192,
+"Satellites": 193,
+"Search For Life": 194,
+"Security Fleet": 195,
+"Self-Sufficient Settlement": 196,
+"Sister Planet Support": 197,
+"Small Animals": 198,
+"Soil Factory": 199,
+"Solar Power": 200,
+"Solarnet": 201,
+"Space Elevator": 202,
+"Strip Mine": 203,
+"Subterranean Reservoir": 204,
+"Shuttles": 205,
+"Solar Wind Power": 206,
+"Soletta": 207,
+"Space Mirrors": 208,
+"Space Station": 209,
+"Special Design": 210,
+"Sponsors": 211,
+"Steelworks": 212,
+"Standard Technology": 213,
+"Symbiotic Fungus": 214,
+"Tardigrades": 215,
+"Technology Demonstration": 216,
+"Tectonic Stress Power": 217,
+"Terraforming Ganymede": 218,
+"Titanium Mine": 219,
+"Toll Station": 220,
+"Towing A Comet": 221,
+"Trans-Neptune Probe": 222,
+"Trees": 223,
+"Tropical Resort": 224,
+"Tundra Farming": 225,
+"Underground City": 226,
+"Underground Detonations": 227,
+"Urbanized Area": 228,
+"Vesta Shipyard": 229,
+"Viral Enhancers": 230,
+"Virus": 231,
+"Water Import From Europa": 232,
+"Water Splitting Plant": 233,
+"Wave Power": 234,
+"Windmills": 235,
+"Worms": 236,
+"Zeppelins": 237,
+"Beginner Corporation": 238,
+"CrediCor": 239,
+"EcoLine": 240,
+"Helion": 241,
+"Interplanetary Cinematics": 242,
+"Inventrix": 243,
+"Mining Guild": 244,
+"PhoboLog": 245,
+"Saturn Systems": 246,
+"Teractor": 247,
+"Tharsis Republic": 248,
+"Thorgate": 249,
+"United Nations Mars Initiative": 250,
+"Acquired Space Agency": 251,
+"Allied Bank": 252,
+"Biofuels": 253,
+"Biolab": 254,
+"Biosphere Support": 255,
+"Business Empire": 256,
+"Cheung Shing MARS": 257,
+"Donation": 258,
+"Experimental Forest": 259,
+"Galilean Mining": 260,
+"Huge Asteroid": 261,
+"Io Research Outpost": 262,
+"Loan": 263,
+"Martian Survey": 264,
+"Metal-Rich Asteroid": 265,
+"Metals Company": 266,
+"Nitrogen Shipment": 267,
+"Orbital Construction Yard": 268,
+"Point Luna": 269,
+"Power Generation": 270,
+"Research Coordination": 271,
+"Research Network": 272,
+"Robinson Industries": 273,
+"SF Memorial": 274,
+"Smelting Plant": 275,
+"Society Support": 276,
+"Space Hotels": 277,
+"Supplier": 278,
+"Supply Drop": 279,
+"UNMI Contractor": 280,
+"Valley Trust": 281,
+"Vitor": 282,
+"Arcadian Communities": 283,
+"Astrodrill": 284,
+"Advertising": 285,
+"Pharmacy Union": 286,
+"Industrial Center": 287,
+"Factorum": 288,
+"Lakefront Resorts": 289,
+"Mons Insurance": 290,
+"Splice": 291,
+"Philares": 292,
+"Recyclon": 293,
+"Manutech": 294,
+"Self-replicating Robots": 295,
+"Polyphemos": 296,
+"Penguins": 297,
+"Small Asteroid": 298,
+"Snow Algae": 299
+}
 
 CARD_NAMES_INT_STR: Dict[int, str] = {
 0: "Sell Patents",
@@ -659,6 +996,562 @@ def build_box_i8(value):
 def build_discrete_i8(value):
     return np.int8(value)
 
+# uses int16
+def get_result_array_from_available_cards(available_cards):
+    result = np.zeros(NUMBER_OF_CARDS, dtype=np.int16)
+    for card in available_cards:
+        card_name = card["name"]
+        card_index = CARD_NAMES_STR_INT[card_name]
+        result[card_index] = 1
+    return result
+
+def get_available_project_cards(res):
+    is_action_option = "options" in res["waitingFor"] and res["waitingFor"]["title"] is not "Initial Research Phase"
+    cards = {}
+    if is_action_option:
+        available_options = res["waitingFor"]["options"]
+        for option in available_options:
+            message = option["title"]["message"] if "message" in option["title"] else option["title"]
+            if message == "Play project card":
+                cards = option["cards"]
+                break
+    else:
+        message = res["waitingFor"]["title"]["message"] if "message" in res["waitingFor"]["title"] else res["waitingFor"]["title"]
+        if message == "Play project card":
+            cards = res["waitingFor"]["cards"]
+    return get_result_array_from_available_cards(cards)
+
+def get_available_cards(res):
+    is_action_option = "options" in res["waitingFor"] and res["waitingFor"]["title"] is not "Initial Research Phase"
+    cards = {}
+    if not is_action_option:
+        message = res["waitingFor"]["title"]["message"] if "message" in res["waitingFor"]["title"] else res["waitingFor"]["title"]
+        match message:
+            case("Select card to add ${0} ${1}",  # geschenkt
+                 "Select builder card to copy",
+                 "Select 1 card(s) to keep",
+                 "Select card to remove 1 Microbe(s)",
+                 "Select card to remove 1 Animal(s)",
+                 "Select prelude card to play",
+                 "Select a card to keep and pass the rest to ${0}",
+                 "Select card(s) to buy"):
+                cards = res["waitingFor"]["cards"]
+    return get_result_array_from_available_cards(cards)
+
+def get_available_cards_from_option(res, option_message):
+    is_action_option = "options" in res["waitingFor"] and res["waitingFor"]["title"] is not "Initial Research Phase"
+    cards = {}
+    if is_action_option:
+        available_options = res["waitingFor"]["options"]
+        for option in available_options:
+            message = option["title"]["message"] if "message" in option["title"] else option["title"]
+            if message == option_message:
+                cards = option["cards"]
+                break
+    return get_result_array_from_available_cards(cards)
+
+def get_available_cards_to_discard(res):
+    return get_available_cards_from_option(res, "Select a card to discard")
+
+def get_available_cards_to_add_3_microbes_to(res):
+    return get_available_cards_from_option(res, "Add 3 microbes to a card")
+
+def get_available_cards_to_add_2_microbes_to(res):
+    return get_available_cards_from_option(res, "Select card to add 2 microbes")
+
+def get_available_cards_to_remove_2_animals_from(res):
+    return get_available_cards_from_option(res, "Select card to remove 2 Animal(s)")
+
+def get_available_cards_to_add_2_animals_to(res):
+    return get_available_cards_from_option(res, "Select card to add 2 animals")
+
+def get_available_cards_to_add_4_animals_to(res):
+    return get_available_cards_from_option(res, "Select card to add 4 animals")
+
+def get_available_cards_to_add_2_animals_to_2(res):
+    return get_available_cards_from_option(res, "Add 2 animals to a card")
+
+def get_available_spaces(res):
+    result = np.zeros(NUMBER_SPACES, dtype=np.int8)
+    is_action_option = "options" in res["waitingFor"] and res["waitingFor"]["title"] is not "Initial Research Phase"
+    available_spaces_ids = {}
+    if is_action_option:
+        available_options = res["waitingFor"]["options"]
+        for option in available_options:
+            message = option["title"]["message"] if "message" in option["title"] else option["title"]
+            if message == "Select space for greenery tile" or message == "Convert ${0} plants into greenery":
+                # theoretisch könnten beide optionen gleichzeitig verfügbar sein was es womöglich crashen würde
+                # aber ich konnte nie beobachten dass das vorkam
+                available_spaces_ids = option["spaces"]
+                break
+    else:
+        message = res["waitingFor"]["title"]["message"] if "message" in res["waitingFor"]["title"] else res["waitingFor"]["title"]
+        match message:
+            case ("Select space for ${0} tile",
+                  "Select space for ocean tile",
+                  "Select space reserved for ocean to place greenery tile",
+                  "Select a space with a steel or titanium bonus",
+                  "Select space adjacent to a city tile",
+                  "Select place next to no other tile for city",
+                  "Select space next to greenery for special tile",
+                  "Select either Tharsis Tholus, Ascraeus Mons, Pavonis Mons or Arsia Mons",
+                  "Select a space with a steel or titanium bonus adjacent to one of your tiles",
+                  "Select space next to at least 2 other city tiles",
+                  "Select a land space to place an ocean tile",
+                  "Select space for city tile",
+                  "Select space for greenery tile",
+                  "Select space for ocean from temperature increase",
+                  "Select space for claim",
+                  "Select space for first ocean",
+                  "Select space for second ocean",
+                  "Select space for special city tile"):
+                available_spaces_ids = res["waitingFor"]["spaces"]
+    for space_id in available_spaces_ids:
+        space_index = int(space_id) - 1
+        result[space_index] = 1
+    return result
+
+def get_available_players(res):
+    result = np.zeros(NUMBER_SPACES, dtype=np.int8)
+    is_action_option = "options" in res["waitingFor"] and res["waitingFor"]["title"] is not "Initial Research Phase"
+    available_player_colors = {}
+    if is_action_option:
+        available_options = res["waitingFor"]["options"]
+        for option in available_options:
+            message = option["title"]["message"] if "message" in option["title"] else option["title"]
+            if message == "Select adjacent player to remove 4 M€ from":
+                available_player_colors = option["players"]
+    else:
+        message = res["waitingFor"]["title"]["message"] if "message" in res["waitingFor"]["title"] else \
+        res["waitingFor"]["title"]
+        if message == "Select player to decrease ${0} production by ${1} step(s)":
+            available_player_colors = res["waitingFor"]["players"]
+    color_of_this_player = res["thisPlayer"]["color"]
+    for player_color in available_player_colors:
+        index = get_index_of_player_color_by_current_player_color(player_color, color_of_this_player)
+        result[index] = 1
+    return result
+
+def get_available_cards_with_actions(res):
+    result = np.zeros(NUMBER_OF_CARDS, dtype=np.int16)
+    is_action_option = "options" in res["waitingFor"] and res["waitingFor"]["title"] is not "Initial Research Phase"
+    if is_action_option:
+        available_options = res["waitingFor"]["options"]
+        for option in available_options:
+            message = option["title"]["message"] if "message" in option["title"] else option["title"]
+            if message == "Perform an action from a played card":
+                available_cards = option["cards"]
+                for card in available_cards:
+                    index_of_card = CARD_NAMES_STR_INT[card["name"]]
+                    result[index_of_card] = 1
+                break
+    return result
+
+def get_available_milestones(res):
+    result = np.zeros(NUMBER_OF_MILESTONES(), dtype=np.int8)
+    is_action_option = "options" in res["waitingFor"] and res["waitingFor"]["title"] is not "Initial Research Phase"
+    if is_action_option:
+        available_options = res["waitingFor"]["options"]
+        for option in available_options:
+            message = option["title"]["message"] if "message" in option["title"] else option["title"]
+            if message == "Claim a milestone":
+                available_milestones = option["options"]
+                for milestone in available_milestones:
+                    index_of_milestone = MILESTONES_STR_INT[milestone["title"]]
+                    result[index_of_milestone] = 1
+                break
+    return result
+
+def get_available_awards(res):
+    result = np.zeros(NUMBER_OF_AWARDS(), dtype=np.int8)
+    is_action_option = "options" in res["waitingFor"] and res["waitingFor"]["title"] is not "Initial Research Phase"
+    if is_action_option:
+        available_options = res["waitingFor"]["options"]
+        for option in available_options:
+            message = option["title"]["message"] if "message" in option["title"] else option["title"]
+            if message == "Fund an award (${0} M€)":
+                available_awards = option["options"]
+                for award in available_awards:
+                    index_of_award = AWARDS_STR_INT[award["title"]]
+                    result[index_of_award] = 1
+                break
+    return result
+
+def get_corporation_to_take_first_action_of(res):
+    corporation_index = CORPORATIONS_WITH_FIRST_ACTION["None"]
+    is_action_option = "options" in res["waitingFor"] and res["waitingFor"]["title"] is not "Initial Research Phase"
+    if is_action_option:
+        available_options = res["waitingFor"]["options"]
+        for option in available_options:
+            message = option["title"]["message"] if "message" in option["title"] else option["title"]
+            if message == "Take first action of ${0} corporation":
+                corporation_name = option["title"]["data"][0]["value"]
+                corporation_index = CORPORATIONS_WITH_FIRST_ACTION[corporation_name]
+                break
+    result = build_discrete_i8(corporation_index)
+    return result
+
+def get_available_standard_projects(res):
+    result = np.zeros(NUMBER_OF_STANDARD_PROJECTS(), dtype=np.int8)
+    is_action_option = "options" in res["waitingFor"] and res["waitingFor"]["title"] is not "Initial Research Phase"
+    if is_action_option:
+        available_options = res["waitingFor"]["options"]
+        for option in available_options:
+            message = option["title"]["message"] if "message" in option["title"] else option["title"]
+            if message == "Standard projects":
+                available_standard_projects = option["options"]
+                for standard_project in available_standard_projects:
+                    if "isDisabled" not in standard_project or ("isDisabled" in standard_project and standard_project["isDisabled"] == "False"):
+                        index_of_standard_project = STANDARD_PROJECTS_NAME_INDEX[standard_project["name"]]
+                        result[index_of_standard_project] = 1
+                break
+    return result
+
+def get_amount_of_plants_to_remove(res):
+    amount = 0
+    is_action_option = "options" in res["waitingFor"] and res["waitingFor"]["title"] is not "Initial Research Phase"
+    if is_action_option:
+        available_options = res["waitingFor"]["options"]
+        for option in available_options:
+            message = option["title"]["message"] if "message" in option["title"] else option["title"]
+            if message == "Remove ${0} plants from ${1}":
+                amount = option["title"]["data"][0]["value"]
+                break
+    result = build_box_i8(amount)
+    return result
+
+def get_player_to_remove_plants_from(res):
+    player_index = NONE_PLAYER_INDEX
+    option = get_option_from_action_options(res, "Remove ${0} plants from ${1}")
+    if option:
+        player_color = option["title"]["data"][1]["value"]
+        color_of_this_player = res["thisPlayer"]["color"]
+        player_index = get_index_of_player_color_by_current_player_color(player_color, color_of_this_player)
+    result = build_discrete_i8(player_index)
+    return result
+
+def get_resource_to_remove(res):
+    resource_index = REMOVABLE_RESOURCES_NAMES["None"]
+    option = get_option_from_action_options(res, "Remove ${0} ${1} from ${2}")
+    if option:
+        resource_name = option["title"]["data"][0]["value"]
+        resource_index = REMOVABLE_RESOURCES_NAMES[resource_name]
+    result = build_discrete_i8(resource_index)
+    return result
+
+def get_amount_of_resource_to_remove(res):
+    amount = 0
+    option = get_option_from_action_options(res, "Remove ${0} ${1} from ${2}")
+    if option:
+        amount = option["title"]["data"][1]["value"]
+    result = build_box_i8(amount)
+    return result
+
+def get_player_to_remove_resource_from(res, action_option):
+    player_index = NONE_PLAYER_INDEX
+    if action_option:
+        player_color = action_option["title"]["data"][2]["value"]
+        color_of_this_player = res["thisPlayer"]["color"]
+        player_index = get_index_of_player_color_by_current_player_color(player_color, color_of_this_player)
+    result = build_discrete_i8(player_index)
+    return result
+
+
+def get_option_from_action_options(res, option_name):
+    is_action_option = "options" in res["waitingFor"] and res["waitingFor"]["title"] is not "Initial Research Phase"
+    if is_action_option:
+        available_options = res["waitingFor"]["options"]
+        for option in available_options:
+            message = option["title"]["message"] if "message" in option["title"] else option["title"]
+            if message == option_name:
+                return option
+    return None
+
+
+def calc_payment_for_project_card(action,
+                                  current_state,
+                                  cost,
+                                  can_pay_with_heat,
+                                  can_pay_with_steel,
+                                  can_pay_with_titanium,
+                                  can_pay_with_microbes,
+                                  reserve_heat,
+                                  reserve_mc,
+                                  reserve_titanium,
+                                  reserve_steel):
+
+    pay_heat_percentage = action[PAY_HEAT_PERCENTAGE]
+    pay_mc_percentage = action[PAY_MC_PERCENTAGE]
+    pay_steel_percentage = action[PAY_STEEL_PERCENTAGE]
+    pay_titanium_percentage = action[PAY_TITANIUM_PERCENTAGE]
+    pay_microbes_percentage = action[PAY_MICROBES_PERCENTAGE]
+
+    available_heat = current_state["thisPlayer"]["heat"]
+    available_mc = current_state["thisPlayer"]["megaCredits"]
+    available_steel = current_state["thisPlayer"]["steel"]
+    steel_value = current_state["thisPlayer"]["steelValue"]
+    available_titanium = current_state["thisPlayer"]["titanium"]
+    titanium_value = current_state["thisPlayer"]["titaniumValue"]
+    available_microbes = current_state["waitingFor"]["microbes"]
+    microbes_value = 2
+
+    available_heat -= reserve_heat
+    available_mc -= reserve_mc
+    available_titanium -= reserve_titanium
+    available_steel -= reserve_steel
+
+    pay_heat = math.floor(pay_heat_percentage * available_heat) * (1 if can_pay_with_heat else 0)
+    pay_mc = math.floor(pay_mc_percentage * available_mc)
+    pay_steel = math.floor(pay_steel_percentage * available_steel) * (1 if can_pay_with_steel else 0)
+    pay_titanium = math.floor(pay_titanium_percentage * available_titanium) * (1 if can_pay_with_titanium else 0)
+    pay_microbes = math.floor(pay_microbes_percentage * available_microbes) * (1 if can_pay_with_microbes else 0)
+
+    payment = pay_heat + pay_mc + pay_steel * steel_value + pay_titanium * titanium_value + pay_microbes * microbes_value
+
+    if payment != cost:
+        pay_heat = 0
+        pay_mc = 0
+        pay_steel = 0
+        pay_titanium = 0
+        pay_microbes = 0
+
+        available_payments = ["mc"]
+        if can_pay_with_heat: available_payments.append("heat")
+        if can_pay_with_steel: available_payments.append("steel")
+        if can_pay_with_titanium: available_payments.append("titanium")
+        if can_pay_with_microbes: available_payments.append("microbes")
+        random.shuffle(available_payments)  # random order
+
+        remaining_cost = cost
+        for payment in available_payments:
+            if remaining_cost <= 0:
+                break
+            elif payment == "mc":
+                if available_mc >= remaining_cost:
+                    pay_mc = remaining_cost
+                    break
+                else:
+                    pay_mc = available_mc
+                    remaining_cost = remaining_cost - available_mc
+            elif payment == "heat":
+                if available_heat >= remaining_cost:
+                    pay_heat = remaining_cost
+                    break
+                else:
+                    pay_heat = available_heat
+                    remaining_cost = remaining_cost - available_heat
+            elif payment == "steel":
+                if available_steel * steel_value >= remaining_cost:
+                    pay_steel = math.ceil(remaining_cost / steel_value)
+                    break
+                else:
+                    pay_steel = available_steel
+                    remaining_cost = remaining_cost - available_steel * steel_value
+            elif payment == "titanium":
+                if available_titanium * titanium_value >= remaining_cost:
+                    pay_titanium = math.ceil(remaining_cost / titanium_value)
+                    break
+                else:
+                    pay_titanium = available_titanium
+                    remaining_cost = remaining_cost - available_titanium * titanium_value
+            elif payment == "microbes":
+                if available_microbes * microbes_value >= remaining_cost:
+                    pay_microbes = math.ceil(remaining_cost / microbes_value)
+                    break
+                else:
+                    pay_microbes = available_microbes
+                    remaining_cost = remaining_cost - available_microbes * microbes_value
+
+    return pay_heat, pay_mc, pay_steel, pay_titanium, pay_microbes
+
+
+def create_or_resp_option(run_id, index):
+    return {
+        "runId": run_id,
+        "type": "or",
+        "index": index,
+        "response": {
+            "type": "option"
+        }
+    }
+
+
+def create_initial_cards_card_card_card_response(run_id, corporation_card_name, prelude_cards_names, project_cards_names):
+    return {
+        "runId": run_id,
+        "type": "initialCards",
+        "responses": [
+            {
+                "type": "card",
+                "cards": [corporation_card_name]
+            }, {
+                "type": "card",
+                "cards": prelude_cards_names
+            }, {
+                "type": "card",
+                "cards": project_cards_names
+            }]
+    }
+
+
+def create_or_resp_project_card_payment(run_id, index, card_name, heat, mc, steel, titanium, microbes):
+    return {
+        "runId": run_id,
+        "type": "or",
+        "index": index,
+        "response": {
+            "type": "projectCard",
+            "card": card_name,
+            "payment": {
+                "heat":heat,
+                "megaCredits": mc,
+                "steel":steel,
+                "titanium":titanium,
+                "plants":0,
+                "microbes":microbes,
+                "floaters":0,
+                "lunaArchivesScience":0,
+                "spireScience":0,
+                "seeds":0,
+                "auroraiData":0,
+                "graphene":0,
+                "kuiperAsteroids":0,
+                "corruption":0
+            }
+        }
+    }
+
+
+def create_or_resp_card_cards(run_id, index, card_names):
+    return {
+        "runId": run_id,
+        "type": "or",
+        "index": index,
+        "response": {
+            "type": "card",
+            "cards": card_names
+        }
+    }
+
+
+def create_space_id_response(run_id, selected_space):
+    return {
+        "runId": run_id,
+        "type": "space",
+        "spaceId": selected_space
+    }
+
+
+def create_or_resp_space_space_id(run_id, index, selected_space):
+    return {
+        "runId": run_id,
+        "type": "or",
+        "index": index,
+        "response": {
+            "type": "space",
+            "spaceId": selected_space
+        }
+    }
+
+
+def create_or_resp_player_player(run_id, index, selected_player):
+    return {
+        "runId": run_id,
+        "type": "or",
+        "index": index,
+        "response": {
+            "type": "player",
+            "player": selected_player
+        }
+    }
+
+
+def create_or_resp_or_resp_option(run_id, action_index, index2):
+    return {
+        "runId": run_id,
+        "type": "or",
+        "index": action_index,
+        "response": {
+            "type": "or",
+            "index": index2,
+            "response": {
+                "type": "option"
+            }
+        }
+    }
+
+
+def create_player_response(run_id, selected_player):
+    return {
+        "runId": run_id,
+        "type": "player",
+        "player": selected_player
+    }
+
+
+def create_cards_response(run_id, selected_cards_names):
+    return {
+        "runId": run_id,
+        "type": "card",
+        "cards": selected_cards_names
+    }
+
+
+def create_payment_response(run_id, heat, mc, steel, titanium):
+    return {
+        "runId": run_id,
+        "type": "payment",
+        "payment": {
+            "heat": heat,
+            "megaCredits": mc,
+            "steel": steel,
+            "titanium": titanium,
+            "plants": 0,
+            "microbes": 0,
+            "floaters": 0,
+            "lunaArchivesScience": 0,
+            "spireScience": 0,
+            "seeds": 0,
+            "auroraiData": 0,
+            "graphene": 0,
+            "kuiperAsteroids": 0,
+            "corruption": 0
+        }
+    }
+
+
+def create_amount_response(run_id, amount):
+    return {
+        "runId": run_id,
+        "type": "amount",
+        "amount": amount
+    }
+
+
+def create_project_card_payment_response(run_id, card_name, heat, mc, steel, titanium, microbes):
+    select_card_data = {
+        "runId": run_id,
+        "type": "projectCard",
+        "card": card_name,
+        "payment": {
+            "heat": heat,
+            "megaCredits": mc,
+            "steel": steel,
+            "titanium": titanium,
+            "plants": 0,
+            "microbes": microbes,
+            "floaters": 0,
+            "lunaArchivesScience": 0,
+            "spireScience": 0,
+            "seeds": 0,
+            "auroraiData": 0,
+            "graphene": 0,
+            "kuiperAsteroids": 0,
+            "corruption": 0
+        }
+    }
+
+
 class CustomEnv(gym.Env):
     http_connection = None
 
@@ -703,8 +1596,16 @@ class CustomEnv(gym.Env):
         self.observation_space = spaces.Dict({
             AVAILABLE_ACTION_OPTIONS: MultiBinary(NUMBER_ALL_ACTION_OPTIONS),
             SELECTED_ACTION_INDEX: Discrete(NUMBER_ALL_ACTIONS),
-            AVAILABLE_CARDS: MultiBinary(NUMBER_OF_CARDS), # to choose from
-            # AVAILABLE_PROJECT_CARDS: MultiBinary(NUMBER_OF_CARDS),
+            AVAILABLE_CARDS: MultiBinary(NUMBER_OF_CARDS),
+            AVAILABLE_PROJECT_CARDS: MultiBinary(NUMBER_OF_CARDS),
+            AVAILABLE_CARDS_TO_DISCARD: MultiBinary(NUMBER_OF_CARDS),
+            AVAILABLE_CARDS_TO_ADD_3_MICROBES_TO: MultiBinary(NUMBER_OF_CARDS),
+            AVAILABLE_CARDS_TO_ADD_2_MICROBES_TO: MultiBinary(NUMBER_OF_CARDS),
+            AVAILABLE_CARDS_TO_REMOVE_2_ANIMALS_FROM: MultiBinary(NUMBER_OF_CARDS),
+            AVAILABLE_CARDS_TO_ADD_2_ANIMALS_TO: MultiBinary(NUMBER_OF_CARDS),
+            AVAILABLE_CARDS_TO_ADD_4_ANIMALS_TO: MultiBinary(NUMBER_OF_CARDS),
+            AVAILABLE_CARDS_TO_ADD_2_ANIMALS_TO_2: MultiBinary(NUMBER_OF_CARDS),
+
             AVAILABLE_HEAT: Box(0, 500, (1,), np.int16),
             AVAILABLE_MC: Box(0, 500, (1,), np.int16),
             AVAILABLE_STEEL: Box(0, 500, (1,), np.int16),
@@ -718,7 +1619,7 @@ class CustomEnv(gym.Env):
             RESERVE_TITANIUM: Box(0, 50, (1,), np.int8),
             AVAILABLE_SPACES: MultiBinary(NUMBER_SPACES),
             AVAILABLE_PLAYERS: MultiBinary(NUMBER_PLAYERS),
-            MULTIPLE_PLAYED_CARDS: MultiBinary(NUMBER_OF_CARDS),
+            PLAYED_CARDS_WITH_ACTIONS: MultiBinary(NUMBER_OF_CARDS),
             AVAILABLE_MILESTONES: MultiBinary(NUMBER_OF_MILESTONES()),
             AVAILABLE_AWARDS: MultiBinary(NUMBER_OF_AWARDS()),
             AVAILABLE_STANDARD_PROJECTS: MultiBinary(NUMBER_OF_STANDARD_PROJECTS()),
@@ -809,6 +1710,15 @@ class CustomEnv(gym.Env):
         self.action_space = spaces.Dict({
             SELECTED_ACTION_OPTION_INDEX: Discrete(NUMBER_ALL_ACTION_OPTIONS),
             SELECTED_CARD_INDEX: Discrete(NUMBER_OF_CARDS),
+            SELECTED_PROJECT_CARD_INDEX: Discrete(NUMBER_OF_CARDS),
+            SELECTED_CARD_TO_DISCARD_INDEX: Discrete(NUMBER_OF_CARDS),
+            SELECTED_CARD_TO_ADD_3_MICROBES_TO_INDEX: Discrete(NUMBER_OF_CARDS),
+            SELECTED_CARD_TO_ADD_2_MICROBES_TO_INDEX: Discrete(NUMBER_OF_CARDS),
+            SELECTED_CARD_TO_REMOVE_2_ANIMALS_FROM_INDEX: Discrete(NUMBER_OF_CARDS),
+            SELECTED_CARD_TO_ADD_2_ANIMALS_TO_INDEX: Discrete(NUMBER_OF_CARDS),
+            SELECTED_CARD_TO_ADD_4_ANIMALS_TO_INDEX: Discrete(NUMBER_OF_CARDS),
+            SELECTED_CARD_TO_ADD_2_ANIMALS_TO_2_INDEX: Discrete(NUMBER_OF_CARDS),
+
             PAY_HEAT_PERCENTAGE: Box(0, 1, (1,), np.float32),
             PAY_MC_PERCENTAGE: Box(low=0, high=1, shape=(1,), dtype=np.float32),
             PAY_STEEL_PERCENTAGE: Box(0, 1, (1,), np.float32),
@@ -817,7 +1727,7 @@ class CustomEnv(gym.Env):
             MULTIPLE_SELECTED_CARDS: MultiBinary(NUMBER_OF_CARDS),
             SELECTED_SPACE_INDEX: Discrete(NUMBER_SPACES),
             SELECTED_PLAYER: Discrete(NUMBER_PLAYERS_DISCRETE),
-            SELECTED_CARD_FROM_PLAYED_CARDS_INDEX: Discrete(NUMBER_OF_CARDS),
+            SELECTED_CARD_WITH_ACTION_INDEX: Discrete(NUMBER_OF_CARDS),
             SELECTED_MILESTONE_INDEX: Discrete(NUMBER_OF_MILESTONES()),
             SELECTED_AWARD_INDEX: Discrete(NUMBER_OF_AWARDS_DISCRETE),
             SELECTED_STANDARD_PROJECT_INDEX: Discrete(NUMBER_OF_STANDARD_PROJECTS()),
@@ -1073,8 +1983,10 @@ class CustomEnv(gym.Env):
 
         current_phase = -1
 
+        is_action_option = "options" in res["waitingFor"] and res["waitingFor"]["title"] is not "Initial Research Phase"
+
         available_action_options = np.zeros(NUMBER_ALL_ACTION_OPTIONS, dtype=np.int8)
-        if "options" in res["waitingFor"] and res["waitingFor"]["title"] is not "Initial Research Phase":
+        if is_action_option:
             for option in res["waitingFor"]["options"]:
                 action_name = option["title"]["message"] if "message" in option["title"] else option["title"]
                 index = ACTION_OPTIONS_NAME_INDEX[action_name]
@@ -1085,15 +1997,43 @@ class CustomEnv(gym.Env):
             message = res["waitingFor"]["title"]["message"] if "message" in res["waitingFor"]["title"] else res["waitingFor"]["title"]
             selected_action_index = SELECTED_ACTION_OPTION_NAME_INDEX[message]
 
-        available_cards = np.zeros(NUMBER_OF_CARDS, dtype=np.int16)
-        if "options" in res["waitingFor"] and res["waitingFor"]["title"] is not "Initial Research Phase":
-            pass
+        available_cards = get_available_cards(res)
 
+        available_project_cards = get_available_project_cards(res)
+
+        available_cards_to_discard = get_available_cards_to_discard(res)
+
+        available_cards_to_add_3_microbes_to = get_available_cards_to_add_3_microbes_to(res)
+
+        available_cards_to_add_2_microbes_to = get_available_cards_to_add_2_microbes_to(res)
+
+        available_cards_to_remove_2_animals_from = get_available_cards_to_remove_2_animals_from(res)
+
+        available_cards_to_add_2_animals_to = get_available_cards_to_add_2_animals_to(res)
+
+        available_cards_to_add_4_animals_to = get_available_cards_to_add_4_animals_to(res)
+
+        available_cards_to_add_2_animals_to_2 = get_available_cards_to_add_2_animals_to_2(res)
+
+        action_options = {}
+        if "options" in res["waitingFor"] and res["waitingFor"]["title"] is not "Initial Research Phase":
+            available_options = res["waitingFor"]["options"]
+            for option in available_options:
+                message = option["title"]["message"] if "message" in option["title"] else option["title"]
+                action_options[message] = option
 
         observation = {
             AVAILABLE_ACTION_OPTIONS: available_action_options,
             SELECTED_ACTION_INDEX: build_discrete_i8(selected_action_index),
             AVAILABLE_CARDS: available_cards,
+            AVAILABLE_PROJECT_CARDS: available_project_cards,
+            AVAILABLE_CARDS_TO_DISCARD: available_cards_to_discard,
+            AVAILABLE_CARDS_TO_ADD_3_MICROBES_TO: available_cards_to_add_3_microbes_to,
+            AVAILABLE_CARDS_TO_ADD_2_MICROBES_TO: available_cards_to_add_2_microbes_to,
+            AVAILABLE_CARDS_TO_REMOVE_2_ANIMALS_FROM: available_cards_to_remove_2_animals_from,
+            AVAILABLE_CARDS_TO_ADD_2_ANIMALS_TO: available_cards_to_add_2_animals_to,
+            AVAILABLE_CARDS_TO_ADD_4_ANIMALS_TO: available_cards_to_add_4_animals_to,
+            AVAILABLE_CARDS_TO_ADD_2_ANIMALS_TO_2: available_cards_to_add_2_animals_to_2,
             AVAILABLE_HEAT: np.array([this_player["heat"]], dtype=np.int16),
             AVAILABLE_MC: np.array([this_player["megaCredits"]], dtype=np.int16),
             AVAILABLE_STEEL: np.array([this_player["steel"]], dtype=np.int16),
@@ -1105,18 +2045,19 @@ class CustomEnv(gym.Env):
             RESERVE_MC: build_box_i8(reserve_mc),
             RESERVE_STEEL: build_box_i8(reserve_steel),
             RESERVE_TITANIUM: build_box_i8(reserve_titanium),
-            AVAILABLE_SPACES: np.zeros(NUMBER_SPACES, dtype=np.int8),
-            AVAILABLE_PLAYERS: np.zeros(NUMBER_PLAYERS, dtype=np.int8),
-            MULTIPLE_PLAYED_CARDS: np.zeros(NUMBER_OF_CARDS, dtype=np.int16),
-            AVAILABLE_MILESTONES: np.zeros(NUMBER_OF_MILESTONES(), dtype=np.int8),
-            AVAILABLE_AWARDS: np.zeros(NUMBER_OF_AWARDS(), dtype=np.int8),
-            AVAILABLE_STANDARD_PROJECTS: np.zeros(NUMBER_OF_STANDARD_PROJECTS(), dtype=np.int8),
-            CORPORATION_TO_TAKE_FIRST_ACTION_OF: np.int8(CORPORATIONS_WITH_FIRST_ACTION["None"]),
-            AMOUNT_OF_PLANTS_TO_REMOVE: build_box_i8(0),
-            PLAYER_TO_REMOVE_PLANTS_FROM: np.int8(NONE_PLAYER_INDEX),
-            RESOURCE_TO_REMOVE: np.int8(REMOVABLE_RESOURCES_NAMES["None"]),
-            AMOUNT_OF_RESOURCE_TO_REMOVE: build_box_i8(0),
-            PLAYER_TO_REMOVE_RESOURCE_FROM: np.int8(NONE_PLAYER_INDEX),
+            AVAILABLE_SPACES: get_available_spaces(res),
+            AVAILABLE_PLAYERS: get_available_players(res),
+            PLAYED_CARDS_WITH_ACTIONS: get_available_cards_with_actions(res),
+            AVAILABLE_MILESTONES: get_available_milestones(res),
+            AVAILABLE_AWARDS: get_available_awards(res),
+            AVAILABLE_STANDARD_PROJECTS: get_available_standard_projects(res),
+            CORPORATION_TO_TAKE_FIRST_ACTION_OF: get_corporation_to_take_first_action_of(res),
+            AMOUNT_OF_PLANTS_TO_REMOVE: get_amount_of_plants_to_remove(res),
+            PLAYER_TO_REMOVE_PLANTS_FROM: get_player_to_remove_plants_from(res),
+            RESOURCE_TO_REMOVE: get_resource_to_remove(res),
+            AMOUNT_OF_RESOURCE_TO_REMOVE: get_amount_of_resource_to_remove(res),
+            PLAYER_TO_REMOVE_RESOURCE_FROM: get_player_to_remove_resource_from(res, action_options["Remove ${0} ${1} from ${2}"]),
+
             AMOUNT_OF_MC_TO_STEAL: build_box_i8(0),
             PLAYER_TO_STEAL_MC_FROM: build_discrete_i8(NONE_PLAYER_INDEX),
             AMOUNT_OF_STEEL_TO_STEAL: build_box_i8(0),
@@ -1133,6 +2074,7 @@ class CustomEnv(gym.Env):
             MAX_AMOUNT_OF_HEAT_PRODUCTION_TO_DECREASE: build_box_i8(0),
             MAX_AMOUNT_OF_ENERGY_TO_SPEND: build_box_i8(0),
             PASS_REMAINING_DRAFT_CARDS_TO_WHOM: build_discrete_i8(NONE_PLAYER_INDEX),
+
             AVAILABLE_CORPORATIONS: np.zeros(NUMBER_OF_CORPORATIONS, dtype=np.int8),
             ACTIONS_TAKEN_THIS_ROUND: build_box_i8(this_player[ACTIONS_TAKEN_THIS_ROUND]),
             AVAILABLE_BLUE_CARD_ACTION_COUNT: build_box_i8(this_player[AVAILABLE_BLUE_CARD_ACTION_COUNT]),
@@ -1309,6 +2251,8 @@ class CustomEnv(gym.Env):
             }
         }
 
+        this_player_color = current_state["thisPlayer"]["color"]
+
         payload = None
 
         run_id = self.player_on_turn.run_id
@@ -1349,7 +2293,7 @@ class CustomEnv(gym.Env):
                         selected_card_name: str = CARD_NAMES_INT_STR[card_index]
                         selected_prelude_cards_names.append(selected_card_name)
 
-                payload = self.create_initial_cards_card_card_card_response(run_id, selected_corporation_name, selected_prelude_cards_names, selected_project_card_names)
+                payload = create_initial_cards_card_card_card_response(run_id, selected_corporation_name, selected_prelude_cards_names, selected_project_card_names)
             else: # wenn optionen ganz normal tatsächlich optionen sind
                 available_options = current_state["waitingFor"]["options"]
 
@@ -1411,10 +2355,10 @@ class CustomEnv(gym.Env):
                           "Add resource to card ${0}",
                           "Add ${0} animals to ${1}",
                           "Fund ${0} award"):
-                        payload = self.create_or_resp_option(run_id, selected_option_index)
+                        payload = create_or_resp_option(run_id, selected_option_index)
                     case "Play project card":
                         available_cards = selected_option["cards"]
-                        selected_card_from_all_name: str = CARD_NAMES_INT_STR[action[SELECTED_CARD_INDEX]]
+                        selected_card_from_all_name: str = CARD_NAMES_INT_STR[action[SELECTED_PROJECT_CARD_INDEX]]
                         selected_card = None
                         for card in available_cards:
                             if card["name"] == selected_card_from_all_name:
@@ -1449,7 +2393,7 @@ class CustomEnv(gym.Env):
                                             break
                                     break
 
-                        pay_heat, pay_mc, pay_steel, pay_titanium, pay_microbes = self.calc_payment_for_project_card(action,
+                        pay_heat, pay_mc, pay_steel, pay_titanium, pay_microbes = calc_payment_for_project_card(action,
                                                                                                                      current_state,
                                                                                                                      card_cost,
                                                                                                                      can_pay_with_heat,
@@ -1461,7 +2405,7 @@ class CustomEnv(gym.Env):
                                                                                                                      reserve_titanium,
                                                                                                                      reserve_steel)
 
-                        payload = self.create_or_resp_project_card_payment(run_id, selected_option_index, card_name, pay_heat, pay_mc, pay_steel, pay_titanium, pay_microbes)
+                        payload = create_or_resp_project_card_payment(run_id, selected_option_index, card_name, pay_heat, pay_mc, pay_steel, pay_titanium, pay_microbes)
                     case "Sell patents": # multiple cards
                         selected_project_cards = []
                         selected_card_indices = action[MULTIPLE_SELECTED_CARDS]
@@ -1469,54 +2413,77 @@ class CustomEnv(gym.Env):
                             if binary == 1:
                                 selected_card_name: str = CARD_NAMES_INT_STR[idx]
                                 selected_project_cards.append(selected_card_name)
-                        payload = self.create_or_resp_card_cards(run_id, selected_option_index, selected_project_cards)
+                        payload = create_or_resp_card_cards(run_id, selected_option_index, selected_project_cards)
                     case "Perform an action from a played card":
                         available_cards = selected_option["cards"]
-                        selected_card_from_all_name: str = CARD_NAMES_INT_STR[action[SELECTED_CARD_FROM_PLAYED_CARDS_INDEX]]
-                        payload = self.create_or_resp_card_cards(run_id, selected_option_index, [selected_card_from_all_name])
-                    case ("Select a card to discard", # single card
-                          "Add 3 microbes to a card",
-                          "Select card to add 2 microbes",
-                          "Select card to remove 2 Animal(s)",
-                          "Select card to add 2 animals",
-                          "Select card to add 4 animals",
-                          "Add 2 animals to a card"):
-                        available_cards = selected_option["cards"]
-                        selected_card_from_all_name: str = CARD_NAMES_INT_STR[action[SELECTED_CARD_INDEX]]
-                        payload = self.create_or_resp_card_cards(run_id, selected_option_index, [selected_card_from_all_name])
+                        selected_card_from_all_name: str = CARD_NAMES_INT_STR[action[SELECTED_CARD_WITH_ACTION_INDEX]]
+                        payload = create_or_resp_card_cards(run_id, selected_option_index, [selected_card_from_all_name])
+                    case "Select a card to discard":
+                        selected_card_from_all_name: str = CARD_NAMES_INT_STR[action[SELECTED_CARD_TO_DISCARD_INDEX]]
+                        payload = create_or_resp_card_cards(run_id, selected_option_index,
+                                                                 [selected_card_from_all_name])
+                    case "Add 3 microbes to a card":
+                        selected_card_from_all_name: str = CARD_NAMES_INT_STR[action[SELECTED_CARD_TO_ADD_3_MICROBES_TO_INDEX]]
+                        payload = create_or_resp_card_cards(run_id, selected_option_index,
+                                                                 [selected_card_from_all_name])
+                    case "Select card to add 2 microbes":
+                        selected_card_from_all_name: str = CARD_NAMES_INT_STR[
+                            action[SELECTED_CARD_TO_ADD_2_MICROBES_TO_INDEX]]
+                        payload = create_or_resp_card_cards(run_id, selected_option_index,
+                                                                 [selected_card_from_all_name])
+                    case "Select card to remove 2 Animal(s)":
+                        selected_card_from_all_name: str = CARD_NAMES_INT_STR[
+                            action[SELECTED_CARD_TO_REMOVE_2_ANIMALS_FROM_INDEX]]
+                        payload = create_or_resp_card_cards(run_id, selected_option_index,
+                                                                 [selected_card_from_all_name])
+                    case "Select card to add 2 animals":
+                        selected_card_from_all_name: str = CARD_NAMES_INT_STR[
+                            action[SELECTED_CARD_TO_ADD_2_ANIMALS_TO_INDEX]]
+                        payload = create_or_resp_card_cards(run_id, selected_option_index,
+                                                                 [selected_card_from_all_name])
+                    case "Select card to add 4 animals":
+                        selected_card_from_all_name: str = CARD_NAMES_INT_STR[
+                            action[SELECTED_CARD_TO_ADD_4_ANIMALS_TO_INDEX]]
+                        payload = create_or_resp_card_cards(run_id, selected_option_index,
+                                                                 [selected_card_from_all_name])
+                    case "Add 2 animals to a card":
+                        selected_card_from_all_name: str = CARD_NAMES_INT_STR[
+                            action[SELECTED_CARD_TO_ADD_2_ANIMALS_TO_2_INDEX]]
+                        payload = create_or_resp_card_cards(run_id, selected_option_index,
+                                                                 [selected_card_from_all_name])
                     case ("Select space for greenery tile",
                           "Convert ${0} plants into greenery"):
                         available_spaces_ids = selected_option["spaces"]
                         selected_space_index = action[SELECTED_SPACE_INDEX]
                         selected_space_id = str(selected_space_index + 1) # TODO maybe "1" is not treated the same as "01"
-                        payload = self.create_or_resp_space_space_id(run_id, selected_option_index, selected_space_id)
+                        payload = create_or_resp_space_space_id(run_id, selected_option_index, selected_space_id)
                     case "Select adjacent player to remove 4 M€ from":
                         available_players_colors = selected_option["players"]
                         selected_player_index = action[SELECTED_PLAYER]
-                        selected_player_color = PLAYERS_ID_COLOR[selected_player_index]
-                        payload = self.create_or_resp_player_player(run_id, selected_option_index, selected_player_color)
+                        selected_player_color = get_color_of_player_index_by_current_player_color(selected_player_index, this_player_color)
+                        payload = create_or_resp_player_player(run_id, selected_option_index, selected_player_color)
                     case "Fund an award (${0} M€)":
                         available_awards = selected_option["options"]
                         selected_award_from_all_name: str = AWARDS_INT_STR[action[SELECTED_AWARD_INDEX]]
                         selected_award_index = -1
                         for idx, award in enumerate(available_awards):
-                            if award["name"] == selected_award_from_all_name:
+                            if award["title"] == selected_award_from_all_name:
                                 selected_award_index = idx
                                 break
-                        payload = self.create_or_resp_or_resp_option(run_id, selected_option_index, selected_award_index)
+                        payload = create_or_resp_or_resp_option(run_id, selected_option_index, selected_award_index)
                     case "Standard projects":
                         # wenn das SP nicht verfügbar ist, darf es gar nicht erst als option im beobachtungsraum sein
                         selected_standard_project_name = STANDARD_PROJECTS_INDEX_NAME[action[SELECTED_STANDARD_PROJECT_INDEX]]
-                        self.create_or_resp_card_cards(run_id, selected_option_index, [selected_standard_project_name])
+                        create_or_resp_card_cards(run_id, selected_option_index, [selected_standard_project_name])
                     case "Claim a milestone":
                         available_milestones = selected_option["options"]
                         selected_milestone_from_all_name: str = MILESTONES_INT_STR[action[SELECTED_MILESTONE_INDEX]]
                         selected_milestone_index = -1
                         for idx, milestone in enumerate(available_milestones):
-                            if milestone["name"] == selected_milestone_from_all_name:
+                            if milestone["title"] == selected_milestone_from_all_name:
                                 selected_milestone_index = idx
                                 break
-                        self.create_or_resp_or_resp_option(run_id, selected_option_index, selected_milestone_index)
+                        create_or_resp_or_resp_option(run_id, selected_option_index, selected_milestone_index)
         else:
             message = current_state["waitingFor"]["title"]["message"] if "message" in current_state["waitingFor"]["title"] else current_state["waitingFor"]["title"]
             match message:
@@ -1541,11 +2508,11 @@ class CustomEnv(gym.Env):
                     available_spaces_ids = current_state["waitingFor"]["spaces"]
                     selected_space_index_from_all = action[SELECTED_SPACE_INDEX]
                     selected_space_id = str(selected_space_index_from_all + 1)
-                    payload = self.create_space_id_response(run_id, selected_space_id)
+                    payload = create_space_id_response(run_id, selected_space_id)
                 case "Select player to decrease ${0} production by ${1} step(s)":
                     selected_player_index = action[SELECTED_PLAYER]
-                    selected_player_color = PLAYERS_ID_COLOR[selected_player_index]
-                    payload = self.create_player_response(run_id, selected_player_color)
+                    selected_player_color = get_color_of_player_index_by_current_player_color(selected_player_index, this_player_color)
+                    payload = create_player_response(run_id, selected_player_color)
                 case ("Select card to add ${0} ${1}", # geschenkt
                       "Select builder card to copy",
                       "Select 1 card(s) to keep",
@@ -1555,7 +2522,7 @@ class CustomEnv(gym.Env):
                       "Select a card to keep and pass the rest to ${0}"):
                     available_cards = current_state["waitingFor"]["cards"]
                     selected_card_from_all_name: str = CARD_NAMES_INT_STR[action[SELECTED_CARD_INDEX]]
-                    payload = self.create_cards_response(run_id, [selected_card_from_all_name])
+                    payload = create_cards_response(run_id, [selected_card_from_all_name])
                 case "Select card(s) to buy":  # 0 or 1
                     available_cards = current_state["waitingFor"]["cards"]
                     max_amount_of_cards = current_state["waitingFor"]["max"]
@@ -1567,7 +2534,7 @@ class CustomEnv(gym.Env):
                             selected_cards_names = [selected_card_from_all_name]
                         elif action[DONT_BUY_CARD] == 0:
                             pass
-                        payload = self.create_cards_response(run_id, selected_cards_names)
+                        payload = create_cards_response(run_id, selected_cards_names)
                     elif max_amount_of_cards == 4:
                         selected_cards_names = []
                         selected_card_indices = action[MULTIPLE_SELECTED_RESEARCH_CARDS]
@@ -1575,7 +2542,7 @@ class CustomEnv(gym.Env):
                             if binary == 1:
                                 selected_card_name: str = CARD_NAMES_INT_STR[idx]
                                 selected_cards_names.append(selected_card_name)
-                        payload = self.create_cards_response(run_id, selected_cards_names)
+                        payload = create_cards_response(run_id, selected_cards_names)
                 case "Select 2 card(s) to keep":
                     available_cards = current_state["waitingFor"]["cards"]
                     selected_cards_indices = action[TWO_SELECTED_CARDS_INDICES]
@@ -1588,12 +2555,12 @@ class CustomEnv(gym.Env):
                     if len(selected_cards_names) != 2:
                         print("did not correctly select 2 cards")
                         exit(-458764)
-                    self.create_cards_response(run_id, selected_cards_names)
+                    create_cards_response(run_id, selected_cards_names)
                 case "You cannot afford any cards":
-                    self.create_cards_response(run_id, [])
+                    create_cards_response(run_id, [])
                 case "Play project card":
                     available_cards = current_state["waitingFor"]["cards"]
-                    selected_card_from_all_name: str = CARD_NAMES_INT_STR[action[SELECTED_CARD_INDEX]]
+                    selected_card_from_all_name: str = CARD_NAMES_INT_STR[action[SELECTED_PROJECT_CARD_INDEX]]
                     selected_card = None
                     for card in available_cards:
                         if card["name"] == selected_card_from_all_name:
@@ -1628,7 +2595,7 @@ class CustomEnv(gym.Env):
                                         break
                                 break
 
-                    pay_heat, pay_mc, pay_steel, pay_titanium, pay_microbes = self.calc_payment_for_project_card(action,
+                    pay_heat, pay_mc, pay_steel, pay_titanium, pay_microbes = calc_payment_for_project_card(action,
                                                                                                                  current_state,
                                                                                                                  card_cost,
                                                                                                                  can_pay_with_heat,
@@ -1640,7 +2607,7 @@ class CustomEnv(gym.Env):
                                                                                                                  reserve_titanium,
                                                                                                                  reserve_steel)
 
-                    self.create_project_card_payment_response(run_id, card_name, pay_heat, pay_mc, pay_steel, pay_titanium, pay_microbes)
+                    create_project_card_payment_response(run_id, card_name, pay_heat, pay_mc, pay_steel, pay_titanium, pay_microbes)
                     pass
                 case ("Select how to pay for the ${0} standard project",
                       "Select how to spend ${0} M€",
@@ -1657,7 +2624,7 @@ class CustomEnv(gym.Env):
                     can_pay_with_titanium = payment_options["titanium"]
                     can_pay_with_steel = payment_options["steel"]
 
-                    pay_heat, pay_mc, pay_steel, pay_titanium, _ = self.calc_payment_for_project_card(action,
+                    pay_heat, pay_mc, pay_steel, pay_titanium, _ = calc_payment_for_project_card(action,
                                                                                                      current_state,
                                                                                                      cost,
                                                                                                      can_pay_with_heat,
@@ -1668,292 +2635,21 @@ class CustomEnv(gym.Env):
                                                                                                      0,
                                                                                                      0,
                                                                                                      0)
-                    payload = self.create_payment_response(run_id, pay_heat, pay_mc, pay_steel, pay_titanium)
+                    payload = create_payment_response(run_id, pay_heat, pay_mc, pay_steel, pay_titanium)
                 case "Select amount of heat production to decrease":
                     selected_amount = action[AMOUNT_OF_HEAT_PRODUCTION_TO_DECREASE]
                     #min = current_state["waitingFor"]["min"]
                     max = current_state["waitingFor"]["max"]
                     amount = min(selected_amount, max)
-                    payload = self.create_amount_response(run_id, amount)
+                    payload = create_amount_response(run_id, amount)
                 case "Select amount of energy to spend":
                     selected_amount = action[AMOUNT_OF_ENERGY_TO_SPEND]
                     max = current_state["waitingFor"]["max"]
                     amount = min(selected_amount, max)
-                    payload = self.create_amount_response(run_id, amount)
+                    payload = create_amount_response(run_id, amount)
 
         res = self.send_player_input(self.player_on_turn.id, payload)
         # from this res create new observation
 
         # send_player_input(json.dumps(select_space_data), player.id, http_connection)
         return res
-
-    def calc_payment_for_project_card(self,
-                                      action,
-                                      current_state,
-                                      cost,
-                                      can_pay_with_heat,
-                                      can_pay_with_steel,
-                                      can_pay_with_titanium,
-                                      can_pay_with_microbes,
-                                      reserve_heat,
-                                      reserve_mc,
-                                      reserve_titanium,
-                                      reserve_steel):
-
-        pay_heat_percentage = action[PAY_HEAT_PERCENTAGE]
-        pay_mc_percentage = action[PAY_MC_PERCENTAGE]
-        pay_steel_percentage = action[PAY_STEEL_PERCENTAGE]
-        pay_titanium_percentage = action[PAY_TITANIUM_PERCENTAGE]
-        pay_microbes_percentage = action[PAY_MICROBES_PERCENTAGE]
-
-        available_heat = current_state["thisPlayer"]["heat"]
-        available_mc = current_state["thisPlayer"]["megaCredits"]
-        available_steel = current_state["thisPlayer"]["steel"]
-        steel_value = current_state["thisPlayer"]["steelValue"]
-        available_titanium = current_state["thisPlayer"]["titanium"]
-        titanium_value = current_state["thisPlayer"]["titaniumValue"]
-        available_microbes = current_state["waitingFor"]["microbes"]
-        microbes_value = 2
-
-        available_heat -= reserve_heat
-        available_mc -= reserve_mc
-        available_titanium -= reserve_titanium
-        available_steel -= reserve_steel
-
-        pay_heat = math.floor(pay_heat_percentage * available_heat) * (1 if can_pay_with_heat else 0)
-        pay_mc = math.floor(pay_mc_percentage * available_mc)
-        pay_steel = math.floor(pay_steel_percentage * available_steel) * (1 if can_pay_with_steel else 0)
-        pay_titanium = math.floor(pay_titanium_percentage * available_titanium) * (1 if can_pay_with_titanium else 0)
-        pay_microbes = math.floor(pay_microbes_percentage * available_microbes) * (1 if can_pay_with_microbes else 0)
-
-        payment = pay_heat + pay_mc + pay_steel * steel_value + pay_titanium * titanium_value + pay_microbes * microbes_value
-
-        if payment != cost:
-            pay_heat = 0
-            pay_mc = 0
-            pay_steel = 0
-            pay_titanium = 0
-            pay_microbes = 0
-
-            available_payments = ["mc"]
-            if can_pay_with_heat: available_payments.append("heat")
-            if can_pay_with_steel: available_payments.append("steel")
-            if can_pay_with_titanium: available_payments.append("titanium")
-            if can_pay_with_microbes: available_payments.append("microbes")
-            random.shuffle(available_payments)  # random order
-
-            remaining_cost = cost
-            for payment in available_payments:
-                if remaining_cost <= 0:
-                    break
-                elif payment == "mc":
-                    if available_mc >= remaining_cost:
-                        pay_mc = remaining_cost
-                        break
-                    else:
-                        pay_mc = available_mc
-                        remaining_cost = remaining_cost - available_mc
-                elif payment == "heat":
-                    if available_heat >= remaining_cost:
-                        pay_heat = remaining_cost
-                        break
-                    else:
-                        pay_heat = available_heat
-                        remaining_cost = remaining_cost - available_heat
-                elif payment == "steel":
-                    if available_steel * steel_value >= remaining_cost:
-                        pay_steel = math.ceil(remaining_cost / steel_value)
-                        break
-                    else:
-                        pay_steel = available_steel
-                        remaining_cost = remaining_cost - available_steel * steel_value
-                elif payment == "titanium":
-                    if available_titanium * titanium_value >= remaining_cost:
-                        pay_titanium = math.ceil(remaining_cost / titanium_value)
-                        break
-                    else:
-                        pay_titanium = available_titanium
-                        remaining_cost = remaining_cost - available_titanium * titanium_value
-                elif payment == "microbes":
-                    if available_microbes * microbes_value >= remaining_cost:
-                        pay_microbes = math.ceil(remaining_cost / microbes_value)
-                        break
-                    else:
-                        pay_microbes = available_microbes
-                        remaining_cost = remaining_cost - available_microbes * microbes_value
-
-        return pay_heat, pay_mc, pay_steel, pay_titanium, pay_microbes
-
-    def create_or_resp_option(self, run_id, index):
-        return {
-            "runId": run_id,
-            "type": "or",
-            "index": index,
-            "response": {
-                "type": "option"
-            }
-        }
-
-    def create_initial_cards_card_card_card_response(self, run_id, corporation_card_name, prelude_cards_names, project_cards_names):
-        return {
-            "runId": run_id,
-            "type": "initialCards",
-            "responses": [
-                {
-                    "type": "card",
-                    "cards": [corporation_card_name]
-                }, {
-                    "type": "card",
-                    "cards": prelude_cards_names
-                }, {
-                    "type": "card",
-                    "cards": project_cards_names
-                }]
-        }
-
-    def create_or_resp_project_card_payment(self, run_id, index, card_name, heat, mc, steel, titanium, microbes):
-        return {
-            "runId": run_id,
-            "type": "or",
-            "index": index,
-            "response": {
-                "type": "projectCard",
-                "card": card_name,
-                "payment": {
-                    "heat":heat,
-                    "megaCredits": mc,
-                    "steel":steel,
-                    "titanium":titanium,
-                    "plants":0,
-                    "microbes":microbes,
-                    "floaters":0,
-                    "lunaArchivesScience":0,
-                    "spireScience":0,
-                    "seeds":0,
-                    "auroraiData":0,
-                    "graphene":0,
-                    "kuiperAsteroids":0,
-                    "corruption":0
-                }
-            }
-        }
-
-    def create_or_resp_card_cards(self, run_id, index, card_names):
-        return {
-            "runId": run_id,
-            "type": "or",
-            "index": index,
-            "response": {
-                "type": "card",
-                "cards": card_names
-            }
-        }
-
-    def create_space_id_response(self, run_id, selected_space):
-        return {
-            "runId": run_id,
-            "type": "space",
-            "spaceId": selected_space
-        }
-
-    def create_or_resp_space_space_id(self, run_id, index, selected_space):
-        return {
-            "runId": run_id,
-            "type": "or",
-            "index": index,
-            "response": {
-                "type": "space",
-                "spaceId": selected_space
-            }
-        }
-
-    def create_or_resp_player_player(self, run_id, index, selected_player):
-        return {
-            "runId": run_id,
-            "type": "or",
-            "index": index,
-            "response": {
-                "type": "player",
-                "player": selected_player
-            }
-        }
-
-    def create_or_resp_or_resp_option(self, run_id, action_index, index2):
-        return {
-            "runId": run_id,
-            "type": "or",
-            "index": action_index,
-            "response": {
-                "type": "or",
-                "index": index2,
-                "response": {
-                    "type": "option"
-                }
-            }
-        }
-
-    def create_player_response(self, run_id, selected_player):
-        return {
-            "runId": run_id,
-            "type": "player",
-            "player": selected_player
-        }
-
-    def create_cards_response(self, run_id, selected_cards_names):
-        return {
-            "runId": run_id,
-            "type": "card",
-            "cards": selected_cards_names
-        }
-
-    def create_payment_response(self, run_id, heat, mc, steel, titanium):
-        return {
-            "runId": run_id,
-            "type": "payment",
-            "payment": {
-                "heat": heat,
-                "megaCredits": mc,
-                "steel": steel,
-                "titanium": titanium,
-                "plants": 0,
-                "microbes": 0,
-                "floaters": 0,
-                "lunaArchivesScience": 0,
-                "spireScience": 0,
-                "seeds": 0,
-                "auroraiData": 0,
-                "graphene": 0,
-                "kuiperAsteroids": 0,
-                "corruption": 0
-            }
-        }
-
-    def create_amount_response(self, run_id, amount):
-        return {
-            "runId": run_id,
-            "type": "amount",
-            "amount": amount
-        }
-
-    def create_project_card_payment_response(self, run_id, card_name, heat, mc, steel, titanium, microbes):
-        select_card_data = {
-            "runId": run_id,
-            "type": "projectCard",
-            "card": card_name,
-            "payment": {
-                "heat": heat,
-                "megaCredits": mc,
-                "steel": steel,
-                "titanium": titanium,
-                "plants": 0,
-                "microbes": microbes,
-                "floaters": 0,
-                "lunaArchivesScience": 0,
-                "spireScience": 0,
-                "seeds": 0,
-                "auroraiData": 0,
-                "graphene": 0,
-                "kuiperAsteroids": 0,
-                "corruption": 0
-            }
-        }
