@@ -9,7 +9,8 @@ def create_or_resp_option(run_id, index):
     }
 
 
-def create_initial_cards_card_card_card_response(run_id, corporation_card_name, prelude_cards_names, project_cards_names):
+def create_initial_cards_card_card_card_response(run_id, corporation_card_name, prelude_cards_names,
+                                                 project_cards_names):
     return {
         "runId": run_id,
         "type": "initialCards",
@@ -36,20 +37,20 @@ def create_or_resp_project_card_payment(run_id, index, card_name, heat, mc, stee
             "type": "projectCard",
             "card": card_name,
             "payment": {
-                "heat":heat,
+                "heat": heat,
                 "megaCredits": mc,
-                "steel":steel,
-                "titanium":titanium,
-                "plants":0,
-                "microbes":microbes,
-                "floaters":0,
-                "lunaArchivesScience":0,
-                "spireScience":0,
-                "seeds":0,
-                "auroraiData":0,
-                "graphene":0,
-                "kuiperAsteroids":0,
-                "corruption":0
+                "steel": steel,
+                "titanium": titanium,
+                "plants": 0,
+                "microbes": microbes,
+                "floaters": 0,
+                "lunaArchivesScience": 0,
+                "spireScience": 0,
+                "seeds": 0,
+                "auroraiData": 0,
+                "graphene": 0,
+                "kuiperAsteroids": 0,
+                "corruption": 0
             }
         }
     }

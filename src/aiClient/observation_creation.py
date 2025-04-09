@@ -2,11 +2,14 @@ import numpy as np
 from mapping_and_constants import *
 from action_observation_names import *
 
+
 def build_box_i8(value):
     return np.array([value], dtype=np.int8)
 
+
 def build_discrete_i8(value):
     return np.int8(value)
+
 
 # uses int16
 def get_result_array_from_available_cards(available_cards):
@@ -16,6 +19,7 @@ def get_result_array_from_available_cards(available_cards):
         card_index = CARD_NAMES_STR_INT[card_name]
         result[card_index] = 1
     return result
+
 
 def get_available_project_cards(res):
     is_action_option = "options" in res["waitingFor"] and res["waitingFor"]["title"] is not "Initial Research Phase"
@@ -28,27 +32,31 @@ def get_available_project_cards(res):
                 cards = option["cards"]
                 break
     else:
-        message = res["waitingFor"]["title"]["message"] if "message" in res["waitingFor"]["title"] else res["waitingFor"]["title"]
+        message = res["waitingFor"]["title"]["message"] if "message" in res["waitingFor"]["title"] else \
+        res["waitingFor"]["title"]
         if message == "Play project card":
             cards = res["waitingFor"]["cards"]
     return get_result_array_from_available_cards(cards)
+
 
 def get_available_cards(res):
     is_action_option = "options" in res["waitingFor"] and res["waitingFor"]["title"] is not "Initial Research Phase"
     cards = {}
     if not is_action_option:
-        message = res["waitingFor"]["title"]["message"] if "message" in res["waitingFor"]["title"] else res["waitingFor"]["title"]
+        message = res["waitingFor"]["title"]["message"] if "message" in res["waitingFor"]["title"] else \
+        res["waitingFor"]["title"]
         match message:
-            case("Select card to add ${0} ${1}",  # geschenkt
-                 "Select builder card to copy",
-                 "Select 1 card(s) to keep",
-                 "Select card to remove 1 Microbe(s)",
-                 "Select card to remove 1 Animal(s)",
-                 "Select prelude card to play",
-                 "Select a card to keep and pass the rest to ${0}",
-                 "Select card(s) to buy"):
+            case ("Select card to add ${0} ${1}",  # geschenkt
+                  "Select builder card to copy",
+                  "Select 1 card(s) to keep",
+                  "Select card to remove 1 Microbe(s)",
+                  "Select card to remove 1 Animal(s)",
+                  "Select prelude card to play",
+                  "Select a card to keep and pass the rest to ${0}",
+                  "Select card(s) to buy"):
                 cards = res["waitingFor"]["cards"]
     return get_result_array_from_available_cards(cards)
+
 
 def get_available_cards_from_option(res, option_message):
     is_action_option = "options" in res["waitingFor"] and res["waitingFor"]["title"] is not "Initial Research Phase"
@@ -62,26 +70,34 @@ def get_available_cards_from_option(res, option_message):
                 break
     return get_result_array_from_available_cards(cards)
 
+
 def get_available_cards_to_discard(res):
     return get_available_cards_from_option(res, "Select a card to discard")
+
 
 def get_available_cards_to_add_3_microbes_to(res):
     return get_available_cards_from_option(res, "Add 3 microbes to a card")
 
+
 def get_available_cards_to_add_2_microbes_to(res):
     return get_available_cards_from_option(res, "Select card to add 2 microbes")
+
 
 def get_available_cards_to_remove_2_animals_from(res):
     return get_available_cards_from_option(res, "Select card to remove 2 Animal(s)")
 
+
 def get_available_cards_to_add_2_animals_to(res):
     return get_available_cards_from_option(res, "Select card to add 2 animals")
+
 
 def get_available_cards_to_add_4_animals_to(res):
     return get_available_cards_from_option(res, "Select card to add 4 animals")
 
+
 def get_available_cards_to_add_2_animals_to_2(res):
     return get_available_cards_from_option(res, "Add 2 animals to a card")
+
 
 def get_available_spaces(res):
     result = np.zeros(NUMBER_SPACES, dtype=np.int8)
@@ -97,7 +113,8 @@ def get_available_spaces(res):
                 available_spaces_ids = option["spaces"]
                 break
     else:
-        message = res["waitingFor"]["title"]["message"] if "message" in res["waitingFor"]["title"] else res["waitingFor"]["title"]
+        message = res["waitingFor"]["title"]["message"] if "message" in res["waitingFor"]["title"] else \
+        res["waitingFor"]["title"]
         match message:
             case ("Select space for ${0} tile",
                   "Select space for ocean tile",
@@ -123,6 +140,7 @@ def get_available_spaces(res):
         result[space_index] = 1
     return result
 
+
 def get_available_players(res):
     result = np.zeros(NUMBER_SPACES, dtype=np.int8)
     is_action_option = "options" in res["waitingFor"] and res["waitingFor"]["title"] is not "Initial Research Phase"
@@ -135,7 +153,7 @@ def get_available_players(res):
                 available_player_colors = option["players"]
     else:
         message = res["waitingFor"]["title"]["message"] if "message" in res["waitingFor"]["title"] else \
-        res["waitingFor"]["title"]
+            res["waitingFor"]["title"]
         if message == "Select player to decrease ${0} production by ${1} step(s)":
             available_player_colors = res["waitingFor"]["players"]
     color_of_this_player = res["thisPlayer"]["color"]
@@ -143,6 +161,7 @@ def get_available_players(res):
         index = get_index_of_player_color_by_current_player_color(player_color, color_of_this_player)
         result[index] = 1
     return result
+
 
 def get_available_cards_with_actions(res):
     result = np.zeros(NUMBER_OF_CARDS, dtype=np.int16)
@@ -159,6 +178,7 @@ def get_available_cards_with_actions(res):
                 break
     return result
 
+
 def get_available_milestones(res):
     result = np.zeros(NUMBER_OF_MILESTONES(), dtype=np.int8)
     is_action_option = "options" in res["waitingFor"] and res["waitingFor"]["title"] is not "Initial Research Phase"
@@ -173,6 +193,7 @@ def get_available_milestones(res):
                     result[index_of_milestone] = 1
                 break
     return result
+
 
 def get_available_awards(res):
     result = np.zeros(NUMBER_OF_AWARDS(), dtype=np.int8)
@@ -189,6 +210,7 @@ def get_available_awards(res):
                 break
     return result
 
+
 def get_corporation_to_take_first_action_of(res):
     corporation_index = CORPORATIONS_WITH_FIRST_ACTION["None"]
     is_action_option = "options" in res["waitingFor"] and res["waitingFor"]["title"] is not "Initial Research Phase"
@@ -203,6 +225,7 @@ def get_corporation_to_take_first_action_of(res):
     result = build_discrete_i8(corporation_index)
     return result
 
+
 def get_available_standard_projects(res):
     result = np.zeros(NUMBER_OF_STANDARD_PROJECTS(), dtype=np.int8)
     is_action_option = "options" in res["waitingFor"] and res["waitingFor"]["title"] is not "Initial Research Phase"
@@ -213,11 +236,13 @@ def get_available_standard_projects(res):
             if message == "Standard projects":
                 available_standard_projects = option["options"]
                 for standard_project in available_standard_projects:
-                    if "isDisabled" not in standard_project or ("isDisabled" in standard_project and standard_project["isDisabled"] == "False"):
+                    if "isDisabled" not in standard_project or (
+                            "isDisabled" in standard_project and standard_project["isDisabled"] == "False"):
                         index_of_standard_project = STANDARD_PROJECTS_NAME_INDEX[standard_project["name"]]
                         result[index_of_standard_project] = 1
                 break
     return result
+
 
 def get_resource_to_remove(action_option):
     resource_index = REMOVABLE_RESOURCES_NAMES["None"]
@@ -227,12 +252,14 @@ def get_resource_to_remove(action_option):
     result = build_discrete_i8(resource_index)
     return result
 
+
 def get_amount_from_action_option(action_option, index):
     amount = 0
     if action_option:
         amount = action_option["title"]["data"][index]["value"]
     result = build_box_i8(amount)
     return result
+
 
 def get_player_from_action_option(res, action_option, index):
     player_index = NONE_PLAYER_INDEX
@@ -243,6 +270,7 @@ def get_player_from_action_option(res, action_option, index):
     result = build_discrete_i8(player_index)
     return result
 
+
 def get_card_to_add_microbe_to(action_option, index):
     card_name = "None"
     if action_option:
@@ -250,12 +278,14 @@ def get_card_to_add_microbe_to(action_option, index):
     card_index = CARDS_MICROBES_CAN_BE_ADDED_TO[card_name]
     return build_discrete_i8(card_index)
 
+
 def get_award_to_fund(action_option, index):
     award_index = NONE_AWARD_INDEX
     if action_option:
         award_name = action_option["title"]["data"][index]["value"]
         award_index = AWARDS_STR_INT[award_name]
     return build_discrete_i8(award_index)
+
 
 def get_fund_award_cost(action_option, index):
     cost = 0
@@ -271,12 +301,14 @@ def get_fund_award_cost(action_option, index):
             cost_index = 3
     return build_discrete_i8(cost_index)
 
+
 def get_tile_to_select_space_for(action_option, index):
     tile_name = "None"
     if action_option:
         tile_name = action_option["title"]["data"][index]["value"]
     tile_index = TILE_NAMES_OF_SELECTABLE_SPACES[tile_name]
     return build_discrete_i8(tile_index)
+
 
 def get_production_to_decrease(action_option, index):
     production_name = "None"
@@ -285,6 +317,7 @@ def get_production_to_decrease(action_option, index):
     production_index = DECREASABLE_PRODUCTIONS_NAMES[production_name]
     return build_discrete_i8(production_index)
 
+
 def get_standard_project_to_select_how_to_pay_for(action_option, index):
     standard_project_index = NONE_STANDARD_PROJECT_INDEX
     if action_option:
@@ -292,11 +325,13 @@ def get_standard_project_to_select_how_to_pay_for(action_option, index):
         standard_project_index = STANDARD_PROJECTS_NAME_INDEX[standard_project_name]
     return build_discrete_i8(standard_project_index)
 
+
 def get_max_value(action_option):
     max_prod = 0
     if action_option:
         max_prod = action_option["max"]
     return build_box_i8(max_prod)
+
 
 def get_available_corporations(res):
     available_corporations = np.zeros(NUMBER_OF_CORPORATIONS, dtype=np.int8)
@@ -307,11 +342,13 @@ def get_available_corporations(res):
             available_corporations[corporation_index] = 1
     return available_corporations
 
+
 def get_picked_corporation(res):
     picked_corporation = NONE_CORPORATION_INDEX
     if "pickedCorporationCard" in res:
         picked_corporation = ALL_CORPORATIONS_NAME_INDEX[res["pickedCorporationCard"]["name"]]
     return build_discrete_i8(picked_corporation)
+
 
 def get_cards_in_hand(res):
     cards_in_hand = np.zeros(len(CARD_NAMES_INT_STR), dtype=np.int16)
@@ -325,6 +362,7 @@ def get_cards_in_hand(res):
         cards_in_hand[card_index] = 1
     return cards_in_hand
 
+
 def get_dealt_cards(res):
     dealt_cards = np.zeros(len(CARD_NAMES_INT_STR), dtype=np.int16)
     for card in res["dealtPreludeCards"]:
@@ -337,22 +375,25 @@ def get_dealt_cards(res):
         dealt_cards[card_index] = 1
     return dealt_cards
 
+
 def get_current_phase(res):
     phase_name = res["game"]["phase"]
     phase_index = PHASES_STR_INT[phase_name]
     return build_discrete_i8(phase_index)
+
 
 def get_occupied_spaces(res):
     occupied_spaces = np.zeros(len(OCCUPIED_SPACES), dtype=np.int8)
     current_player_color = res["game"]["thisPlayer"]["color"]
     for space in res["game"]["spaces"]:
         if space["id"] == "69":
-            continue # aus ner erweiterung
+            continue  # aus ner erweiterung
         if "color" in space:
             player_color = space["color"]
             player_id = get_index_of_player_color_by_current_player_color(player_color, current_player_color)
             space_id = int(space["id"])
             occupied_spaces[space_id] = player_id
+
 
 def create_observation_from_res(self, res):
     res = {
@@ -435,7 +476,7 @@ def create_observation_from_res(self, res):
     if "options" not in res["waitingFor"] or (
             "options" in res["waitingFor"] and res["waitingFor"]["title"] is "Initial Research Phase"):
         message = res["waitingFor"]["title"]["message"] if "message" in res["waitingFor"]["title"] else \
-        res["waitingFor"]["title"]
+            res["waitingFor"]["title"]
         selected_action_index = SELECTED_ACTION_OPTION_NAME_INDEX[message]
 
     available_cards = get_available_cards(res)

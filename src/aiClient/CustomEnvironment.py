@@ -15,6 +15,7 @@ from action_observation_names import *
 from https_responses import *
 from mapping_and_constants import *
 
+
 def calc_payment_for_project_card(action,
                                   current_state,
                                   cost,
@@ -26,7 +27,6 @@ def calc_payment_for_project_card(action,
                                   reserve_mc,
                                   reserve_titanium,
                                   reserve_steel):
-
     pay_heat_percentage = action[PAY_HEAT_PERCENTAGE]
     pay_mc_percentage = action[PAY_MC_PERCENTAGE]
     pay_steel_percentage = action[PAY_STEEL_PERCENTAGE]
@@ -111,6 +111,7 @@ def calc_payment_for_project_card(action,
 
     return pay_heat, pay_mc, pay_steel, pay_titanium, pay_microbes
 
+
 class CustomEnv(gym.Env):
     http_connection = None
 
@@ -194,7 +195,7 @@ class CustomEnv(gym.Env):
             HOW_MANY_PLANTS_TO_CONVERT_INTO_GREENERY: Box(0, 8, (1,), np.int8),
 
             # Fund an award (${0} M€)
-            FUND_AWARD_COST: Discrete(4), # none, 8, 14, 20
+            FUND_AWARD_COST: Discrete(4),  # none, 8, 14, 20
 
             # Select space for ${0} tile
             TILE_TO_SELECT_SPACE_FOR: Discrete(len(TILE_NAMES_OF_SELECTABLE_SPACES)),
@@ -232,18 +233,19 @@ class CustomEnv(gym.Env):
             PLANTS_PROTECTED: MultiBinary(1),
             PLANT_PRODUCTION_PROTECTED: MultiBinary(1),
             STEEL_PRODUCTION: Box(0, 127, (1,), np.int8),
-            TAGS: Box(0, 127, (11,), np.int8), # city, event, earth, plant, space, jovia, science, building, power, microbe, animal
+            TAGS: Box(0, 127, (11,), np.int8),
+            # city, event, earth, plant, space, jovia, science, building, power, microbe, animal
             TERRAFORM_RATING: Box(0, 511, (1,), np.int16),
             TITANIUM_PRODUCTION: Box(0, 127, (1,), np.int8),
             TOTAL_VICTORY_POINTS: Box(0, 511, (1,), np.int16),
-            PICKED_CORPORATION: Discrete(NUMBER_CORPORATIONS_DISCRETE), # last is none
+            PICKED_CORPORATION: Discrete(NUMBER_CORPORATIONS_DISCRETE),  # last is none
             CARDS_IN_HAND: MultiBinary(len(CARD_NAMES_INT_STR)),
             DEALT_CARDS: MultiBinary(len(CARD_NAMES_INT_STR)),
             GENERATION: Box(0, 127, (1,), np.int8),
             OXYGEN_LEVEL: Box(0, 127, (1,), np.int8),
             TEMPERATURE: Box(-30, 100, (1,), np.int8),
             CURRENT_PHASE: Discrete(len(PHASES_STR_INT)),
-            OCCUPIED_SPACES: MultiDiscrete(np.full((NUMBER_SPACES,),4,np.int8))
+            OCCUPIED_SPACES: MultiDiscrete(np.full((NUMBER_SPACES,), 4, np.int8))
         })
 
         self.action_space = spaces.Dict({
@@ -282,7 +284,7 @@ class CustomEnv(gym.Env):
 
             # Select card(s) to buy
             MULTIPLE_SELECTED_RESEARCH_CARDS: MultiBinary(NUMBER_OF_CARDS),
-            DONT_BUY_CARD: Discrete(2), # zero means no, one means yes
+            DONT_BUY_CARD: Discrete(2),  # zero means no, one means yes
 
             # Initial Research Phase
             SELECTED_CORPORATION: Discrete(NUMBER_OF_CORPORATIONS),
@@ -295,7 +297,7 @@ class CustomEnv(gym.Env):
         self.player2 = None
         self.player3 = None
 
-        #self.http_connection = http.client.HTTPConnection("localhost", 8080)
+        # self.http_connection = http.client.HTTPConnection("localhost", 8080)
 
         # ai should always play the same color
 
@@ -394,7 +396,8 @@ class CustomEnv(gym.Env):
 
         # self.player_on_turn = self.get_current_player(res_player1["players"]) # the three res are not equal but show the same current player
 
-        self.observed_player = random.choice([self.player1, self.player2, self.player3]) # TODO ai should always play the same color
+        self.observed_player = random.choice(
+            [self.player1, self.player2, self.player3])  # TODO ai should always play the same color
 
         # TODO current_player ist eig nicht richtig. es geht um die view, welcher spieler über das gesamte spiel betrachtet wird. das darf
         # TODO sich nicht pro zug/runde ändern
@@ -406,7 +409,6 @@ class CustomEnv(gym.Env):
         observation_player1 = self.create_observation_from_res(res_player1)
         observation_player2 = self.create_observation_from_res(res_player2)
         observation_player3 = self.create_observation_from_res(res_player3)
-
 
         # weil die ergebnisse der spieler nicht voneinander abhängen ist die reihenfolge hier beliebig
         match self.observed_player:
@@ -458,7 +460,7 @@ class CustomEnv(gym.Env):
         res = self.normal_turn(action)
         obs = self.create_observation_from_res(res)
 
-        current_phase = "initial_research" # calc from res
+        current_phase = "initial_research"  # calc from res
 
         if current_phase == "drafting":
             all_players = [self.player1, self.player2, self.player3]
@@ -472,9 +474,6 @@ class CustomEnv(gym.Env):
             act2, _ = self.policy_model.predict(obs2, deterministic=False)
             _ = self.normal_turn(act2)
             # return obs usw
-
-
-
 
             res_player1 = self.get_game(self.player1)
             res_player2 = self.get_game(self.player2)
@@ -498,19 +497,11 @@ class CustomEnv(gym.Env):
             curr_p = self.get_current_player(res["players"])
             # play turns of other players
             while self.player_on_turn != self.observed_player:
-                pass # do the turn of the other players (is not necessarily two
+                pass  # do the turn of the other players (is not necessarily two
 
             game = self.get_game(curr_p.id)
             obs = self.create_observation_from_res(game)
             # return
-
-
-
-
-
-
-
-
 
         match (self.last_observation["current_phase"]):
             case PhasesEnum.DRAFTING.value:
@@ -538,7 +529,7 @@ class CustomEnv(gym.Env):
             "available_initial_project_cards": self.available_initial_project_cards.sample(),
         }
 
-        self.player_on_turn = self.player1 # je nach observation festlegen
+        self.player_on_turn = self.player1  # je nach observation festlegen
 
         return observation, reward, done, False, {}
 
@@ -604,7 +595,6 @@ class CustomEnv(gym.Env):
 
         run_id = self.player_on_turn.run_id
 
-
         if "options" in current_state["waitingFor"]:
             # this has to be handled separately bc the options are not really options but all mandatory
             if current_state["waitingFor"]["title"] == "Initial Research Phase":
@@ -622,11 +612,11 @@ class CustomEnv(gym.Env):
                                 selected_project_cards.append(card)
                                 break
 
-
                 while True:
                     cost_of_card_selection = sum(map(lambda card: card["calculatedCost"], selected_project_cards))
                     if cost_of_card_selection > available_cash_for_project_cards:
-                        most_expensive_card_index = argmax(map(lambda card: card["calculatedCost"], selected_project_cards))
+                        most_expensive_card_index = argmax(
+                            map(lambda card: card["calculatedCost"], selected_project_cards))
                         selected_project_cards.pop(most_expensive_card_index)
                     else:
                         break
@@ -640,8 +630,10 @@ class CustomEnv(gym.Env):
                         selected_card_name: str = CARD_NAMES_INT_STR[card_index]
                         selected_prelude_cards_names.append(selected_card_name)
 
-                payload = create_initial_cards_card_card_card_response(run_id, selected_corporation_name, selected_prelude_cards_names, selected_project_card_names)
-            else: # wenn optionen ganz normal tatsächlich optionen sind
+                payload = create_initial_cards_card_card_card_response(run_id, selected_corporation_name,
+                                                                       selected_prelude_cards_names,
+                                                                       selected_project_card_names)
+            else:  # wenn optionen ganz normal tatsächlich optionen sind
                 available_options = current_state["waitingFor"]["options"]
 
                 # TODO if index = standard project, check if is available and maybe choose other
@@ -659,7 +651,8 @@ class CustomEnv(gym.Env):
                         break
                 selected_option = available_options[selected_option_index]
 
-                action_name = selected_option["title"]["message"] if "message" in selected_option["title"] else selected_option["title"]
+                action_name = selected_option["title"]["message"] if "message" in selected_option["title"] else \
+                selected_option["title"]
                 match action_name:
                     case ("Pass for this generation",
                           "End Turn",
@@ -693,7 +686,7 @@ class CustomEnv(gym.Env):
                           "Gain 3 plants",
                           "Gain 5 plants",
                           "Don't remove M€ from adjacent player",
-                          "Take first action of ${0} corporation", #c = which_option["title"]["data"][0]["value"]
+                          "Take first action of ${0} corporation",  # c = which_option["title"]["data"][0]["value"]
                           "Remove ${0} plants from ${1}",
                           "Remove ${0} ${1} from ${2}",
                           "Steal ${0} M€ from ${1}",
@@ -741,19 +734,21 @@ class CustomEnv(gym.Env):
                                     break
 
                         pay_heat, pay_mc, pay_steel, pay_titanium, pay_microbes = calc_payment_for_project_card(action,
-                                                                                                                     current_state,
-                                                                                                                     card_cost,
-                                                                                                                     can_pay_with_heat,
-                                                                                                                     can_pay_with_steel,
-                                                                                                                     can_pay_with_titanium,
-                                                                                                                     can_pay_with_microbes,
-                                                                                                                     reserve_heat,
-                                                                                                                     reserve_mc,
-                                                                                                                     reserve_titanium,
-                                                                                                                     reserve_steel)
+                                                                                                                current_state,
+                                                                                                                card_cost,
+                                                                                                                can_pay_with_heat,
+                                                                                                                can_pay_with_steel,
+                                                                                                                can_pay_with_titanium,
+                                                                                                                can_pay_with_microbes,
+                                                                                                                reserve_heat,
+                                                                                                                reserve_mc,
+                                                                                                                reserve_titanium,
+                                                                                                                reserve_steel)
 
-                        payload = create_or_resp_project_card_payment(run_id, selected_option_index, card_name, pay_heat, pay_mc, pay_steel, pay_titanium, pay_microbes)
-                    case "Sell patents": # multiple cards
+                        payload = create_or_resp_project_card_payment(run_id, selected_option_index, card_name,
+                                                                      pay_heat, pay_mc, pay_steel, pay_titanium,
+                                                                      pay_microbes)
+                    case "Sell patents":  # multiple cards
                         selected_project_cards = []
                         selected_card_indices = action[MULTIPLE_SELECTED_CARDS]
                         for idx, binary in enumerate(selected_card_indices):
@@ -764,50 +759,54 @@ class CustomEnv(gym.Env):
                     case "Perform an action from a played card":
                         available_cards = selected_option["cards"]
                         selected_card_from_all_name: str = CARD_NAMES_INT_STR[action[SELECTED_CARD_WITH_ACTION_INDEX]]
-                        payload = create_or_resp_card_cards(run_id, selected_option_index, [selected_card_from_all_name])
+                        payload = create_or_resp_card_cards(run_id, selected_option_index,
+                                                            [selected_card_from_all_name])
                     case "Select a card to discard":
                         selected_card_from_all_name: str = CARD_NAMES_INT_STR[action[SELECTED_CARD_TO_DISCARD_INDEX]]
                         payload = create_or_resp_card_cards(run_id, selected_option_index,
-                                                                 [selected_card_from_all_name])
+                                                            [selected_card_from_all_name])
                     case "Add 3 microbes to a card":
-                        selected_card_from_all_name: str = CARD_NAMES_INT_STR[action[SELECTED_CARD_TO_ADD_3_MICROBES_TO_INDEX]]
+                        selected_card_from_all_name: str = CARD_NAMES_INT_STR[
+                            action[SELECTED_CARD_TO_ADD_3_MICROBES_TO_INDEX]]
                         payload = create_or_resp_card_cards(run_id, selected_option_index,
-                                                                 [selected_card_from_all_name])
+                                                            [selected_card_from_all_name])
                     case "Select card to add 2 microbes":
                         selected_card_from_all_name: str = CARD_NAMES_INT_STR[
                             action[SELECTED_CARD_TO_ADD_2_MICROBES_TO_INDEX]]
                         payload = create_or_resp_card_cards(run_id, selected_option_index,
-                                                                 [selected_card_from_all_name])
+                                                            [selected_card_from_all_name])
                     case "Select card to remove 2 Animal(s)":
                         selected_card_from_all_name: str = CARD_NAMES_INT_STR[
                             action[SELECTED_CARD_TO_REMOVE_2_ANIMALS_FROM_INDEX]]
                         payload = create_or_resp_card_cards(run_id, selected_option_index,
-                                                                 [selected_card_from_all_name])
+                                                            [selected_card_from_all_name])
                     case "Select card to add 2 animals":
                         selected_card_from_all_name: str = CARD_NAMES_INT_STR[
                             action[SELECTED_CARD_TO_ADD_2_ANIMALS_TO_INDEX]]
                         payload = create_or_resp_card_cards(run_id, selected_option_index,
-                                                                 [selected_card_from_all_name])
+                                                            [selected_card_from_all_name])
                     case "Select card to add 4 animals":
                         selected_card_from_all_name: str = CARD_NAMES_INT_STR[
                             action[SELECTED_CARD_TO_ADD_4_ANIMALS_TO_INDEX]]
                         payload = create_or_resp_card_cards(run_id, selected_option_index,
-                                                                 [selected_card_from_all_name])
+                                                            [selected_card_from_all_name])
                     case "Add 2 animals to a card":
                         selected_card_from_all_name: str = CARD_NAMES_INT_STR[
                             action[SELECTED_CARD_TO_ADD_2_ANIMALS_TO_2_INDEX]]
                         payload = create_or_resp_card_cards(run_id, selected_option_index,
-                                                                 [selected_card_from_all_name])
+                                                            [selected_card_from_all_name])
                     case ("Select space for greenery tile",
                           "Convert ${0} plants into greenery"):
                         available_spaces_ids = selected_option["spaces"]
                         selected_space_index = action[SELECTED_SPACE_INDEX]
-                        selected_space_id = str(selected_space_index + 1) # TODO maybe "1" is not treated the same as "01"
+                        selected_space_id = str(
+                            selected_space_index + 1)  # TODO maybe "1" is not treated the same as "01"
                         payload = create_or_resp_space_space_id(run_id, selected_option_index, selected_space_id)
                     case "Select adjacent player to remove 4 M€ from":
                         available_players_colors = selected_option["players"]
                         selected_player_index = action[SELECTED_PLAYER]
-                        selected_player_color = get_color_of_player_index_by_current_player_color(selected_player_index, this_player_color)
+                        selected_player_color = get_color_of_player_index_by_current_player_color(selected_player_index,
+                                                                                                  this_player_color)
                         payload = create_or_resp_player_player(run_id, selected_option_index, selected_player_color)
                     case "Fund an award (${0} M€)":
                         available_awards = selected_option["options"]
@@ -820,7 +819,8 @@ class CustomEnv(gym.Env):
                         payload = create_or_resp_or_resp_option(run_id, selected_option_index, selected_award_index)
                     case "Standard projects":
                         # wenn das SP nicht verfügbar ist, darf es gar nicht erst als option im beobachtungsraum sein
-                        selected_standard_project_name = STANDARD_PROJECTS_INDEX_NAME[action[SELECTED_STANDARD_PROJECT_INDEX]]
+                        selected_standard_project_name = STANDARD_PROJECTS_INDEX_NAME[
+                            action[SELECTED_STANDARD_PROJECT_INDEX]]
                         create_or_resp_card_cards(run_id, selected_option_index, [selected_standard_project_name])
                     case "Claim a milestone":
                         available_milestones = selected_option["options"]
@@ -832,7 +832,8 @@ class CustomEnv(gym.Env):
                                 break
                         create_or_resp_or_resp_option(run_id, selected_option_index, selected_milestone_index)
         else:
-            message = current_state["waitingFor"]["title"]["message"] if "message" in current_state["waitingFor"]["title"] else current_state["waitingFor"]["title"]
+            message = current_state["waitingFor"]["title"]["message"] if "message" in current_state["waitingFor"][
+                "title"] else current_state["waitingFor"]["title"]
             match message:
                 case ("Select space for ${0} tile",
                       "Select space for ocean tile",
@@ -858,9 +859,10 @@ class CustomEnv(gym.Env):
                     payload = create_space_id_response(run_id, selected_space_id)
                 case "Select player to decrease ${0} production by ${1} step(s)":
                     selected_player_index = action[SELECTED_PLAYER]
-                    selected_player_color = get_color_of_player_index_by_current_player_color(selected_player_index, this_player_color)
+                    selected_player_color = get_color_of_player_index_by_current_player_color(selected_player_index,
+                                                                                              this_player_color)
                     payload = create_player_response(run_id, selected_player_color)
-                case ("Select card to add ${0} ${1}", # geschenkt
+                case ("Select card to add ${0} ${1}",  # geschenkt
                       "Select builder card to copy",
                       "Select 1 card(s) to keep",
                       "Select card to remove 1 Microbe(s)",
@@ -943,23 +945,24 @@ class CustomEnv(gym.Env):
                                 break
 
                     pay_heat, pay_mc, pay_steel, pay_titanium, pay_microbes = calc_payment_for_project_card(action,
-                                                                                                                 current_state,
-                                                                                                                 card_cost,
-                                                                                                                 can_pay_with_heat,
-                                                                                                                 can_pay_with_steel,
-                                                                                                                 can_pay_with_titanium,
-                                                                                                                 can_pay_with_microbes,
-                                                                                                                 reserve_heat,
-                                                                                                                 reserve_mc,
-                                                                                                                 reserve_titanium,
-                                                                                                                 reserve_steel)
+                                                                                                            current_state,
+                                                                                                            card_cost,
+                                                                                                            can_pay_with_heat,
+                                                                                                            can_pay_with_steel,
+                                                                                                            can_pay_with_titanium,
+                                                                                                            can_pay_with_microbes,
+                                                                                                            reserve_heat,
+                                                                                                            reserve_mc,
+                                                                                                            reserve_titanium,
+                                                                                                            reserve_steel)
 
-                    create_project_card_payment_response(run_id, card_name, pay_heat, pay_mc, pay_steel, pay_titanium, pay_microbes)
+                    create_project_card_payment_response(run_id, card_name, pay_heat, pay_mc, pay_steel, pay_titanium,
+                                                         pay_microbes)
                     pass
                 case ("Select how to pay for the ${0} standard project",
                       "Select how to spend ${0} M€",
                       "Select how to spend ${0} M€ for ${1} cards",
-                      "Select how to pay for ${0} action", # too complicated
+                      "Select how to pay for ${0} action",  # too complicated
                       "Select how to pay for award",
                       "Select how to pay for action",
                       "Select how to pay for milestone"):
@@ -972,20 +975,20 @@ class CustomEnv(gym.Env):
                     can_pay_with_steel = payment_options["steel"]
 
                     pay_heat, pay_mc, pay_steel, pay_titanium, _ = calc_payment_for_project_card(action,
-                                                                                                     current_state,
-                                                                                                     cost,
-                                                                                                     can_pay_with_heat,
-                                                                                                     can_pay_with_steel,
-                                                                                                     can_pay_with_titanium,
-                                                                                                     False,
-                                                                                                     0,
-                                                                                                     0,
-                                                                                                     0,
-                                                                                                     0)
+                                                                                                 current_state,
+                                                                                                 cost,
+                                                                                                 can_pay_with_heat,
+                                                                                                 can_pay_with_steel,
+                                                                                                 can_pay_with_titanium,
+                                                                                                 False,
+                                                                                                 0,
+                                                                                                 0,
+                                                                                                 0,
+                                                                                                 0)
                     payload = create_payment_response(run_id, pay_heat, pay_mc, pay_steel, pay_titanium)
                 case "Select amount of heat production to decrease":
                     selected_amount = action[AMOUNT_OF_HEAT_PRODUCTION_TO_DECREASE]
-                    #min = current_state["waitingFor"]["min"]
+                    # min = current_state["waitingFor"]["min"]
                     max = current_state["waitingFor"]["max"]
                     amount = min(selected_amount, max)
                     payload = create_amount_response(run_id, amount)
