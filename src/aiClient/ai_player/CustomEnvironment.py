@@ -9,7 +9,7 @@ import random
 from gymnasium.spaces import Box, Discrete, MultiBinary, MultiDiscrete
 from numpy import argmax
 
-import ppo
+from ai_player.ppo_stuff import ppo
 from Player import Player
 from action_observation_names import *
 from https_responses import *

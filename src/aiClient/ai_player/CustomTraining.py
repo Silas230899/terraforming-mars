@@ -1,12 +1,7 @@
-import numpy as np
-from gymnasium.wrappers import FlattenObservation
-from stable_baselines3 import PPO
-from stable_baselines3.common.env_checker import check_env
 from stable_baselines3.common.vec_env import DummyVecEnv
 
 from CustomEnvironment import CustomEnv
 from HybridActionWrapper import HybridActionWrapper
-from ppo import PPO
 
 if __name__ == '__main__':
     env1 = CustomEnv()

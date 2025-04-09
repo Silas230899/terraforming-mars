@@ -686,8 +686,6 @@ def turn(player, http_connection):
                 "type": "space",
                 "spaceId": random.choice(available_spaces)
             }
-            print(json.dumps(game, indent=2))
-            exit(0)
             res = send_player_input(json.dumps(select_space_data), player.id, http_connection)
             #print("Select space reserved for ocean to place greenery tile")
             return res
