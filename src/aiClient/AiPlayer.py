@@ -686,6 +686,8 @@ def turn(player, http_connection):
                 "type": "space",
                 "spaceId": random.choice(available_spaces)
             }
+            print(json.dumps(game, indent=2))
+            exit(0)
             res = send_player_input(json.dumps(select_space_data), player.id, http_connection)
             #print("Select space reserved for ocean to place greenery tile")
             return res
@@ -2419,6 +2421,7 @@ def turn(player, http_connection):
     elif which_option["title"]["message"] == "Add ${0} microbes to ${1}":
         amount = which_option["title"]["data"][0]["value"]
         which_card = which_option["title"]["data"][1]["value"]
+        #print(which_card)
 
         add_microbes_data = {
             "runId": player.run_id,
@@ -2460,6 +2463,7 @@ def turn(player, http_connection):
         return res
     elif which_option["title"]["message"] == "Fund ${0} award":
         what_award = which_option["title"]["data"][0]["value"]
+        print(what_award)
         add_animals_data = {
             "runId": player.run_id,
             "type": "or",
