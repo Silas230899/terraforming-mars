@@ -37,8 +37,6 @@ PLANT_CARDS_SET = {'Biosphere Support', 'Dome Farming', 'Ecology Experts', 'Expe
                    'Mangrove', 'Moss', 'Nitrophilic Moss', 'Noctis Farming', 'Plantation', 'Protected Valley', 'Trees',
                    'Tundra Farming'}
 
-NUMBER_CORPORATIONS = 12
-NUMBER_CORPORATIONS_DISCRETE = NUMBER_CORPORATIONS + 1
 NUMBER_PLAYERS = 3
 NUMBER_PLAYERS_DISCRETE = 4
 
@@ -47,21 +45,6 @@ NONE_PLAYER_INDEX = 3
 NUMBER_SPACES = 63  # indices 01 to 63
 
 
-def NUMBER_OF_AWARDS(): return len(AWARDS_INT_STR)
-
-
-NUMBER_OF_AWARDS_DISCRETE = NUMBER_OF_AWARDS() + 1
-NONE_AWARD_INDEX = 5
-
-
-def NUMBER_OF_MILESTONES(): return len(MILESTONES_INT_STR)
-
-
-def NUMBER_OF_STANDARD_PROJECTS(): return len(STANDARD_PROJECTS_INDEX_NAME)
-
-
-NUMBER_OF_STANDARD_PROJECTS_DISCRETE = NUMBER_OF_STANDARD_PROJECTS() + 1
-NONE_STANDARD_PROJECT_INDEX = 5
 
 
 class PhasesEnum(Enum):
@@ -75,7 +58,7 @@ class PhasesEnum(Enum):
 
 
 PHASES_STR_INT: Dict[str, int] = {
-    "initial_research": 0,
+    "research": 0,
     "preludes": 1,
     "action": 2,
     "production": 3,
@@ -98,6 +81,10 @@ AWARDS_STR_INT = {
     "Thermalist": 3,
     "Banker": 4,
 }
+
+def NUMBER_OF_AWARDS(): return len(AWARDS_INT_STR)
+NUMBER_OF_AWARDS_DISCRETE = NUMBER_OF_AWARDS() + 1
+NONE_AWARD_INDEX = 5
 
 MILESTONES_INT_STR: Dict[int, str] = {
     0: "Gardener",
@@ -130,6 +117,13 @@ STANDARD_PROJECTS_NAME_INDEX = {
     "Greenery": 3,
     "City": 4,
 }
+
+def NUMBER_OF_MILESTONES(): return len(MILESTONES_INT_STR)
+
+
+def NUMBER_OF_STANDARD_PROJECTS(): return len(STANDARD_PROJECTS_INDEX_NAME)
+NUMBER_OF_STANDARD_PROJECTS_DISCRETE = NUMBER_OF_STANDARD_PROJECTS() + 1
+NONE_STANDARD_PROJECT_INDEX = 5
 
 
 def get_index_of_player_color_by_current_player_color(color_of_player, color_of_current_player):
@@ -1041,3 +1035,4 @@ CORPORATIONS_STARTING_MC = {
     "Vitor": 45,
 }
 NUMBER_OF_CORPORATIONS = 17
+NUMBER_CORPORATIONS_DISCRETE = NUMBER_OF_CORPORATIONS + 1

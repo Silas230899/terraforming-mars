@@ -1,4 +1,7 @@
+import json
+
 import numpy as np
+
 from mapping_and_constants import *
 from action_observation_names import *
 
@@ -22,7 +25,7 @@ def get_result_array_from_available_cards(available_cards):
 
 
 def get_available_project_cards(res):
-    is_action_option = "options" in res["waitingFor"] and res["waitingFor"]["title"] is not "Initial Research Phase"
+    is_action_option = "options" in res["waitingFor"] and res["waitingFor"]["title"] != "Initial Research Phase"
     cards = {}
     if is_action_option:
         available_options = res["waitingFor"]["options"]
@@ -40,7 +43,7 @@ def get_available_project_cards(res):
 
 
 def get_available_cards(res):
-    is_action_option = "options" in res["waitingFor"] and res["waitingFor"]["title"] is not "Initial Research Phase"
+    is_action_option = "options" in res["waitingFor"] and res["waitingFor"]["title"] != "Initial Research Phase"
     cards = {}
     if not is_action_option:
         message = res["waitingFor"]["title"]["message"] if "message" in res["waitingFor"]["title"] else \
@@ -59,7 +62,7 @@ def get_available_cards(res):
 
 
 def get_available_cards_from_option(res, option_message):
-    is_action_option = "options" in res["waitingFor"] and res["waitingFor"]["title"] is not "Initial Research Phase"
+    is_action_option = "options" in res["waitingFor"] and res["waitingFor"]["title"] != "Initial Research Phase"
     cards = {}
     if is_action_option:
         available_options = res["waitingFor"]["options"]
@@ -101,7 +104,7 @@ def get_available_cards_to_add_2_animals_to_2(res):
 
 def get_available_spaces(res):
     result = np.zeros(NUMBER_SPACES, dtype=np.int8)
-    is_action_option = "options" in res["waitingFor"] and res["waitingFor"]["title"] is not "Initial Research Phase"
+    is_action_option = "options" in res["waitingFor"] and res["waitingFor"]["title"] != "Initial Research Phase"
     available_spaces_ids = {}
     if is_action_option:
         available_options = res["waitingFor"]["options"]
@@ -142,8 +145,8 @@ def get_available_spaces(res):
 
 
 def get_available_players(res):
-    result = np.zeros(NUMBER_SPACES, dtype=np.int8)
-    is_action_option = "options" in res["waitingFor"] and res["waitingFor"]["title"] is not "Initial Research Phase"
+    result = np.zeros(NUMBER_PLAYERS, dtype=np.int8)
+    is_action_option = "options" in res["waitingFor"] and res["waitingFor"]["title"] != "Initial Research Phase"
     available_player_colors = {}
     if is_action_option:
         available_options = res["waitingFor"]["options"]
@@ -165,7 +168,7 @@ def get_available_players(res):
 
 def get_available_cards_with_actions(res):
     result = np.zeros(NUMBER_OF_CARDS, dtype=np.int16)
-    is_action_option = "options" in res["waitingFor"] and res["waitingFor"]["title"] is not "Initial Research Phase"
+    is_action_option = "options" in res["waitingFor"] and res["waitingFor"]["title"] != "Initial Research Phase"
     if is_action_option:
         available_options = res["waitingFor"]["options"]
         for option in available_options:
@@ -181,7 +184,7 @@ def get_available_cards_with_actions(res):
 
 def get_available_milestones(res):
     result = np.zeros(NUMBER_OF_MILESTONES(), dtype=np.int8)
-    is_action_option = "options" in res["waitingFor"] and res["waitingFor"]["title"] is not "Initial Research Phase"
+    is_action_option = "options" in res["waitingFor"] and res["waitingFor"]["title"] != "Initial Research Phase"
     if is_action_option:
         available_options = res["waitingFor"]["options"]
         for option in available_options:
@@ -197,7 +200,7 @@ def get_available_milestones(res):
 
 def get_available_awards(res):
     result = np.zeros(NUMBER_OF_AWARDS(), dtype=np.int8)
-    is_action_option = "options" in res["waitingFor"] and res["waitingFor"]["title"] is not "Initial Research Phase"
+    is_action_option = "options" in res["waitingFor"] and res["waitingFor"]["title"] != "Initial Research Phase"
     if is_action_option:
         available_options = res["waitingFor"]["options"]
         for option in available_options:
@@ -213,7 +216,7 @@ def get_available_awards(res):
 
 def get_corporation_to_take_first_action_of(res):
     corporation_index = CORPORATIONS_WITH_FIRST_ACTION["None"]
-    is_action_option = "options" in res["waitingFor"] and res["waitingFor"]["title"] is not "Initial Research Phase"
+    is_action_option = "options" in res["waitingFor"] and res["waitingFor"]["title"] != "Initial Research Phase"
     if is_action_option:
         available_options = res["waitingFor"]["options"]
         for option in available_options:
@@ -228,7 +231,7 @@ def get_corporation_to_take_first_action_of(res):
 
 def get_available_standard_projects(res):
     result = np.zeros(NUMBER_OF_STANDARD_PROJECTS(), dtype=np.int8)
-    is_action_option = "options" in res["waitingFor"] and res["waitingFor"]["title"] is not "Initial Research Phase"
+    is_action_option = "options" in res["waitingFor"] and res["waitingFor"]["title"] != "Initial Research Phase"
     if is_action_option:
         available_options = res["waitingFor"]["options"]
         for option in available_options:
@@ -336,7 +339,7 @@ def get_max_value(action_option):
 def get_available_corporations(res):
     available_corporations = np.zeros(NUMBER_OF_CORPORATIONS, dtype=np.int8)
     if "options" in res["waitingFor"] and res["waitingFor"]["title"] == "Initial Research Phase":
-        for corporation in res["waitingFor"]["options"][0]:
+        for corporation in res["waitingFor"]["options"][0]["cards"]:
             corporation_name = corporation["name"]
             corporation_index = ALL_CORPORATIONS_NAME_INDEX[corporation_name]
             available_corporations[corporation_index] = 1
@@ -345,7 +348,7 @@ def get_available_corporations(res):
 
 def get_picked_corporation(res):
     picked_corporation = NONE_CORPORATION_INDEX
-    if "pickedCorporationCard" in res:
+    if "pickedCorporationCard" in res and len(res["pickedCorporationCard"]) > 0:
         picked_corporation = ALL_CORPORATIONS_NAME_INDEX[res["pickedCorporationCard"]["name"]]
     return build_discrete_i8(picked_corporation)
 
@@ -383,8 +386,11 @@ def get_current_phase(res):
 
 
 def get_occupied_spaces(res):
-    occupied_spaces = np.zeros(len(OCCUPIED_SPACES), dtype=np.int8)
-    current_player_color = res["game"]["thisPlayer"]["color"]
+    occupied_spaces = np.full(NUMBER_SPACES, NONE_PLAYER_INDEX, dtype=np.int8)
+    assert occupied_spaces.shape == (63,)
+    assert occupied_spaces.dtype == np.int8
+    # occupied_spaces = np.zeros((NUMBER_SPACES,), dtype=np.int8)
+    current_player_color = res["thisPlayer"]["color"]
     for space in res["game"]["spaces"]:
         if space["id"] == "69":
             continue  # aus ner erweiterung
@@ -393,6 +399,7 @@ def get_occupied_spaces(res):
             player_id = get_index_of_player_color_by_current_player_color(player_color, current_player_color)
             space_id = int(space["id"])
             occupied_spaces[space_id] = player_id
+    return occupied_spaces
 
 
 def create_observation_from_res(res):
@@ -436,10 +443,10 @@ def create_observation_from_res(res):
     protected_resources = this_player["protectedResources"]
 
     microbes = res["waitingFor"]["microbes"] if "waitingFor" in res and "microbes" in res["waitingFor"] else 0
-    reserve_heat = protected_resources["heat"] if protected_resources["heat"] is not "off" else 0
-    reserve_mc = protected_resources["megacredits"] if protected_resources["megacredits"] is not "off" else 0
-    reserve_steel = protected_resources["steel"] if protected_resources["steel"] is not "off" else 0
-    reserve_titanium = protected_resources["titanium"] if protected_resources["titanium"] is not "off" else 0
+    reserve_heat = protected_resources["heat"] if protected_resources["heat"] != "off" else 0
+    reserve_mc = protected_resources["megacredits"] if protected_resources["megacredits"] != "off" else 0
+    reserve_steel = protected_resources["steel"] if protected_resources["steel"] != "off" else 0
+    reserve_titanium = protected_resources["titanium"] if protected_resources["titanium"] != "off" else 0
 
     plants_protected = np.zeros(1, dtype=np.int8) if this_player["protectedResources"]["plants"] == "off" else np.ones(
         1, dtype=np.int8)
@@ -461,9 +468,9 @@ def create_observation_from_res(res):
     }
     for tag in this_player["tags"]:
         tags_dict[tag["tag"]] = tag["count"]
-    tags_array = tags_dict.values()
+    tags_array = list(tags_dict.values())
 
-    is_action_option = "options" in res["waitingFor"] and res["waitingFor"]["title"] is not "Initial Research Phase"
+    is_action_option = "options" in res["waitingFor"] and res["waitingFor"]["title"] != "Initial Research Phase"
 
     available_action_options = np.zeros(NUMBER_ALL_ACTION_OPTIONS, dtype=np.int8)
     if is_action_option:
@@ -474,7 +481,7 @@ def create_observation_from_res(res):
 
     selected_action_index = SELECTED_ACTION_OPTION_NAME_INDEX["None"]
     if "options" not in res["waitingFor"] or (
-            "options" in res["waitingFor"] and res["waitingFor"]["title"] is "Initial Research Phase"):
+            "options" in res["waitingFor"] and res["waitingFor"]["title"] == "Initial Research Phase"):
         message = res["waitingFor"]["title"]["message"] if "message" in res["waitingFor"]["title"] else \
             res["waitingFor"]["title"]
         selected_action_index = SELECTED_ACTION_OPTION_NAME_INDEX[message]
@@ -498,11 +505,20 @@ def create_observation_from_res(res):
     available_cards_to_add_2_animals_to_2 = get_available_cards_to_add_2_animals_to_2(res)
 
     action_options = {}
-    if "options" in res["waitingFor"] and res["waitingFor"]["title"] is not "Initial Research Phase":
+    for option in ACTION_OPTIONS_NAME_INDEX.keys():
+        action_options[option] = None
+    if "options" in res["waitingFor"] and res["waitingFor"]["title"] != "Initial Research Phase":
         available_options = res["waitingFor"]["options"]
         for option in available_options:
             message = option["title"]["message"] if "message" in option["title"] else option["title"]
             action_options[message] = option
+
+    selected_action = {}
+    for action in SELECTED_ACTION_OPTION_NAME_INDEX.keys():
+        selected_action[action] = None
+    if "options" not in res["waitingFor"]:
+        name = res["waitingFor"]["title"] if "message" not in res["waitingFor"]["title"] else res["waitingFor"]["title"]["message"]
+        selected_action[name] = res["waitingFor"]
 
     observation = {
         AVAILABLE_ACTION_OPTIONS: available_action_options,
@@ -551,17 +567,17 @@ def create_observation_from_res(res):
         HOW_MANY_PLANTS_TO_CONVERT_INTO_GREENERY: get_amount_from_action_option(
             action_options["Convert ${0} plants into greenery"], 0),
         FUND_AWARD_COST: get_fund_award_cost(action_options["Fund an award (${0} M€)"], 0),  # 0 (none), 8, 14, 20
-        TILE_TO_SELECT_SPACE_FOR: get_tile_to_select_space_for(action_options["Select space for ${0} tile"], 0),
+        TILE_TO_SELECT_SPACE_FOR: get_tile_to_select_space_for(selected_action["Select space for ${0} tile"], 0),
         PRODUCTION_TO_DECREASE: get_production_to_decrease(
-            action_options["Select player to decrease ${0} production by ${1} step(s)"], 0),
+            selected_action["Select player to decrease ${0} production by ${1} step(s)"], 0),
         STEPS_TO_DECREASE_PRODUCTION: get_amount_from_action_option(
-            action_options["Select player to decrease ${0} production by ${1} step(s)"], 1),
+            selected_action["Select player to decrease ${0} production by ${1} step(s)"], 1),
         WHAT_STANDARD_PROJECT_TO_SELECT_HOW_TO_PAY_FOR: get_standard_project_to_select_how_to_pay_for(
-            action_options["Select how to pay for the ${0} standard project"], 0),
+            selected_action["Select how to pay for the ${0} standard project"], 0),
         MAX_AMOUNT_OF_HEAT_PRODUCTION_TO_DECREASE: get_max_value(
-            action_options["Select amount of heat production to decrease"]),
-        MAX_AMOUNT_OF_ENERGY_TO_SPEND: get_max_value(action_options["Select amount of energy to spend"]),
-        PASS_REMAINING_DRAFT_CARDS_TO_WHOM: get_player_from_action_option(res, action_options[
+            selected_action["Select amount of heat production to decrease"]),
+        MAX_AMOUNT_OF_ENERGY_TO_SPEND: get_max_value(selected_action["Select amount of energy to spend"]),
+        PASS_REMAINING_DRAFT_CARDS_TO_WHOM: get_player_from_action_option(res, selected_action[
             "Select a card to keep and pass the rest to ${0}"], 0),
         AVAILABLE_CORPORATIONS: get_available_corporations(res),
         ACTIONS_TAKEN_THIS_ROUND: build_box_i8(this_player[ACTIONS_TAKEN_THIS_ROUND]),
@@ -587,8 +603,7 @@ def create_observation_from_res(res):
         GENERATION: build_box_i8(game[GENERATION]),
         OXYGEN_LEVEL: build_box_i8(game[OXYGEN_LEVEL]),
         TEMPERATURE: build_box_i8(game[TEMPERATURE]),
-        CURRENT_PHASE: get_current_phase(res),
+        CURRENT_PHASE: build_box_i8(get_current_phase(res)),
         OCCUPIED_SPACES: get_occupied_spaces(res),
     }
-
     return observation

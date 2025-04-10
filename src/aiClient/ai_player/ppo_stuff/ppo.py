@@ -11,7 +11,7 @@ from stable_baselines3.common.policies import ActorCriticCnnPolicy, ActorCriticP
 from stable_baselines3.common.type_aliases import GymEnv, MaybeCallback, Schedule, RolloutBufferSamples
 from stable_baselines3.common.utils import explained_variance, get_schedule_fn
 
-from on_policy_algorithm import OnPolicyAlgorithm
+from ai_player.ppo_stuff.on_policy_algorithm import OnPolicyAlgorithm
 
 SelfPPO = TypeVar("SelfPPO", bound="PPO")
 

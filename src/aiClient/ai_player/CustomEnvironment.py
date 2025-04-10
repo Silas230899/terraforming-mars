@@ -1,3 +1,4 @@
+import http.client
 import math
 
 import gymnasium as gym
@@ -14,114 +15,15 @@ from network_related import *
 from observation_creation import *
 
 
-def calc_payment_for_project_card(action,
-                                  current_state,
-                                  cost,
-                                  can_pay_with_heat,
-                                  can_pay_with_steel,
-                                  can_pay_with_titanium,
-                                  can_pay_with_microbes,
-                                  reserve_heat,
-                                  reserve_mc,
-                                  reserve_titanium,
-                                  reserve_steel):
-    pay_heat_percentage = action[PAY_HEAT_PERCENTAGE]
-    pay_mc_percentage = action[PAY_MC_PERCENTAGE]
-    pay_steel_percentage = action[PAY_STEEL_PERCENTAGE]
-    pay_titanium_percentage = action[PAY_TITANIUM_PERCENTAGE]
-    pay_microbes_percentage = action[PAY_MICROBES_PERCENTAGE]
-
-    available_heat = current_state["thisPlayer"]["heat"]
-    available_mc = current_state["thisPlayer"]["megaCredits"]
-    available_steel = current_state["thisPlayer"]["steel"]
-    steel_value = current_state["thisPlayer"]["steelValue"]
-    available_titanium = current_state["thisPlayer"]["titanium"]
-    titanium_value = current_state["thisPlayer"]["titaniumValue"]
-    available_microbes = current_state["waitingFor"]["microbes"]
-    microbes_value = 2
-
-    available_heat -= reserve_heat
-    available_mc -= reserve_mc
-    available_titanium -= reserve_titanium
-    available_steel -= reserve_steel
-
-    pay_heat = math.floor(pay_heat_percentage * available_heat) * (1 if can_pay_with_heat else 0)
-    pay_mc = math.floor(pay_mc_percentage * available_mc)
-    pay_steel = math.floor(pay_steel_percentage * available_steel) * (1 if can_pay_with_steel else 0)
-    pay_titanium = math.floor(pay_titanium_percentage * available_titanium) * (1 if can_pay_with_titanium else 0)
-    pay_microbes = math.floor(pay_microbes_percentage * available_microbes) * (1 if can_pay_with_microbes else 0)
-
-    payment = pay_heat + pay_mc + pay_steel * steel_value + pay_titanium * titanium_value + pay_microbes * microbes_value
-
-    if payment != cost:
-        pay_heat = 0
-        pay_mc = 0
-        pay_steel = 0
-        pay_titanium = 0
-        pay_microbes = 0
-
-        available_payments = ["mc"]
-        if can_pay_with_heat: available_payments.append("heat")
-        if can_pay_with_steel: available_payments.append("steel")
-        if can_pay_with_titanium: available_payments.append("titanium")
-        if can_pay_with_microbes: available_payments.append("microbes")
-        random.shuffle(available_payments)  # random order
-
-        remaining_cost = cost
-        for payment in available_payments:
-            if remaining_cost <= 0:
-                break
-            elif payment == "mc":
-                if available_mc >= remaining_cost:
-                    pay_mc = remaining_cost
-                    break
-                else:
-                    pay_mc = available_mc
-                    remaining_cost = remaining_cost - available_mc
-            elif payment == "heat":
-                if available_heat >= remaining_cost:
-                    pay_heat = remaining_cost
-                    break
-                else:
-                    pay_heat = available_heat
-                    remaining_cost = remaining_cost - available_heat
-            elif payment == "steel":
-                if available_steel * steel_value >= remaining_cost:
-                    pay_steel = math.ceil(remaining_cost / steel_value)
-                    break
-                else:
-                    pay_steel = available_steel
-                    remaining_cost = remaining_cost - available_steel * steel_value
-            elif payment == "titanium":
-                if available_titanium * titanium_value >= remaining_cost:
-                    pay_titanium = math.ceil(remaining_cost / titanium_value)
-                    break
-                else:
-                    pay_titanium = available_titanium
-                    remaining_cost = remaining_cost - available_titanium * titanium_value
-            elif payment == "microbes":
-                if available_microbes * microbes_value >= remaining_cost:
-                    pay_microbes = math.ceil(remaining_cost / microbes_value)
-                    break
-                else:
-                    pay_microbes = available_microbes
-                    remaining_cost = remaining_cost - available_microbes * microbes_value
-
-    return pay_heat, pay_mc, pay_steel, pay_titanium, pay_microbes
-
-
 class CustomEnv(gym.Env):
     http_connection = None
 
-    player1 = None
-    player2 = None
-    player3 = None
+    player1: Player = None
+    player2: Player = None
+    player3: Player = None
 
-    player_on_turn = None
-    observed_player = None
-
-    current_turn = None
-    last_observation = None
+    observed_player: Player = None
+    res_of_observed_player = None
 
     run_id = -1
 
@@ -129,6 +31,8 @@ class CustomEnv(gym.Env):
 
     def __init__(self):
         super(CustomEnv, self).__init__()
+
+        self.http_connection = http.client.HTTPConnection("localhost", 8080)
 
         # Beobachtungsraum
         self.observation_space = spaces.Dict({
@@ -243,7 +147,7 @@ class CustomEnv(gym.Env):
             OXYGEN_LEVEL: Box(0, 127, (1,), np.int8),
             TEMPERATURE: Box(-30, 100, (1,), np.int8),
             CURRENT_PHASE: Discrete(len(PHASES_STR_INT)),
-            OCCUPIED_SPACES: MultiDiscrete(np.full((NUMBER_SPACES,), 4, np.int8))
+            OCCUPIED_SPACES: spaces.MultiDiscrete(np.full((NUMBER_SPACES,), 4, np.int8))
         })
 
         self.action_space = spaces.Dict({
@@ -288,82 +192,6 @@ class CustomEnv(gym.Env):
             SELECTED_CORPORATION: Discrete(NUMBER_OF_CORPORATIONS),
         })
 
-    def reset(self, seed=None, options=None):
-        super().reset(seed=seed)
-
-        self.player1 = None
-        self.player2 = None
-        self.player3 = None
-
-        # self.http_connection = http.client.HTTPConnection("localhost", 8080)
-
-        # ai should always play the same color
-
-
-        result = create_game(self.http_connection, json.dumps(settings))
-
-        self.player1 = Player(result["players"][0]["color"],
-                              result["players"][0]["id"],
-                              result["players"][0]["name"])
-        self.player2 = Player(result["players"][1]["color"],
-                              result["players"][1]["id"],
-                              result["players"][1]["name"])
-        self.player3 = Player(result["players"][2]["color"],
-                              result["players"][2]["id"],
-                              result["players"][2]["name"])
-
-        res_player1 = get_game(self.http_connection, self.player1)
-        res_player2 = get_game(self.http_connection, self.player2)
-        res_player3 = get_game(self.http_connection, self.player3)
-
-        self.run_id = res_player1["runId"]  # all players have the same run_id
-
-        # self.player_on_turn = self.get_current_player(res_player1["players"]) # the three res are not equal but show the same current player
-
-        self.observed_player = random.choice(
-            [self.player1, self.player2, self.player3])  # TODO ai should always play the same color
-
-        # TODO current_player ist eig nicht richtig. es geht um die view, welcher spieler über das gesamte spiel betrachtet wird. das darf
-        # TODO sich nicht pro zug/runde ändern
-
-        # für rot: gelb links, grün rechts
-        # für grün: rot links, gelb rechts
-        # für gelb: grün links, rot rechts
-
-        observation_player1 = create_observation_from_res(res_player1)
-        observation_player2 = create_observation_from_res(res_player2)
-        observation_player3 = create_observation_from_res(res_player3)
-
-        # weil die ergebnisse der spieler nicht voneinander abhängen ist die reihenfolge hier beliebig
-        match self.observed_player:
-            case self.player1:
-                # calc player 2 and 3 now
-                action_player2, _ = self.policy_model.predict(observation_player2)
-                _ = self.normal_turn(action_player2)
-                action_player3, _ = self.policy_model.predict(observation_player3)
-                _ = self.normal_turn(action_player3)
-                return observation_player1, {}
-            case self.player2:
-                # calc player 1 and 3 now
-                action_player1, _ = self.policy_model.predict(observation_player1)
-                _ = self.normal_turn(action_player1)
-                action_player3, _ = self.policy_model.predict(observation_player3)
-                _ = self.normal_turn(action_player3)
-                return observation_player2, {}
-            case self.player3:
-                action_player1, _ = self.policy_model.predict(observation_player1)
-                _ = self.normal_turn(action_player1)
-                action_player2, _ = self.policy_model.predict(observation_player2)
-                _ = self.normal_turn(action_player2)
-                return observation_player3, {}
-
-        # return {
-        #     AVAILABLE_ACTION_OPTIONS: None,
-        #     SELECTED_ACTION_INDEX: None,
-        #     "available_corporations": self.available_corporations.sample(),
-        #     "available_initial_project_cards": self.available_initial_project_cards.sample(),
-        # }, {}
-
     def get_current_player(self, players) -> Player:
         for player in players:
             if player["isActive"]:
@@ -378,137 +206,163 @@ class CustomEnv(gym.Env):
                         print("error getting current player")
                         exit(-1)
 
+
+    def play_all_at_once(self, res_player1, res_player2, res_player3):
+        observation_player1 = create_observation_from_res(res_player1)
+        observation_player2 = create_observation_from_res(res_player2)
+        observation_player3 = create_observation_from_res(res_player3)
+
+
+        action_player2xx, _ = self.policy_model.predict(observation_player2)
+        print(action_player2xx)
+        print(type(action_player2xx))
+        print(action_player2xx[0])
+        print(len(action_player2xx[0]))
+        exit(0)
+
+        # weil die ergebnisse der spieler nicht voneinander abhängen ist die reihenfolge hier beliebig
+        match self.observed_player:
+            case self.player1:
+                # calc player 2 and 3 now
+                action_player2, _ = self.policy_model.predict(observation_player2)
+                _ = self.normal_turn(action_player2, res_player2, self.player2)
+                action_player3, _ = self.policy_model.predict(observation_player3)
+                _ = self.normal_turn(action_player3, res_player3, self.player3)
+                return observation_player1, res_player1
+            case self.player2:
+                # calc player 1 and 3 now
+                action_player1, _ = self.policy_model.predict(observation_player1)
+                _ = self.normal_turn(action_player1, res_player1, self.player1)
+                action_player3, _ = self.policy_model.predict(observation_player3)
+                _ = self.normal_turn(action_player3, res_player3, self.player3)
+                return observation_player2, res_player2
+            case self.player3:
+                action_player1, _ = self.policy_model.predict(observation_player1)
+                _ = self.normal_turn(action_player1, res_player1, self.player1)
+                action_player2, _ = self.policy_model.predict(observation_player2)
+                _ = self.normal_turn(action_player2, res_player2, self.player2)
+                return observation_player3, res_player3
+
+
+    def reset(self, seed=None, options=None):
+        super().reset()
+
+        result = create_game(self.http_connection, json.dumps(settings))
+
+        self.player1 = None
+        self.player2 = None
+        self.player3 = None
+
+        self.player1 = Player(result["players"][0]["color"],
+                              result["players"][0]["id"],
+                              result["players"][0]["name"])
+        self.player2 = Player(result["players"][1]["color"],
+                              result["players"][1]["id"],
+                              result["players"][1]["name"])
+        self.player3 = Player(result["players"][2]["color"],
+                              result["players"][2]["id"],
+                              result["players"][2]["name"])
+
+        res_player1 = get_game(self.http_connection, self.player1.id)
+        res_player2 = get_game(self.http_connection, self.player2.id)
+        res_player3 = get_game(self.http_connection, self.player3.id)
+
+        self.run_id = res_player1["runId"]  # all players have the same run_id
+
+        self.observed_player = random.choice([self.player1, self.player2, self.player3])
+
+        # für rot: gelb links, grün rechts
+        # für grün: rot links, gelb rechts
+        # für gelb: grün links, rot rechts
+
+        observation, self.res_of_observed_player = self.play_all_at_once(res_player1, res_player2, res_player3)
+        return observation, {}
+
+
     def step(self, action):
-        res = None
+        # action ausführen
+        res = self.normal_turn(action, self.res_of_observed_player, self.observed_player) # this is from observed player
 
-        res = self.normal_turn(action)
-        obs = create_observation_from_res(res)
+        if res["game"]["phase"] == "drafting":
+            res_player1 = get_game(self.http_connection, self.player1.id)
+            res_player2 = get_game(self.http_connection, self.player2.id)
+            res_player3 = get_game(self.http_connection, self.player3.id)
 
-        current_phase = "initial_research"  # calc from res
+            return_obs, self.res_of_observed_player = self.play_all_at_once(res_player1, res_player2, res_player3)
 
-        if current_phase == "drafting":
-            all_players = [self.player1, self.player2, self.player3]
-            all_players.remove(self.observed_player)
-            res1 = get_game(self.http_connection, all_players[0])
-            obs1 = create_observation_from_res(res1)
-            act1, _ = self.policy_model.predict(obs1, deterministic=False)
-            _ = self.normal_turn(act1)
-            res2 = get_game(self.http_connection, all_players[1])
-            obs2 = create_observation_from_res(res2)
-            act2, _ = self.policy_model.predict(obs2, deterministic=False)
-            _ = self.normal_turn(act2)
-            # return obs usw
-
-            res_player1 = get_game(self.http_connection, self.player1)
-            res_player2 = get_game(self.http_connection, self.player2)
-            res_player3 = get_game(self.http_connection, self.player3)
-            observation_player1 = create_observation_from_res(res_player1)
-            observation_player2 = create_observation_from_res(res_player2)
-            observation_player3 = create_observation_from_res(res_player3)
-            match self.observed_player:
-                case self.player1:
-                    # calc player 2 and 3 now
-                    action_player2, _ = self.policy_model.predict(observation_player2, deterministic=False)
-                    _ = self.normal_turn(action_player2)
-                    action_player3, _ = self.policy_model.predict(observation_player3, deterministic=False)
-                    _ = self.normal_turn(action_player3)
-                    # return
-                case self.player2:
-                    pass
-                case self.player3:
-                    pass
+            reward = 1
+            done = False
+            return return_obs, reward, done, False, {}
         else:
-            curr_p = self.get_current_player(res["players"])
-            # play turns of other players
-            while self.player_on_turn != self.observed_player:
-                pass  # do the turn of the other players (is not necessarily two
+            next_player = self.get_current_player(res["players"]) # herausfinden, wer als nächstes dran ist
 
-            game = get_game(self.http_connection, curr_p.id)
-            obs = create_observation_from_res(game)
-            # return
+            while next_player != self.observed_player:
+                # die anderen spieler spielen
+                res = get_game(self.http_connection, next_player.id)
+                observation_other_player = create_observation_from_res(res)
+                action_other_player, _ = self.policy_model.predict(observation_other_player)
+                res = self.normal_turn(action_other_player, res, next_player)
+                next_player = self.get_current_player(res["players"]) # herausfinden, wer als nächstes dran ist
 
-        match (self.last_observation["current_phase"]):
-            case PhasesEnum.DRAFTING.value:
-                pass
-            case PhasesEnum.ACTION.value, PhasesEnum.PRODUCTION.value, PhasesEnum.PRELUDES.value:
-                res = self.normal_turn(action)
+            # now next_player == self.observed_player:
+            res = get_game(self.http_connection, next_player.id)
+            observation = create_observation_from_res(res)
+            self.res_of_observed_player = res
 
-        # TODO herausfinden welcher player gerade dran ist, am besten als parameter
-        # Beispiel-Logik für Belohnung und Fertigkeitsstatus
         reward = np.random.random()
-        done = reward > 0.95
-
-        next_phase = PhasesEnum.INITIAL_RESEARCH
-        match (res["game"]["phase"]):
-            case "research":
-                next_phase = PhasesEnum.RESEARCH
-            case "drafting":
-                next_phase = PhasesEnum.DRAFTING
-
-        current_phase_ordinal = next_phase.value
-        observation = {
-            "current_phase": current_phase_ordinal,
-            "dealt_project_cards": self.dealt_project_cards.sample(),
-            "available_corporations": self.available_corporations.sample(),
-            "available_initial_project_cards": self.available_initial_project_cards.sample(),
-        }
-
-        self.player_on_turn = self.player1  # je nach observation festlegen
+        done = res["game"]["phase"] == "end"
 
         return observation, reward, done, False, {}
 
-    def normal_turn(self, action):
 
-        # this action is to be used on self.player_on_turn
+    def normal_turn(self, action, res, which_player):
+        # res = {
+        #     "waitingFor": {
+        #         "title1": {
+        #             "message": "Select space for ${0} tile"
+        #         },
+        #         "title2": "Select space for ocean tile",
+        #         "options": [
+        #             {
+        #                 "title": "Standard projects"
+        #             },
+        #             {
+        #                 "title": "Pass for this generation"
+        #             },
+        #             {
+        #                 "title": {
+        #                     "message": "Mollo"
+        #                 }
+        #             },
+        #             {
+        #                 "title": "Sell patents",
+        #                 "cards": [
+        #                     {
+        #                         "name": "Testname1",
+        #                         "calculatedCost": 15
+        #                     }
+        #                 ]
+        #             }
+        #         ]
+        #     },
+        #     "thisPlayer": {
+        #         "megaCredits": 15
+        #     }
+        # }
 
-        # get_game(player.id, http_connection)
-        current_state = {
-            "waitingFor": {
-                "title1": {
-                    "message": "Select space for ${0} tile"
-                },
-                "title2": "Select space for ocean tile",
-                "options": [
-                    {
-                        "title": "Standard projects"
-                    },
-                    {
-                        "title": "Pass for this generation"
-                    },
-                    {
-                        "title": {
-                            "message": "Mollo"
-                        }
-                    },
-                    {
-                        "title": "Sell patents",
-                        "cards": [
-                            {
-                                "name": "Testname1",
-                                "calculatedCost": 15
-                            }
-                        ]
-                    }
-                ]
-            },
-            "thisPlayer": {
-                "megaCredits": 15
-            }
-        }
-
-        this_player_color = current_state["thisPlayer"]["color"]
+        this_player_color = res["thisPlayer"]["color"]
 
         payload = None
 
-        run_id = self.player_on_turn.run_id
+        run_id = self.run_id
 
-        if "options" in current_state["waitingFor"]:
+        if "options" in res["waitingFor"]:
             # this has to be handled separately bc the options are not really options but all mandatory
-            if current_state["waitingFor"]["title"] == "Initial Research Phase":
+            if res["waitingFor"]["title"] == "Initial Research Phase":
                 selected_corporation_name = ALL_CORPORATIONS_INDEX_NAME[action[SELECTED_CORPORATION]]
                 available_cash_for_project_cards = CORPORATIONS_STARTING_MC[selected_corporation_name]
 
-                available_cards = current_state["waitingFor"]["options"][2]["cards"]
+                available_cards = res["waitingFor"]["options"][2]["cards"]
                 selected_cards_indices = action[MULTIPLE_SELECTED_CARDS]
                 selected_project_cards = []
                 for card_index, selected_binary in enumerate(selected_cards_indices):
@@ -541,7 +395,7 @@ class CustomEnv(gym.Env):
                                                                        selected_prelude_cards_names,
                                                                        selected_project_card_names)
             else:  # wenn optionen ganz normal tatsächlich optionen sind
-                available_options = current_state["waitingFor"]["options"]
+                available_options = res["waitingFor"]["options"]
 
                 # TODO if index = standard project, check if is available and maybe choose other
 
@@ -632,8 +486,8 @@ class CustomEnv(gym.Env):
                         can_pay_with_titanium = card_name in SPACE_CARDS_SET  # space cards
                         can_pay_with_microbes = False
                         if card_name in PLANT_CARDS_SET:
-                            for p in current_state["players"]:
-                                if p["color"] == self.player_on_turn.color:
+                            for p in res["players"]:
+                                if p["color"] == which_player.color:
                                     for card in p["tableau"]:
                                         if card["name"] == "Psychrophiles":
                                             can_pay_with_microbes = True
@@ -641,7 +495,7 @@ class CustomEnv(gym.Env):
                                     break
 
                         pay_heat, pay_mc, pay_steel, pay_titanium, pay_microbes = calc_payment_for_project_card(action,
-                                                                                                                current_state,
+                                                                                                                res,
                                                                                                                 card_cost,
                                                                                                                 can_pay_with_heat,
                                                                                                                 can_pay_with_steel,
@@ -739,8 +593,8 @@ class CustomEnv(gym.Env):
                                 break
                         create_or_resp_or_resp_option(run_id, selected_option_index, selected_milestone_index)
         else:
-            message = current_state["waitingFor"]["title"]["message"] if "message" in current_state["waitingFor"][
-                "title"] else current_state["waitingFor"]["title"]
+            message = res["waitingFor"]["title"]["message"] if "message" in res["waitingFor"][
+                "title"] else res["waitingFor"]["title"]
             match message:
                 case ("Select space for ${0} tile",
                       "Select space for ocean tile",
@@ -760,7 +614,7 @@ class CustomEnv(gym.Env):
                       "Select space for first ocean",
                       "Select space for second ocean",
                       "Select space for special city tile"):
-                    available_spaces_ids = current_state["waitingFor"]["spaces"]
+                    available_spaces_ids = res["waitingFor"]["spaces"]
                     selected_space_index_from_all = action[SELECTED_SPACE_INDEX]
                     selected_space_id = str(selected_space_index_from_all + 1)
                     payload = create_space_id_response(run_id, selected_space_id)
@@ -776,12 +630,12 @@ class CustomEnv(gym.Env):
                       "Select card to remove 1 Animal(s)",
                       "Select prelude card to play",
                       "Select a card to keep and pass the rest to ${0}"):
-                    available_cards = current_state["waitingFor"]["cards"]
+                    available_cards = res["waitingFor"]["cards"]
                     selected_card_from_all_name: str = CARD_NAMES_INT_STR[action[SELECTED_CARD_INDEX]]
                     payload = create_cards_response(run_id, [selected_card_from_all_name])
                 case "Select card(s) to buy":  # 0 or 1
-                    available_cards = current_state["waitingFor"]["cards"]
-                    max_amount_of_cards = current_state["waitingFor"]["max"]
+                    available_cards = res["waitingFor"]["cards"]
+                    max_amount_of_cards = res["waitingFor"]["max"]
                     if max_amount_of_cards == 1:
                         selected_cards_names = []
                         if action[DONT_BUY_CARD] == 1:
@@ -800,7 +654,7 @@ class CustomEnv(gym.Env):
                                 selected_cards_names.append(selected_card_name)
                         payload = create_cards_response(run_id, selected_cards_names)
                 case "Select 2 card(s) to keep":
-                    available_cards = current_state["waitingFor"]["cards"]
+                    available_cards = res["waitingFor"]["cards"]
                     selected_cards_indices = action[TWO_SELECTED_CARDS_INDICES]
                     selected_cards_names = []
                     for idx, binary in enumerate(selected_cards_indices):
@@ -815,7 +669,7 @@ class CustomEnv(gym.Env):
                 case "You cannot afford any cards":
                     create_cards_response(run_id, [])
                 case "Play project card":
-                    available_cards = current_state["waitingFor"]["cards"]
+                    available_cards = res["waitingFor"]["cards"]
                     selected_card_from_all_name: str = CARD_NAMES_INT_STR[action[SELECTED_PROJECT_CARD_INDEX]]
                     selected_card = None
                     for card in available_cards:
@@ -837,14 +691,14 @@ class CustomEnv(gym.Env):
                         reserve_steel = reserve_units["steel"]
                         reserve_titanium = reserve_units["titanium"]
 
-                    payment_options = current_state["waitingFor"]["paymentOptions"]
+                    payment_options = res["waitingFor"]["paymentOptions"]
                     can_pay_with_heat = payment_options["heat"]
                     can_pay_with_steel = card_name in BUILDING_CARDS_SET  # building cards
                     can_pay_with_titanium = card_name in SPACE_CARDS_SET  # space cards
                     can_pay_with_microbes = False
                     if card_name in PLANT_CARDS_SET:
-                        for p in current_state["players"]:
-                            if p["color"] == self.player_on_turn.color:
+                        for p in res["players"]:
+                            if p["color"] == which_player.color:
                                 for card in p["tableau"]:
                                     if card["name"] == "Psychrophiles":
                                         can_pay_with_microbes = True
@@ -852,7 +706,7 @@ class CustomEnv(gym.Env):
                                 break
 
                     pay_heat, pay_mc, pay_steel, pay_titanium, pay_microbes = calc_payment_for_project_card(action,
-                                                                                                            current_state,
+                                                                                                            res,
                                                                                                             card_cost,
                                                                                                             can_pay_with_heat,
                                                                                                             can_pay_with_steel,
@@ -874,15 +728,15 @@ class CustomEnv(gym.Env):
                       "Select how to pay for action",
                       "Select how to pay for milestone"):
 
-                    cost = current_state["waitingFor"]["amount"]
+                    cost = res["waitingFor"]["amount"]
 
-                    payment_options = current_state["waitingFor"]["paymentOptions"]
+                    payment_options = res["waitingFor"]["paymentOptions"]
                     can_pay_with_heat = payment_options["heat"]
                     can_pay_with_titanium = payment_options["titanium"]
                     can_pay_with_steel = payment_options["steel"]
 
                     pay_heat, pay_mc, pay_steel, pay_titanium, _ = calc_payment_for_project_card(action,
-                                                                                                 current_state,
+                                                                                                 res,
                                                                                                  cost,
                                                                                                  can_pay_with_heat,
                                                                                                  can_pay_with_steel,
@@ -896,17 +750,113 @@ class CustomEnv(gym.Env):
                 case "Select amount of heat production to decrease":
                     selected_amount = action[AMOUNT_OF_HEAT_PRODUCTION_TO_DECREASE]
                     # min = current_state["waitingFor"]["min"]
-                    max = current_state["waitingFor"]["max"]
+                    max = res["waitingFor"]["max"]
                     amount = min(selected_amount, max)
                     payload = create_amount_response(run_id, amount)
                 case "Select amount of energy to spend":
                     selected_amount = action[AMOUNT_OF_ENERGY_TO_SPEND]
-                    max = current_state["waitingFor"]["max"]
+                    max = res["waitingFor"]["max"]
                     amount = min(selected_amount, max)
                     payload = create_amount_response(run_id, amount)
 
-        res = send_player_input(self.http_connection, self.player_on_turn.id, payload)
+        res = send_player_input(self.http_connection, which_player.id, payload)
         # from this res create new observation
 
         # send_player_input(json.dumps(select_space_data), player.id, http_connection)
         return res
+
+
+def calc_payment_for_project_card(action,
+                                  current_state,
+                                  cost,
+                                  can_pay_with_heat,
+                                  can_pay_with_steel,
+                                  can_pay_with_titanium,
+                                  can_pay_with_microbes,
+                                  reserve_heat,
+                                  reserve_mc,
+                                  reserve_titanium,
+                                  reserve_steel):
+    pay_heat_percentage = action[PAY_HEAT_PERCENTAGE]
+    pay_mc_percentage = action[PAY_MC_PERCENTAGE]
+    pay_steel_percentage = action[PAY_STEEL_PERCENTAGE]
+    pay_titanium_percentage = action[PAY_TITANIUM_PERCENTAGE]
+    pay_microbes_percentage = action[PAY_MICROBES_PERCENTAGE]
+
+    available_heat = current_state["thisPlayer"]["heat"]
+    available_mc = current_state["thisPlayer"]["megaCredits"]
+    available_steel = current_state["thisPlayer"]["steel"]
+    steel_value = current_state["thisPlayer"]["steelValue"]
+    available_titanium = current_state["thisPlayer"]["titanium"]
+    titanium_value = current_state["thisPlayer"]["titaniumValue"]
+    available_microbes = current_state["waitingFor"]["microbes"]
+    microbes_value = 2
+
+    available_heat -= reserve_heat
+    available_mc -= reserve_mc
+    available_titanium -= reserve_titanium
+    available_steel -= reserve_steel
+
+    pay_heat = math.floor(pay_heat_percentage * available_heat) * (1 if can_pay_with_heat else 0)
+    pay_mc = math.floor(pay_mc_percentage * available_mc)
+    pay_steel = math.floor(pay_steel_percentage * available_steel) * (1 if can_pay_with_steel else 0)
+    pay_titanium = math.floor(pay_titanium_percentage * available_titanium) * (1 if can_pay_with_titanium else 0)
+    pay_microbes = math.floor(pay_microbes_percentage * available_microbes) * (1 if can_pay_with_microbes else 0)
+
+    payment = pay_heat + pay_mc + pay_steel * steel_value + pay_titanium * titanium_value + pay_microbes * microbes_value
+
+    if payment != cost:
+        pay_heat = 0
+        pay_mc = 0
+        pay_steel = 0
+        pay_titanium = 0
+        pay_microbes = 0
+
+        available_payments = ["mc"]
+        if can_pay_with_heat: available_payments.append("heat")
+        if can_pay_with_steel: available_payments.append("steel")
+        if can_pay_with_titanium: available_payments.append("titanium")
+        if can_pay_with_microbes: available_payments.append("microbes")
+        random.shuffle(available_payments)  # random order
+
+        remaining_cost = cost
+        for payment in available_payments:
+            if remaining_cost <= 0:
+                break
+            elif payment == "mc":
+                if available_mc >= remaining_cost:
+                    pay_mc = remaining_cost
+                    break
+                else:
+                    pay_mc = available_mc
+                    remaining_cost = remaining_cost - available_mc
+            elif payment == "heat":
+                if available_heat >= remaining_cost:
+                    pay_heat = remaining_cost
+                    break
+                else:
+                    pay_heat = available_heat
+                    remaining_cost = remaining_cost - available_heat
+            elif payment == "steel":
+                if available_steel * steel_value >= remaining_cost:
+                    pay_steel = math.ceil(remaining_cost / steel_value)
+                    break
+                else:
+                    pay_steel = available_steel
+                    remaining_cost = remaining_cost - available_steel * steel_value
+            elif payment == "titanium":
+                if available_titanium * titanium_value >= remaining_cost:
+                    pay_titanium = math.ceil(remaining_cost / titanium_value)
+                    break
+                else:
+                    pay_titanium = available_titanium
+                    remaining_cost = remaining_cost - available_titanium * titanium_value
+            elif payment == "microbes":
+                if available_microbes * microbes_value >= remaining_cost:
+                    pay_microbes = math.ceil(remaining_cost / microbes_value)
+                    break
+                else:
+                    pay_microbes = available_microbes
+                    remaining_cost = remaining_cost - available_microbes * microbes_value
+
+    return pay_heat, pay_mc, pay_steel, pay_titanium, pay_microbes

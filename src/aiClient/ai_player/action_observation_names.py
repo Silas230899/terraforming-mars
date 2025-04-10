@@ -85,7 +85,7 @@ AVAILABLE_CORPORATIONS = "available_corporations"
 
 ACTIONS_TAKEN_THIS_ROUND = "actionsTakenThisRound"
 AVAILABLE_BLUE_CARD_ACTION_COUNT = "availableBlueCardActionCount"
-CARDS_IN_HAND_NUMBER = "cardsInHandNumber"
+CARDS_IN_HAND_NUMBER = "cardsInHandNbr"
 CITIES_COUNT = "citiesCount"
 AVAILABLE_ENERGY = "availableEnergy"
 ENERGY_PRODUCTION = "energyProduction"
