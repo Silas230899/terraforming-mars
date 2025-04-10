@@ -2,8 +2,6 @@ import math
 
 import gymnasium as gym
 from gymnasium import spaces
-import numpy as np
-import json
 import random
 
 from gymnasium.spaces import Box, Discrete, MultiBinary, MultiDiscrete
@@ -11,9 +9,9 @@ from numpy import argmax
 
 from ai_player.ppo_stuff import ppo
 from Player import Player
-from action_observation_names import *
-from https_responses import *
-from mapping_and_constants import *
+from ai_player.tfm_settings import settings
+from network_related import *
+from observation_creation import *
 
 
 def calc_payment_for_project_card(action,
@@ -301,82 +299,8 @@ class CustomEnv(gym.Env):
 
         # ai should always play the same color
 
-        settings = {
-            "players": [
-                {
-                    "name": "Yellow",
-                    "color": "yellow",
-                    "beginner": False,
-                    "handicap": 0,
-                    "first": False
-                },
-                {
-                    "name": "Red",
-                    "color": "red",
-                    "beginner": False,
-                    "handicap": 0,
-                    "first": False
-                },
-                {
-                    "name": "Green",
-                    "color": "green",
-                    "beginner": False,
-                    "handicap": 0,
-                    "first": False
-                }
-            ],
-            "corporateEra": True,
-            "prelude": True,
-            "prelude2Expansion": False,
-            "draftVariant": True,
-            "showOtherPlayersVP": False,
-            "venusNext": False,
-            "colonies": False,
-            "turmoil": False,
-            "customCorporationsList": [],
-            "customColoniesList": [],
-            "customPreludes": [],
-            "bannedCards": [],
-            "includedCards": [],
-            "board": "tharsis",
-            "seed": random.random(),
-            "solarPhaseOption": False,
-            "promoCardsOption": False,
-            "communityCardsOption": False,
-            "aresExtension": False,
-            "politicalAgendasExtension": "Standard",
-            "moonExpansion": False,
-            "pathfindersExpansion": False,
-            "undoOption": False,
-            "showTimers": True,
-            "fastModeOption": False,
-            "removeNegativeGlobalEventsOption": False,
-            "includeVenusMA": True,
-            "includeFanMA": False,
-            "modularMA": False,
-            "startingCorporations": 2,
-            "soloTR": False,
-            "initialDraft": False,
-            "preludeDraftVariant": True,
-            "randomMA": "No randomization",
-            "shuffleMapOption": False,
-            "randomFirstPlayer": True,
-            "requiresVenusTrackCompletion": False,
-            "requiresMoonTrackCompletion": False,
-            "moonStandardProjectVariant": False,
-            "moonStandardProjectVariant1": False,
-            "altVenusBoard": False,
-            "escapeVelocityMode": False,
-            "escapeVelocityBonusSeconds": 2,
-            "twoCorpsVariant": False,
-            "ceoExtension": False,
-            "customCeos": [],
-            "startingCeos": 3,
-            "startingPreludes": 4,
-            "starWarsExpansion": False,
-            "underworldExpansion": False
-        }
-        result = self.create_game(json.dumps(settings))
+
+        result = create_game(self.http_connection, json.dumps(settings))
 
         self.player1 = Player(result["players"][0]["color"],
                               result["players"][0]["id"],
@@ -388,9 +312,9 @@ class CustomEnv(gym.Env):
                               result["players"][2]["id"],
                               result["players"][2]["name"])
 
-        res_player1 = self.get_game(self.player1)
-        res_player2 = self.get_game(self.player2)
-        res_player3 = self.get_game(self.player3)
+        res_player1 = get_game(self.http_connection, self.player1)
+        res_player2 = get_game(self.http_connection, self.player2)
+        res_player3 = get_game(self.http_connection, self.player3)
 
         self.run_id = res_player1["runId"]  # all players have the same run_id
 
@@ -406,9 +330,9 @@ class CustomEnv(gym.Env):
         # für grün: rot links, gelb rechts
         # für gelb: grün links, rot rechts
 
-        observation_player1 = self.create_observation_from_res(res_player1)
-        observation_player2 = self.create_observation_from_res(res_player2)
-        observation_player3 = self.create_observation_from_res(res_player3)
+        observation_player1 = create_observation_from_res(res_player1)
+        observation_player2 = create_observation_from_res(res_player2)
+        observation_player3 = create_observation_from_res(res_player3)
 
         # weil die ergebnisse der spieler nicht voneinander abhängen ist die reihenfolge hier beliebig
         match self.observed_player:
@@ -458,29 +382,29 @@ class CustomEnv(gym.Env):
         res = None
 
         res = self.normal_turn(action)
-        obs = self.create_observation_from_res(res)
+        obs = create_observation_from_res(res)
 
         current_phase = "initial_research"  # calc from res
 
         if current_phase == "drafting":
             all_players = [self.player1, self.player2, self.player3]
             all_players.remove(self.observed_player)
-            res1 = self.get_game(all_players[0])
-            obs1 = self.create_observation_from_res(res1)
+            res1 = get_game(self.http_connection, all_players[0])
+            obs1 = create_observation_from_res(res1)
             act1, _ = self.policy_model.predict(obs1, deterministic=False)
             _ = self.normal_turn(act1)
-            res2 = self.get_game(all_players[1])
-            obs2 = self.create_observation_from_res(res2)
+            res2 = get_game(self.http_connection, all_players[1])
+            obs2 = create_observation_from_res(res2)
             act2, _ = self.policy_model.predict(obs2, deterministic=False)
             _ = self.normal_turn(act2)
             # return obs usw
 
-            res_player1 = self.get_game(self.player1)
-            res_player2 = self.get_game(self.player2)
-            res_player3 = self.get_game(self.player3)
-            observation_player1 = self.create_observation_from_res(res_player1)
-            observation_player2 = self.create_observation_from_res(res_player2)
-            observation_player3 = self.create_observation_from_res(res_player3)
+            res_player1 = get_game(self.http_connection, self.player1)
+            res_player2 = get_game(self.http_connection, self.player2)
+            res_player3 = get_game(self.http_connection, self.player3)
+            observation_player1 = create_observation_from_res(res_player1)
+            observation_player2 = create_observation_from_res(res_player2)
+            observation_player3 = create_observation_from_res(res_player3)
             match self.observed_player:
                 case self.player1:
                     # calc player 2 and 3 now
@@ -499,8 +423,8 @@ class CustomEnv(gym.Env):
             while self.player_on_turn != self.observed_player:
                 pass  # do the turn of the other players (is not necessarily two
 
-            game = self.get_game(curr_p.id)
-            obs = self.create_observation_from_res(game)
+            game = get_game(self.http_connection, curr_p.id)
+            obs = create_observation_from_res(game)
             # return
 
         match (self.last_observation["current_phase"]):
@@ -532,23 +456,6 @@ class CustomEnv(gym.Env):
         self.player_on_turn = self.player1  # je nach observation festlegen
 
         return observation, reward, done, False, {}
-
-    def create_game(self, payload):
-        self.http_connection.request("PUT", "/game", body=payload)
-        response = self.http_connection.getresponse()
-        result = json.loads(response.read().decode())
-        return result
-
-    def send_player_input(self, player_id, payload):
-        self.http_connection.request("POST", "/player/input?id=" + player_id, body=payload)
-        response = self.http_connection.getresponse()
-        result = json.loads(response.read().decode())
-        return result
-
-    def get_game(self, player_id):
-        self.http_connection.request("GET", "/api/player?id=" + player_id)
-        response = self.http_connection.getresponse()
-        return json.loads(response.read().decode())
 
     def normal_turn(self, action):
 
@@ -998,7 +905,7 @@ class CustomEnv(gym.Env):
                     amount = min(selected_amount, max)
                     payload = create_amount_response(run_id, amount)
 
-        res = self.send_player_input(self.player_on_turn.id, payload)
+        res = send_player_input(self.http_connection, self.player_on_turn.id, payload)
         # from this res create new observation
 
         # send_player_input(json.dumps(select_space_data), player.id, http_connection)

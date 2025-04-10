@@ -1,3 +1,26 @@
+import json
+
+
+def create_game(http_connection, payload):
+    http_connection.request("PUT", "/game", body=payload)
+    response = http_connection.getresponse()
+    result = json.loads(response.read().decode())
+    return result
+
+
+def send_player_input(http_connection, player_id, payload):
+    http_connection.request("POST", "/player/input?id=" + player_id, body=payload)
+    response = http_connection.getresponse()
+    result = json.loads(response.read().decode())
+    return result
+
+
+def get_game(http_connection, player_id):
+    http_connection.request("GET", "/api/player?id=" + player_id)
+    response = http_connection.getresponse()
+    return json.loads(response.read().decode())
+
+
 def create_or_resp_option(run_id, index):
     return {
         "runId": run_id,

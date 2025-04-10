@@ -395,40 +395,40 @@ def get_occupied_spaces(res):
             occupied_spaces[space_id] = player_id
 
 
-def create_observation_from_res(self, res):
-    res = {
-        "waitingFor": {
-            "title1": {
-                "message": "Select space for ${0} tile"
-            },
-            "title2": "Select space for ocean tile",
-            "options": [
-                {
-                    "title": "Standard projects"
-                },
-                {
-                    "title": "Pass for this generation"
-                },
-                {
-                    "title": {
-                        "message": "Mollo"
-                    }
-                },
-                {
-                    "title": "Sell patents",
-                    "cards": [
-                        {
-                            "name": "Testname1",
-                            "calculatedCost": 15
-                        }
-                    ]
-                }
-            ]
-        },
-        "thisPlayer": {
-            "megaCredits": 15
-        }
-    }
+def create_observation_from_res(res):
+    # res = {
+    #     "waitingFor": {
+    #         "title1": {
+    #             "message": "Select space for ${0} tile"
+    #         },
+    #         "title2": "Select space for ocean tile",
+    #         "options": [
+    #             {
+    #                 "title": "Standard projects"
+    #             },
+    #             {
+    #                 "title": "Pass for this generation"
+    #             },
+    #             {
+    #                 "title": {
+    #                     "message": "Mollo"
+    #                 }
+    #             },
+    #             {
+    #                 "title": "Sell patents",
+    #                 "cards": [
+    #                     {
+    #                         "name": "Testname1",
+    #                         "calculatedCost": 15
+    #                     }
+    #                 ]
+    #             }
+    #         ]
+    #     },
+    #     "thisPlayer": {
+    #         "megaCredits": 15
+    #     }
+    # }
 
     this_player = res["thisPlayer"]
     game = res["game"]
