@@ -3,11 +3,12 @@ from stable_baselines3.common.vec_env import DummyVecEnv
 
 from CustomEnvironment import CustomEnv
 from HybridActionWrapper import HybridActionWrapper
+from ai_player.CustomModel import HybridActorCriticPolicy, CustomFeatureExtractor
 
 if __name__ == '__main__':
     env1 = CustomEnv()
     wrapped_env = HybridActionWrapper(env1)
-    env = DummyVecEnv([lambda: wrapped_env])
+    vec_env = DummyVecEnv([lambda: wrapped_env])
 
     #current_observation = env.reset()
     # while True:
@@ -25,14 +26,21 @@ if __name__ == '__main__':
     #model2 = PPO("MultiInputPolicy", env, verbose=1, n_steps=32, batch_size=8)
     #model2.learn(total_timesteps=512, progress_bar=True, log_interval=1)
 
-    env2 = CustomEnv()
-    wrapped_env2 = HybridActionWrapper(env2)
-    env3 = DummyVecEnv([lambda: wrapped_env2])
-    policy_model2 = PPO("MultiInputPolicy", env=env3, verbose=1)
+    #env2 = CustomEnv()
+    #wrapped_env2 = HybridActionWrapper(env2)
+    #env3 = DummyVecEnv([lambda: wrapped_env2])
+    #policy_model2 = PPO("MultiInputPolicy", env=wrapped_env2, verbose=1)
 
-    policy_model = PPO("MultiInputPolicy", env=env, verbose=1)
-    env1.policy_model = policy_model2
-    #policy_model.learn(total_timesteps=1)
-    current_observation = env.reset()
+    initial_dict_action_space = env1.action_space
+
+    policy_model = PPO(policy=HybridActorCriticPolicy, env=vec_env, verbose=1,policy_kwargs=dict(
+        features_extractor_class=CustomFeatureExtractor,
+        features_extractor_kwargs=dict(features_dim=64),
+        original_action_space=initial_dict_action_space,
+    ))
+    env1.policy_model = policy_model
+    env1.action_wrapper = wrapped_env
+    policy_model.learn(total_timesteps=1)
+    #current_observation = wrapped_env.reset()
     #policy_model.predict()
 

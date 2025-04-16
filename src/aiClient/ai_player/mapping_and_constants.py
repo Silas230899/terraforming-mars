@@ -37,13 +37,12 @@ PLANT_CARDS_SET = {'Biosphere Support', 'Dome Farming', 'Ecology Experts', 'Expe
                    'Mangrove', 'Moss', 'Nitrophilic Moss', 'Noctis Farming', 'Plantation', 'Protected Valley', 'Trees',
                    'Tundra Farming'}
 
-NUMBER_PLAYERS = 3
-NUMBER_PLAYERS_DISCRETE = 4
+NUMBER_PLAYERS = 4
 
-NONE_PLAYER_INDEX = 3
+NONE_PLAYER_INDEX =  NUMBER_PLAYERS - 1
 
-NUMBER_SPACES = 63  # indices 01 to 63
-
+NUMBER_SPACES = 64  # indices 01 to 63 = 63 + None space
+NONE_SPACE_INDEX = NUMBER_SPACES - 1
 
 
 
@@ -107,7 +106,8 @@ STANDARD_PROJECTS_INDEX_NAME: Dict[int, str] = {
     1: "Asteroid:SP",
     2: "Aquifer",
     3: "Greenery",
-    4: "City"
+    4: "City",
+    5: "None"
 }
 
 STANDARD_PROJECTS_NAME_INDEX = {
@@ -116,14 +116,13 @@ STANDARD_PROJECTS_NAME_INDEX = {
     "Aquifer": 2,
     "Greenery": 3,
     "City": 4,
+    "None": 5
 }
 
 def NUMBER_OF_MILESTONES(): return len(MILESTONES_INT_STR)
 
 
-def NUMBER_OF_STANDARD_PROJECTS(): return len(STANDARD_PROJECTS_INDEX_NAME)
-NUMBER_OF_STANDARD_PROJECTS_DISCRETE = NUMBER_OF_STANDARD_PROJECTS() + 1
-NONE_STANDARD_PROJECT_INDEX = 5
+NUMBER_OF_STANDARD_PROJECTS = len(STANDARD_PROJECTS_INDEX_NAME)
 
 
 def get_index_of_player_color_by_current_player_color(color_of_player, color_of_current_player):
@@ -247,6 +246,7 @@ ACTION_OPTIONS_NAME_INDEX: Dict[str, int] = {
     "Fund an award (${0} M€)": 54,
     "Standard projects": 55,
     "Claim a milestone": 56,
+    "None": 57
 }
 
 ACTION_OPTIONS_INDEX_NAME: Dict[int, str] = {
@@ -307,6 +307,7 @@ ACTION_OPTIONS_INDEX_NAME: Dict[int, str] = {
     54: "Fund an award (${0} M€)",
     55: "Standard projects",
     56: "Claim a milestone",
+    57: "None"
 }
 
 NUMBER_ALL_ACTION_OPTIONS = len(ACTION_OPTIONS_INDEX_NAME)
@@ -611,7 +612,8 @@ CARD_NAMES_STR_INT: Dict[str, int] = {
     "Polyphemos": 296,
     "Penguins": 297,
     "Small Asteroid": 298,
-    "Snow Algae": 299
+    "Snow Algae": 299,
+    "None": 300
 }
 
 CARD_NAMES_INT_STR: Dict[int, str] = {
@@ -914,7 +916,8 @@ CARD_NAMES_INT_STR: Dict[int, str] = {
     296: "Polyphemos",
     297: "Penguins",
     298: "Small Asteroid",
-    299: "Snow Algae"
+    299: "Snow Algae",
+    300: "None"
 }
 
 # NUMBER_OF_CARDS = 211 + 2 + 6 + 50 + 14 # 283

@@ -1,5 +1,5 @@
 import json
-
+import http.client
 
 def create_game(http_connection, payload):
     http_connection.request("PUT", "/game", body=payload)
@@ -8,7 +8,8 @@ def create_game(http_connection, payload):
     return result
 
 
-def send_player_input(http_connection, player_id, payload):
+def send_player_input(http_connection: http.client.HTTPConnection, player_id, payload):
+    payload = json.dumps(payload)
     http_connection.request("POST", "/player/input?id=" + player_id, body=payload)
     response = http_connection.getresponse()
     result = json.loads(response.read().decode())

@@ -8,6 +8,7 @@ import random
 from gymnasium.spaces import Box, Discrete, MultiBinary, MultiDiscrete
 from numpy import argmax
 
+from ai_player.HybridActionWrapper import HybridActionWrapper
 from ai_player.ppo_stuff import ppo
 from Player import Player
 from ai_player.tfm_settings import settings
@@ -28,6 +29,7 @@ class CustomEnv(gym.Env):
     run_id = -1
 
     policy_model: ppo.PPO
+    action_wrapper: HybridActionWrapper
 
     def __init__(self):
         super(CustomEnv, self).__init__()
@@ -64,27 +66,27 @@ class CustomEnv(gym.Env):
             PLAYED_CARDS_WITH_ACTIONS: MultiBinary(NUMBER_OF_CARDS),
             AVAILABLE_MILESTONES: MultiBinary(NUMBER_OF_MILESTONES()),
             AVAILABLE_AWARDS: MultiBinary(NUMBER_OF_AWARDS()),
-            AVAILABLE_STANDARD_PROJECTS: MultiBinary(NUMBER_OF_STANDARD_PROJECTS()),
+            AVAILABLE_STANDARD_PROJECTS: MultiBinary(NUMBER_OF_STANDARD_PROJECTS),
 
             # for "Take first action of ${0} corporation"
             CORPORATION_TO_TAKE_FIRST_ACTION_OF: Discrete(len(CORPORATIONS_WITH_FIRST_ACTION)),
 
             # "Remove ${0} plants from ${1}"
             AMOUNT_OF_PLANTS_TO_REMOVE: Box(0, 8, (1,), np.int8),
-            PLAYER_TO_REMOVE_PLANTS_FROM: Discrete(NUMBER_PLAYERS_DISCRETE),
+            PLAYER_TO_REMOVE_PLANTS_FROM: Discrete(NUMBER_PLAYERS),
 
             # "Remove ${0} ${1} from ${2}"
             RESOURCE_TO_REMOVE: Discrete(len(REMOVABLE_RESOURCES_NAMES)),
             AMOUNT_OF_RESOURCE_TO_REMOVE: Box(0, 8, (1,), np.int8),
-            PLAYER_TO_REMOVE_RESOURCE_FROM: Discrete(NUMBER_PLAYERS_DISCRETE),
+            PLAYER_TO_REMOVE_RESOURCE_FROM: Discrete(NUMBER_PLAYERS),
 
             # "Steal ${0} M€ from ${1}"
             AMOUNT_OF_MC_TO_STEAL: Box(0, 100, (1,), np.int8),
-            PLAYER_TO_STEAL_MC_FROM: Discrete(NUMBER_PLAYERS_DISCRETE),
+            PLAYER_TO_STEAL_MC_FROM: Discrete(NUMBER_PLAYERS),
 
             # "Steal ${0} steel from ${1}"
             AMOUNT_OF_STEEL_TO_STEAL: Box(0, 2, (1,), np.int8),
-            PLAYER_TO_STEAL_STEEL_FROM: Discrete(NUMBER_PLAYERS_DISCRETE),
+            PLAYER_TO_STEAL_STEEL_FROM: Discrete(NUMBER_PLAYERS),
 
             # "Add ${0} microbes to ${1}"
             AMOUNT_OF_MICROBES_TO_ADD: Box(0, 3, (1,), np.int8),
@@ -107,7 +109,7 @@ class CustomEnv(gym.Env):
             STEPS_TO_DECREASE_PRODUCTION: Box(0, 8, (1,), np.int8),
 
             # Select how to pay for the ${0} standard project
-            WHAT_STANDARD_PROJECT_TO_SELECT_HOW_TO_PAY_FOR: Discrete(NUMBER_OF_STANDARD_PROJECTS_DISCRETE),
+            WHAT_STANDARD_PROJECT_TO_SELECT_HOW_TO_PAY_FOR: Discrete(NUMBER_OF_STANDARD_PROJECTS),
 
             # Select amount of heat production to decrease
             MAX_AMOUNT_OF_HEAT_PRODUCTION_TO_DECREASE: Box(0, 50, (1,), np.int8),
@@ -116,7 +118,7 @@ class CustomEnv(gym.Env):
             MAX_AMOUNT_OF_ENERGY_TO_SPEND: Box(0, 50, (1,), np.int8),
 
             # Select a card to keep and pass the rest to ${0}
-            PASS_REMAINING_DRAFT_CARDS_TO_WHOM: Discrete(NUMBER_PLAYERS_DISCRETE),
+            PASS_REMAINING_DRAFT_CARDS_TO_WHOM: Discrete(NUMBER_PLAYERS),
 
             # Initial Research Phase
             AVAILABLE_CORPORATIONS: MultiBinary(NUMBER_OF_CORPORATIONS),
@@ -169,11 +171,11 @@ class CustomEnv(gym.Env):
             PAY_MICROBES_PERCENTAGE: Box(0, 1, (1,), np.float32),
             MULTIPLE_SELECTED_CARDS: MultiBinary(NUMBER_OF_CARDS),
             SELECTED_SPACE_INDEX: Discrete(NUMBER_SPACES),
-            SELECTED_PLAYER: Discrete(NUMBER_PLAYERS_DISCRETE),
+            SELECTED_PLAYER: Discrete(NUMBER_PLAYERS),
             SELECTED_CARD_WITH_ACTION_INDEX: Discrete(NUMBER_OF_CARDS),
             SELECTED_MILESTONE_INDEX: Discrete(NUMBER_OF_MILESTONES()),
             SELECTED_AWARD_INDEX: Discrete(NUMBER_OF_AWARDS_DISCRETE),
-            SELECTED_STANDARD_PROJECT_INDEX: Discrete(NUMBER_OF_STANDARD_PROJECTS()),
+            SELECTED_STANDARD_PROJECT_INDEX: Discrete(NUMBER_OF_STANDARD_PROJECTS),
 
             # Select 2 card(s) to keep
             TWO_SELECTED_CARDS_INDICES: MultiBinary(NUMBER_OF_CARDS),
@@ -213,33 +215,44 @@ class CustomEnv(gym.Env):
         observation_player3 = create_observation_from_res(res_player3)
 
 
-        action_player2xx, _ = self.policy_model.predict(observation_player2)
-        print(action_player2xx)
-        print(type(action_player2xx))
-        print(action_player2xx[0])
-        print(len(action_player2xx[0]))
-        exit(0)
+        # action_player2xx, _ = self.policy_model.predict(observation_player2)
+        # print(action_player2xx)
+        # print(type(action_player2xx))
+        # print(action_player2xx[0])
+        # print(len(action_player2xx[0]))
+        # print(action_player2xx[0][0])
+        # env1 = CustomEnv()
+        # wrapped_env = HybridActionWrapper(env1)
+        # umgewandelt = wrapped_env.action(action_player2xx)
+        # print(umgewandelt)
+        # exit(0)
 
         # weil die ergebnisse der spieler nicht voneinander abhängen ist die reihenfolge hier beliebig
         match self.observed_player:
             case self.player1:
                 # calc player 2 and 3 now
                 action_player2, _ = self.policy_model.predict(observation_player2)
+                action_player2 = self.action_wrapper.action(action_player2)
                 _ = self.normal_turn(action_player2, res_player2, self.player2)
                 action_player3, _ = self.policy_model.predict(observation_player3)
+                action_player3 = self.action_wrapper.action(action_player3)
                 _ = self.normal_turn(action_player3, res_player3, self.player3)
                 return observation_player1, res_player1
             case self.player2:
                 # calc player 1 and 3 now
                 action_player1, _ = self.policy_model.predict(observation_player1)
+                action_player1 = self.action_wrapper.action(action_player1)
                 _ = self.normal_turn(action_player1, res_player1, self.player1)
                 action_player3, _ = self.policy_model.predict(observation_player3)
+                action_player3 = self.action_wrapper.action(action_player3)
                 _ = self.normal_turn(action_player3, res_player3, self.player3)
                 return observation_player2, res_player2
             case self.player3:
                 action_player1, _ = self.policy_model.predict(observation_player1)
+                action_player1 = self.action_wrapper.action(action_player1)
                 _ = self.normal_turn(action_player1, res_player1, self.player1)
                 action_player2, _ = self.policy_model.predict(observation_player2)
+                action_player2 = self.action_wrapper.action(action_player2)
                 _ = self.normal_turn(action_player2, res_player2, self.player2)
                 return observation_player3, res_player3
 
@@ -316,6 +329,7 @@ class CustomEnv(gym.Env):
 
 
     def normal_turn(self, action, res, which_player):
+
         # res = {
         #     "waitingFor": {
         #         "title1": {
@@ -385,15 +399,19 @@ class CustomEnv(gym.Env):
                 selected_project_card_names = list(map(lambda card: card["name"], selected_project_cards))
 
                 selected_prelude_cards_indices = action[TWO_SELECTED_CARDS_INDICES]
+                print(selected_prelude_cards_indices)
                 selected_prelude_cards_names = []
                 for card_index, selected_binary in enumerate(selected_prelude_cards_indices):
                     if selected_binary == 1:
                         selected_card_name: str = CARD_NAMES_INT_STR[card_index]
                         selected_prelude_cards_names.append(selected_card_name)
+                print(selected_prelude_cards_names)
+                print(len(selected_prelude_cards_names))
 
                 payload = create_initial_cards_card_card_card_response(run_id, selected_corporation_name,
                                                                        selected_prelude_cards_names,
                                                                        selected_project_card_names)
+                print(json.dumps(payload, indent=2))
             else:  # wenn optionen ganz normal tatsächlich optionen sind
                 available_options = res["waitingFor"]["options"]
 

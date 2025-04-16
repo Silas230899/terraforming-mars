@@ -17,10 +17,13 @@ def build_discrete_i8(value):
 # uses int16
 def get_result_array_from_available_cards(available_cards):
     result = np.zeros(NUMBER_OF_CARDS, dtype=np.int16)
-    for card in available_cards:
-        card_name = card["name"]
-        card_index = CARD_NAMES_STR_INT[card_name]
-        result[card_index] = 1
+    if len(available_cards) == 0:
+        result[CARD_NAMES_STR_INT["None"]] = 1
+    else:
+        for card in available_cards:
+            card_name = card["name"]
+            card_index = CARD_NAMES_STR_INT[card_name]
+            result[card_index] = 1
     return result
 
 
@@ -141,6 +144,8 @@ def get_available_spaces(res):
     for space_id in available_spaces_ids:
         space_index = int(space_id) - 1
         result[space_index] = 1
+    if sum(result) == 0:
+        result[NONE_SPACE_INDEX] = 1
     return result
 
 
@@ -163,6 +168,8 @@ def get_available_players(res):
     for player_color in available_player_colors:
         index = get_index_of_player_color_by_current_player_color(player_color, color_of_this_player)
         result[index] = 1
+    if sum(result) == 0:
+        result[NONE_PLAYER_INDEX] = 1
     return result
 
 
@@ -179,6 +186,8 @@ def get_available_cards_with_actions(res):
                     index_of_card = CARD_NAMES_STR_INT[card["name"]]
                     result[index_of_card] = 1
                 break
+    if sum(result) == 0:
+        result[CARD_NAMES_STR_INT["None"]] = 1
     return result
 
 
@@ -230,7 +239,7 @@ def get_corporation_to_take_first_action_of(res):
 
 
 def get_available_standard_projects(res):
-    result = np.zeros(NUMBER_OF_STANDARD_PROJECTS(), dtype=np.int8)
+    result = np.zeros(NUMBER_OF_STANDARD_PROJECTS, dtype=np.int8)
     is_action_option = "options" in res["waitingFor"] and res["waitingFor"]["title"] != "Initial Research Phase"
     if is_action_option:
         available_options = res["waitingFor"]["options"]
@@ -244,6 +253,8 @@ def get_available_standard_projects(res):
                         index_of_standard_project = STANDARD_PROJECTS_NAME_INDEX[standard_project["name"]]
                         result[index_of_standard_project] = 1
                 break
+    if sum(result) == 0:
+        result[STANDARD_PROJECTS_NAME_INDEX["None"]] = 1
     return result
 
 
@@ -322,7 +333,7 @@ def get_production_to_decrease(action_option, index):
 
 
 def get_standard_project_to_select_how_to_pay_for(action_option, index):
-    standard_project_index = NONE_STANDARD_PROJECT_INDEX
+    standard_project_index = STANDARD_PROJECTS_NAME_INDEX["None"]
     if action_option:
         standard_project_name = action_option["title"]["data"][index]["value"]
         standard_project_index = STANDARD_PROJECTS_NAME_INDEX[standard_project_name]
@@ -363,6 +374,8 @@ def get_cards_in_hand(res):
         card_name = card["name"]
         card_index = CARD_NAMES_STR_INT[card_name]
         cards_in_hand[card_index] = 1
+    if len(res["preludeCardsInHand"]) == 0 and len(res["cardsInHand"]) == 0:
+        cards_in_hand[CARD_NAMES_STR_INT["None"]] = 1
     return cards_in_hand
 
 
@@ -376,6 +389,8 @@ def get_dealt_cards(res):
         card_name = card["name"]
         card_index = CARD_NAMES_STR_INT[card_name]
         dealt_cards[card_index] = 1
+    if len(res["dealtPreludeCards"]) == 0 and len(res["dealtProjectCards"]) == 0:
+        dealt_cards[CARD_NAMES_STR_INT["None"]] = 1
     return dealt_cards
 
 
@@ -387,8 +402,6 @@ def get_current_phase(res):
 
 def get_occupied_spaces(res):
     occupied_spaces = np.full(NUMBER_SPACES, NONE_PLAYER_INDEX, dtype=np.int8)
-    assert occupied_spaces.shape == (63,)
-    assert occupied_spaces.dtype == np.int8
     # occupied_spaces = np.zeros((NUMBER_SPACES,), dtype=np.int8)
     current_player_color = res["thisPlayer"]["color"]
     for space in res["game"]["spaces"]:
@@ -478,6 +491,8 @@ def create_observation_from_res(res):
             action_name = option["title"]["message"] if "message" in option["title"] else option["title"]
             index = ACTION_OPTIONS_NAME_INDEX[action_name]
             available_action_options[index] = 1
+    else:
+        available_action_options[ACTION_OPTIONS_NAME_INDEX["None"]] = 1
 
     selected_action_index = SELECTED_ACTION_OPTION_NAME_INDEX["None"]
     if "options" not in res["waitingFor"] or (

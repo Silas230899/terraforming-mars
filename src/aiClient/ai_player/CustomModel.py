@@ -12,7 +12,7 @@ class CustomFeatureExtractor(BaseFeaturesExtractor):
     def __init__(self, observation_space: gym.spaces.Dict, features_dim: int = 64):
         super().__init__(observation_space, features_dim)
 
-        input_size = sum(np.prod(space.shape) for space in observation_space.spaces.values())
+        input_size = int(sum(np.prod(space.shape) for space in observation_space.spaces.values()))
 
         self.fc = nn.Sequential(
             nn.Linear(input_size, 128),
@@ -25,20 +25,25 @@ class CustomFeatureExtractor(BaseFeaturesExtractor):
         # return self.fc(x)
         obs_list = [obs_dict[key].flatten() for key in obs_dict.keys()]
         obs_tensor = th.cat(obs_list, dim=-1)  # Alle Beobachtungen kombinieren
+        obs_tensor = obs_tensor.float()
+        # Falls keine Batch-Dimension: hinzufügen
+        if obs_tensor.dim() == 1:
+            obs_tensor = obs_tensor.unsqueeze(0)
         return self.fc(obs_tensor)
 
 
 class HybridActorCriticPolicy(ActorCriticPolicy):
-    def __init__(self, observation_space, action_space, **kwargs):
-        super().__init__(observation_space, action_space, **kwargs)
+    def __init__(self, observation_space, action_space, schedule, **kwargs):
+        self.original_action_space = kwargs.pop("original_action_space", action_space)
+        super().__init__(observation_space, action_space, schedule, **kwargs)
 
-        self.discrete_keys = [key for key in action_space.spaces if isinstance(action_space.spaces[key], gym.spaces.Discrete)]
-        self.continuous_keys = [key for key in action_space.spaces if isinstance(action_space.spaces[key], gym.spaces.Box)]
-        self.binary_keys = [key for key in action_space.spaces if isinstance(action_space.spaces[key], gym.spaces.MultiBinary)]
+        self.discrete_keys = [key for key in self.original_action_space.spaces if isinstance(self.original_action_space.spaces[key], gym.spaces.Discrete)]
+        self.continuous_keys = [key for key in self.original_action_space.spaces if isinstance(self.original_action_space.spaces[key], gym.spaces.Box)]
+        self.binary_keys = [key for key in self.original_action_space.spaces if isinstance(self.original_action_space.spaces[key], gym.spaces.MultiBinary)]
 
-        self.num_discrete = sum(action_space.spaces[key].n for key in self.discrete_keys)
-        self.num_continuous = sum(action_space.spaces[key].shape[0] for key in self.continuous_keys)
-        self.num_binary = sum(action_space.spaces[key].n for key in self.binary_keys)
+        self.num_discrete = sum(self.original_action_space.spaces[key].n for key in self.discrete_keys)
+        self.num_continuous = sum(self.original_action_space.spaces[key].shape[0] for key in self.continuous_keys)
+        self.num_binary = sum(self.original_action_space.spaces[key].n for key in self.binary_keys)
 
         features_dim = 64
         self.features_extractor = CustomFeatureExtractor(observation_space, features_dim)
@@ -77,6 +82,9 @@ class HybridActorCriticPolicy(ActorCriticPolicy):
 
     def forward(self, obs, deterministic=False):
         features = self.features_extractor(obs)
+        # Falls einzelne Beobachtung: Batch-Dimension hinzufügen
+        if features.dim() == 1:
+            features = features.unsqueeze(0)
         discrete_logits = self.discrete_policy(features)
         continuous_mean = self.continuous_policy(features)
         binary_logits = self.binary_policy(features)  # MultiBinary Logits
@@ -90,27 +98,55 @@ class HybridActorCriticPolicy(ActorCriticPolicy):
         # **Diskrete Logits maskieren**
         masked_discrete_logits = []
         start_idx = 0
-        for i, key in enumerate(self.discrete_keys):
-            num_values = self.action_space.spaces[key].n
-            mask = discrete_masks[i] if i < len(discrete_masks) else th.ones_like(
-                discrete_logits[:, start_idx:start_idx + num_values])
-            masked_logits = discrete_logits[:, start_idx:start_idx + num_values] + (1 - mask) * -float('inf')
-            masked_discrete_logits.append(masked_logits)
+        for key in self.discrete_keys:
+            num_values = self.original_action_space.spaces[key].n
+            logits = discrete_logits[:, start_idx:start_idx + num_values]
+
+            if key in self.discrete_mask_mapping:
+                #print(key)
+                mask_key = self.discrete_mask_mapping[key]
+                mask = obs[mask_key]
+                mask = mask.float()
+                print(mask)
+                if mask.sum() == 0:
+                    raise ValueError(f"Mask for '{key}' has no valid actions!")
+                #print("mask dim: ", mask.dim(), mask.shape, mask.size())
+                #print("logits: ", logits.shape)
+                if mask.dim() == 1:
+                    mask = mask.unsqueeze(0)
+                mask = mask.expand(logits.size(0), -1)
+                print("logits vorher: ", logits)
+                # logits = logits + (1 - mask) * -float('inf')
+                logits = logits.masked_fill(mask == 0, -float("inf"))
+                print("in between1:", (1 - mask))
+                print("in between2:", ((1 - mask) * -float('inf')))
+                print(key, logits)
+                print()
+
+            masked_discrete_logits.append(logits)
             start_idx += num_values
         masked_discrete_logits = th.cat(masked_discrete_logits, dim=-1)  # Wieder zusammenführen
 
         # **MultiBinary Logits maskieren**
         masked_binary_logits = []
         start_idx = 0
-        for i, key in enumerate(self.binary_keys):
-            num_values = self.action_space.spaces[key].n
-            mask = binary_masks[i] if i < len(binary_masks) else th.ones_like(
-                binary_logits[:, start_idx:start_idx + num_values])
-            masked_logits = binary_logits[:, start_idx:start_idx + num_values] + (1 - mask) * -float('inf')
-            masked_binary_logits.append(masked_logits)
+        for key in self.binary_keys:
+            num_values = self.original_action_space.spaces[key].n
+            logits = binary_logits[:, start_idx:start_idx + num_values]
+
+            if key in self.binary_mask_mapping:
+                mask_key = self.binary_mask_mapping[key]
+                mask = obs[mask_key]
+                if mask.dim() == 1:
+                    mask = mask.unsqueeze(0)
+                mask = mask.expand(logits.size(0), -1)
+                # logits = logits + (1 - mask) * -float('inf')
+                logits = logits.masked_fill(mask == 0, -float("inf"))
+
+            masked_binary_logits.append(logits)
             start_idx += num_values
         masked_binary_logits = th.cat(masked_binary_logits, dim=-1)  # Wieder zusammenführen
-
+        print("forwarding done")
         return masked_discrete_logits, continuous_mean, masked_binary_logits
 
     def _predict(self, obs, deterministic=False):
@@ -125,7 +161,8 @@ class HybridActorCriticPolicy(ActorCriticPolicy):
         discrete_actions = []
         start_idx = 0
         for key in self.discrete_keys:
-            num_values = self.action_space.spaces[key].n
+            print(key)
+            num_values = self.original_action_space.spaces[key].n
             logits = masked_discrete_logits[:, start_idx:start_idx + num_values]
             probs = th.nn.functional.softmax(logits, dim=-1)
             if deterministic:
@@ -153,7 +190,7 @@ class HybridActorCriticPolicy(ActorCriticPolicy):
         binary_actions = []
         start_idx = 0
         for key in self.binary_keys:
-            num_values = self.action_space.spaces[key].n
+            num_values = self.original_action_space.spaces[key].n
             logits = masked_binary_logits[:, start_idx:start_idx + num_values]
             probs = th.sigmoid(logits)  # Wahrscheinlichkeiten aus Logits berechnen
 
