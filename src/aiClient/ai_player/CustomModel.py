@@ -1,5 +1,6 @@
 import torch.nn as nn
 import torch as th
+from gymnasium import spaces
 from stable_baselines3.common.policies import ActorCriticPolicy
 from stable_baselines3.common.torch_layers import BaseFeaturesExtractor
 import gymnasium as gym
@@ -34,7 +35,7 @@ class CustomFeatureExtractor(BaseFeaturesExtractor):
 
 class HybridActorCriticPolicy(ActorCriticPolicy):
     def __init__(self, observation_space, action_space, schedule, **kwargs):
-        self.original_action_space = kwargs.pop("original_action_space", action_space)
+        self.original_action_space: spaces.Dict = kwargs.pop("original_action_space", action_space)
         super().__init__(observation_space, action_space, schedule, **kwargs)
 
         self.discrete_keys = [key for key in self.original_action_space.spaces if isinstance(self.original_action_space.spaces[key], gym.spaces.Discrete)]
@@ -85,17 +86,21 @@ class HybridActorCriticPolicy(ActorCriticPolicy):
         # Falls einzelne Beobachtung: Batch-Dimension hinzufügen
         if features.dim() == 1:
             features = features.unsqueeze(0)
+
+        # Aktionen berechnen
+        masked_discrete_logits, continuous_mean, masked_binary_logits = self._get_action_logits(obs, features)
+
+        return masked_discrete_logits, continuous_mean, masked_binary_logits
+
+    def _get_action_logits(self, obs, features):
+        """
+        Hilfsfunktion: Berechnet und maskiert die Logits für alle Aktionstypen.
+        Gibt zurück:
+            - masked_discrete_logits
+            - continuous_mean
+            - masked_binary_logits
+        """
         discrete_logits = self.discrete_policy(features)
-        continuous_mean = self.continuous_policy(features)
-        binary_logits = self.binary_policy(features)  # MultiBinary Logits
-
-        # **Masken anhand der definierten Mappings abrufen**
-        discrete_masks = [obs[self.discrete_mask_mapping[key]] for key in self.discrete_keys if
-                          key in self.discrete_mask_mapping]
-        binary_masks = [obs[self.binary_mask_mapping[key]] for key in self.binary_keys if
-                        key in self.binary_mask_mapping]
-
-        # **Diskrete Logits maskieren**
         masked_discrete_logits = []
         start_idx = 0
         for key in self.discrete_keys:
@@ -103,31 +108,27 @@ class HybridActorCriticPolicy(ActorCriticPolicy):
             logits = discrete_logits[:, start_idx:start_idx + num_values]
 
             if key in self.discrete_mask_mapping:
-                #print(key)
+                # print(key)
                 mask_key = self.discrete_mask_mapping[key]
                 mask = obs[mask_key]
                 mask = mask.float()
-                print(mask)
+                #print(mask)
                 if mask.sum() == 0:
                     raise ValueError(f"Mask for '{key}' has no valid actions!")
-                #print("mask dim: ", mask.dim(), mask.shape, mask.size())
-                #print("logits: ", logits.shape)
                 if mask.dim() == 1:
                     mask = mask.unsqueeze(0)
                 mask = mask.expand(logits.size(0), -1)
-                print("logits vorher: ", logits)
-                # logits = logits + (1 - mask) * -float('inf')
                 logits = logits.masked_fill(mask == 0, -float("inf"))
-                print("in between1:", (1 - mask))
-                print("in between2:", ((1 - mask) * -float('inf')))
-                print(key, logits)
-                print()
 
             masked_discrete_logits.append(logits)
             start_idx += num_values
         masked_discrete_logits = th.cat(masked_discrete_logits, dim=-1)  # Wieder zusammenführen
 
+        # Kontinuierliche Mittelwerte
+        continuous_mean = self.continuous_policy(features)
+
         # **MultiBinary Logits maskieren**
+        binary_logits = self.binary_policy(features)  # MultiBinary Logits
         masked_binary_logits = []
         start_idx = 0
         for key in self.binary_keys:
@@ -146,11 +147,83 @@ class HybridActorCriticPolicy(ActorCriticPolicy):
             masked_binary_logits.append(logits)
             start_idx += num_values
         masked_binary_logits = th.cat(masked_binary_logits, dim=-1)  # Wieder zusammenführen
-        print("forwarding done")
+
+        print("_get_action_logits: ", masked_discrete_logits.shape, continuous_mean.shape, binary_logits.shape)
         return masked_discrete_logits, continuous_mean, masked_binary_logits
 
     def _predict(self, obs, deterministic=False):
         masked_discrete_logits, continuous_mean, masked_binary_logits = self.forward(obs)
+
+        # Indizes für kontinuierlich, diskret, binär
+        discrete_idx = 0
+        continuous_idx = 0
+        binary_idx = 0
+
+        action_parts = []
+
+        for key in self.original_action_space.spaces:
+            space = self.original_action_space.spaces[key]
+            if isinstance(space, gym.spaces.Discrete):
+                num_values = space.n
+                logits = masked_discrete_logits[:, discrete_idx:discrete_idx + num_values]
+                probs = th.nn.functional.softmax(logits, dim=-1)
+
+                if deterministic:
+                    action = th.argmax(probs, dim=-1).float()  # float für Kompatibilität mit Box
+                else:
+                    action = th.distributions.Categorical(probs=probs).sample().float()
+
+                action_parts.append(action.unsqueeze(-1))  # [B, 1]
+                discrete_idx += num_values
+
+            elif isinstance(space, gym.spaces.Box):
+                size = int(np.prod(space.shape))
+                if deterministic:
+                    action = continuous_mean[:, continuous_idx:continuous_idx + size]
+                else:
+                    std = th.exp(self.log_std[continuous_idx:continuous_idx + size])
+                    noise = th.randn_like(continuous_mean[:, continuous_idx:continuous_idx + size])
+                    action = continuous_mean[:, continuous_idx:continuous_idx + size] + std * noise
+
+                action_parts.append(action)
+                continuous_idx += size
+
+            elif isinstance(space, gym.spaces.MultiBinary):
+                num_values = space.n
+                logits = masked_binary_logits[:, binary_idx:binary_idx + num_values]
+                probs = th.sigmoid(logits)
+
+                if key == TWO_SELECTED_CARDS_INDICES:
+                    if deterministic:
+                        top2 = probs.topk(2, dim=-1).indices
+                        action = th.zeros_like(probs)
+                        action.scatter_(-1, top2, 1)
+                    else:
+                        selected = th.multinomial(probs, num_samples=2, replacement=False)
+                        action = th.zeros_like(probs)
+                        action.scatter_(-1, selected, 1)
+                else:
+                    if deterministic:
+                        action = (probs > 0.5).float()
+                    else:
+                        action = th.distributions.Bernoulli(probs=probs).sample()
+
+                action_parts.append(action)
+                binary_idx += num_values
+
+            else:
+                raise NotImplementedError(f"Unsupported action type: {type(space)}")
+
+        # Finales Flattening
+        flat_action = th.cat(action_parts, dim=-1)  # [B, total_action_dim]
+        print("_predict: ", flat_action.squeeze(0).shape)
+        return flat_action.squeeze(0)  # Falls nur ein Sample, [1, D] → [D]
+
+
+
+
+
+
 
         # Diskrete Aktion
         # discrete_probs = th.nn.functional.softmax(masked_discrete_logits, dim=-1)
@@ -221,3 +294,5 @@ class HybridActorCriticPolicy(ActorCriticPolicy):
             "continuous": continuous_action,
             "binary": binary_action
         }
+
+

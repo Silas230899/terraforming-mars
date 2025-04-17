@@ -1,4 +1,5 @@
 from stable_baselines3 import PPO
+from stable_baselines3.common.env_checker import check_env
 from stable_baselines3.common.vec_env import DummyVecEnv
 
 from CustomEnvironment import CustomEnv
@@ -40,7 +41,8 @@ if __name__ == '__main__':
     ))
     env1.policy_model = policy_model
     env1.action_wrapper = wrapped_env
-    policy_model.learn(total_timesteps=1)
+
+    policy_model.learn(total_timesteps=10)
     #current_observation = wrapped_env.reset()
     #policy_model.predict()
 

@@ -399,19 +399,16 @@ class CustomEnv(gym.Env):
                 selected_project_card_names = list(map(lambda card: card["name"], selected_project_cards))
 
                 selected_prelude_cards_indices = action[TWO_SELECTED_CARDS_INDICES]
-                print(selected_prelude_cards_indices)
                 selected_prelude_cards_names = []
                 for card_index, selected_binary in enumerate(selected_prelude_cards_indices):
                     if selected_binary == 1:
                         selected_card_name: str = CARD_NAMES_INT_STR[card_index]
                         selected_prelude_cards_names.append(selected_card_name)
-                print(selected_prelude_cards_names)
-                print(len(selected_prelude_cards_names))
 
                 payload = create_initial_cards_card_card_card_response(run_id, selected_corporation_name,
                                                                        selected_prelude_cards_names,
                                                                        selected_project_card_names)
-                print(json.dumps(payload, indent=2))
+                #print(json.dumps(payload, indent=2))
             else:  # wenn optionen ganz normal tatsächlich optionen sind
                 available_options = res["waitingFor"]["options"]
 
