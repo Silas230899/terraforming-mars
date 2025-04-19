@@ -12,45 +12,63 @@ class HybridActionWrapper(gym.ActionWrapper):
         self.sizes = []
         self.low = []
         self.high = []
-        self.dtypes = []
+
+        # Calculate the total flat size
+        total_flat_dim = 0
 
         for key, space in self.original_action_space.spaces.items():
             self.flat_keys.append(key)
 
             if isinstance(space, spaces.Discrete):
+                # For Discrete, we need one float value
                 self.sizes.append(1)
                 self.low.append(0)
                 self.high.append(space.n - 1)
-                self.dtypes.append(np.int32)
+                total_flat_dim += 1
             elif isinstance(space, spaces.Box):
-                self.sizes.append(np.prod(space.shape))
+                # For Box, we flatten all dimensions
+                flat_size = int(np.prod(space.shape))
+                self.sizes.append(flat_size)
                 self.low.extend(space.low.flatten())
                 self.high.extend(space.high.flatten())
-                self.dtypes.append(space.dtype)
+                total_flat_dim += flat_size
             elif isinstance(space, spaces.MultiBinary):
+                # For MultiBinary, we need one float per binary value
                 self.sizes.append(space.n)
                 self.low.extend([0] * space.n)
                 self.high.extend([1] * space.n)
-                self.dtypes.append(np.int8)
+                total_flat_dim += space.n
             else:
                 raise NotImplementedError(f"Action type {type(space)} not supported.")
 
-        self.flat_size = sum(self.sizes)
+        print(f"Total flat dimension: {total_flat_dim}")
+        print(f"Low bounds length: {len(self.low)}, High bounds length: {len(self.high)}")
+
+        assert len(self.low) == total_flat_dim, f"Size mismatch in low bounds"
+        assert len(self.high) == total_flat_dim, f"Size mismatch in high bounds"
+
+        # Create a Box action space with the calculated dimensions
         self.action_space = spaces.Box(
             low=np.array(self.low, dtype=np.float32),
             high=np.array(self.high, dtype=np.float32),
+            shape=(total_flat_dim,),
             dtype=np.float32
         )
 
-    def action(self, action_flat: np.ndarray) -> dict:
-        print("Action called")
-        """
-        Convert flat Box action from agent into Dict action for the environment.
-        """
+        print(f"Created wrapped action space with shape: {self.action_space.shape}")
 
-        # Falls wir von VecEnv ein (1, N)-Array bekommen
-        if isinstance(action_flat, np.ndarray) and len(action_flat.shape) == 2:
-            action_flat = action_flat[0]  # nehme nur das erste (und einzige) Environment
+    def action(self, action_flat: np.ndarray) -> dict:
+        print(f"Action wrapper received shape: {action_flat.shape if hasattr(action_flat, 'shape') else 'unknown'}")
+
+        # Try to reshape if needed - this is important!
+        if isinstance(action_flat, np.ndarray) and len(action_flat.shape) > 1:
+            if action_flat.shape[0] == 1:  # If batch dimension is 1
+                action_flat = action_flat.reshape(-1)  # Flatten to 1D
+                print(f"Reshaped to: {action_flat.shape}")
+
+        # Make sure the shape matches expected size
+        if len(action_flat) != len(self.low):
+            raise ValueError(f"Expected action of shape {len(self.low)}, got {len(action_flat)}")
 
         dict_action = {}
         idx = 0
@@ -64,8 +82,6 @@ class HybridActionWrapper(gym.ActionWrapper):
             if isinstance(space, spaces.Discrete):
                 dict_action[key] = int(np.clip(np.round(sub_action[0]), 0, space.n - 1))
             elif isinstance(space, spaces.Box):
-                # print(f"[DEBUG] {key}: size={size}, expected_shape={space.shape}, sub_action.shape={np.array(sub_action).shape}")
-                # reshaped = np.array(sub_action, dtype=space.dtype).reshape(space.shape)
                 sub_action = np.asarray(sub_action).flatten()  # sicheres 1D-Array
                 reshaped = sub_action.astype(space.dtype).reshape(space.shape)
                 dict_action[key] = np.clip(reshaped, space.low, space.high)

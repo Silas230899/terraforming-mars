@@ -214,19 +214,6 @@ class CustomEnv(gym.Env):
         observation_player2 = create_observation_from_res(res_player2)
         observation_player3 = create_observation_from_res(res_player3)
 
-
-        # action_player2xx, _ = self.policy_model.predict(observation_player2)
-        # print(action_player2xx)
-        # print(type(action_player2xx))
-        # print(action_player2xx[0])
-        # print(len(action_player2xx[0]))
-        # print(action_player2xx[0][0])
-        # env1 = CustomEnv()
-        # wrapped_env = HybridActionWrapper(env1)
-        # umgewandelt = wrapped_env.action(action_player2xx)
-        # print(umgewandelt)
-        # exit(0)
-
         # weil die ergebnisse der spieler nicht voneinander abhängen ist die reihenfolge hier beliebig
         match self.observed_player:
             case self.player1:
