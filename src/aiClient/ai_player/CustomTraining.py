@@ -4,7 +4,8 @@ from stable_baselines3.common.vec_env import DummyVecEnv
 
 from CustomEnvironment import CustomEnv
 from HybridActionWrapper import HybridActionWrapper
-from ai_player.CustomModel import HybridActorCriticPolicy, CustomFeatureExtractor
+from ai_player.CustomFeatureExtractor import CustomFeatureExtractor
+from ai_player.HybridActorCriticPolicy import HybridActorCriticPolicy
 
 if __name__ == '__main__':
     env1 = CustomEnv()
@@ -37,8 +38,11 @@ if __name__ == '__main__':
     policy_model = PPO(policy=HybridActorCriticPolicy, env=vec_env, verbose=1,policy_kwargs=dict(
         features_extractor_class=CustomFeatureExtractor,
         features_extractor_kwargs=dict(features_dim=64),
+        flat_keys=wrapped_env.flat_keys,
         original_action_space=initial_dict_action_space,
     ))
+    policy_model.policy.flat_keys = wrapped_env.flat_keys
+    policy_model.policy.sizes = wrapped_env.sizes
     env1.policy_model = policy_model
     env1.action_wrapper = wrapped_env
 

@@ -9,7 +9,9 @@ class HybridActionWrapper(gym.ActionWrapper):
 
         self.original_action_space: spaces.Dict = env.action_space
         self.flat_keys = []
+        #env.flat_keys = self.flat_keys
         self.sizes = []
+        #env.sizes = self.sizes
         self.low = []
         self.high = []
         self.dtypes = []
