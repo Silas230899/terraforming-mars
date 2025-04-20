@@ -43,7 +43,7 @@ class HybridActionWrapper(gym.ActionWrapper):
         )
 
     def action(self, action_flat: np.ndarray) -> dict:
-        print("Action called")
+        #print("Action called")
         """
         Convert flat Box action from agent into Dict action for the environment.
         """
@@ -62,11 +62,13 @@ class HybridActionWrapper(gym.ActionWrapper):
             idx += size
 
             if isinstance(space, spaces.Discrete):
+                print(key, sub_action[0])
                 dict_action[key] = int(np.clip(np.round(sub_action[0]), 0, space.n - 1))
             elif isinstance(space, spaces.Box):
                 # print(f"[DEBUG] {key}: size={size}, expected_shape={space.shape}, sub_action.shape={np.array(sub_action).shape}")
                 # reshaped = np.array(sub_action, dtype=space.dtype).reshape(space.shape)
                 sub_action = np.asarray(sub_action).flatten()  # sicheres 1D-Array
+                print(key, sub_action[0])
                 reshaped = sub_action.astype(space.dtype).reshape(space.shape)
                 dict_action[key] = np.clip(reshaped, space.low, space.high)
             elif isinstance(space, spaces.MultiBinary):

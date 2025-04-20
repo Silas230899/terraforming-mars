@@ -13,8 +13,9 @@ class CustomFeatureExtractor(BaseFeaturesExtractor):
     def __init__(self, observation_space: gym.spaces.Dict, features_dim: int = 64):
         super().__init__(observation_space, features_dim)
 
-        input_size = int(sum(np.prod(space.shape) for space in observation_space.spaces.values()))
-
+        #input_size = int(sum(np.prod(space.shape) for space in observation_space.spaces.values()))
+        input_size = 4207 # TODO ka wie man es richtig berechnet
+        #print("input_size", input_size)
         self.fc = nn.Sequential(
             nn.Linear(input_size, 128),
             nn.ReLU(),
@@ -24,12 +25,14 @@ class CustomFeatureExtractor(BaseFeaturesExtractor):
 
     def forward(self, obs_dict):
         # return self.fc(x)
+        #print(obs_dict)
         obs_list = [obs_dict[key].flatten() for key in obs_dict.keys()]
         obs_tensor = th.cat(obs_list, dim=-1)  # Alle Beobachtungen kombinieren
         obs_tensor = obs_tensor.float()
         # Falls keine Batch-Dimension: hinzufügen
         if obs_tensor.dim() == 1:
             obs_tensor = obs_tensor.unsqueeze(0)
+            #print(obs_tensor.shape)
         return self.fc(obs_tensor)
 
 
@@ -54,32 +57,6 @@ class HybridActorCriticPolicy(ActorCriticPolicy):
         self.binary_policy = nn.Linear(features_dim, self.num_binary)  # MultiBinary als Logits
 
         self.log_std = nn.Parameter(th.zeros(self.num_continuous))
-
-        # **Manuelle Zuordnung der Maskierungs-Beobachtungen**
-        self.discrete_mask_mapping = {
-            SELECTED_ACTION_OPTION_INDEX: AVAILABLE_ACTION_OPTIONS,
-            SELECTED_CARD_INDEX: AVAILABLE_CARDS,
-            SELECTED_PROJECT_CARD_INDEX: AVAILABLE_PROJECT_CARDS,
-            SELECTED_CARD_TO_DISCARD_INDEX: AVAILABLE_CARDS_TO_DISCARD,
-            SELECTED_CARD_TO_ADD_3_MICROBES_TO_INDEX: AVAILABLE_CARDS_TO_ADD_3_MICROBES_TO,
-            SELECTED_CARD_TO_ADD_2_MICROBES_TO_INDEX: AVAILABLE_CARDS_TO_ADD_2_MICROBES_TO,
-            SELECTED_CARD_TO_REMOVE_2_ANIMALS_FROM_INDEX: AVAILABLE_CARDS_TO_REMOVE_2_ANIMALS_FROM,
-            SELECTED_CARD_TO_ADD_2_ANIMALS_TO_INDEX: AVAILABLE_CARDS_TO_ADD_2_ANIMALS_TO,
-            SELECTED_CARD_TO_ADD_4_ANIMALS_TO_INDEX: AVAILABLE_CARDS_TO_ADD_4_ANIMALS_TO,
-            SELECTED_CARD_TO_ADD_2_ANIMALS_TO_2_INDEX: AVAILABLE_CARDS_TO_ADD_2_ANIMALS_TO_2,
-
-            SELECTED_SPACE_INDEX: AVAILABLE_SPACES,
-            SELECTED_PLAYER: AVAILABLE_PLAYERS,
-            SELECTED_CARD_WITH_ACTION_INDEX: PLAYED_CARDS_WITH_ACTIONS,
-            SELECTED_STANDARD_PROJECT_INDEX: AVAILABLE_STANDARD_PROJECTS,
-            SELECTED_CORPORATION: AVAILABLE_CORPORATIONS,
-        }
-
-        self.binary_mask_mapping = {
-            MULTIPLE_SELECTED_CARDS: AVAILABLE_CARDS,
-            TWO_SELECTED_CARDS_INDICES: AVAILABLE_CARDS,
-            MULTIPLE_SELECTED_RESEARCH_CARDS: AVAILABLE_CARDS,
-        }
 
     def forward(self, obs, deterministic=False):
         features = self.features_extractor(obs)

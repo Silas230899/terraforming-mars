@@ -1,6 +1,7 @@
 from stable_baselines3 import PPO
 from stable_baselines3.common.env_checker import check_env
 from stable_baselines3.common.vec_env import DummyVecEnv
+from stable_baselines3.ppo import MultiInputPolicy
 
 from CustomEnvironment import CustomEnv
 from HybridActionWrapper import HybridActionWrapper
@@ -34,10 +35,10 @@ if __name__ == '__main__':
 
     initial_dict_action_space = env1.action_space
 
-    policy_model = PPO(policy=HybridActorCriticPolicy, env=vec_env, verbose=1,policy_kwargs=dict(
+    policy_model = PPO(policy=MultiInputPolicy, env=vec_env, verbose=1,policy_kwargs=dict(
         features_extractor_class=CustomFeatureExtractor,
         features_extractor_kwargs=dict(features_dim=64),
-        original_action_space=initial_dict_action_space,
+        #original_action_space=initial_dict_action_space,
     ))
     env1.policy_model = policy_model
     env1.action_wrapper = wrapped_env

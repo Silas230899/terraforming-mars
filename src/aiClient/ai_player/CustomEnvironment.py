@@ -1,4 +1,5 @@
 import http.client
+import json
 import math
 
 import gymnasium as gym
@@ -296,6 +297,10 @@ class CustomEnv(gym.Env):
         # action ausführen
         res = self.normal_turn(action, self.res_of_observed_player, self.observed_player) # this is from observed player
 
+        if "game" not in res:
+            print(res)
+            exit(-1)
+
         if res["game"]["phase"] == "drafting":
             res_player1 = get_game(self.http_connection, self.player1.id)
             res_player2 = get_game(self.http_connection, self.player2.id)
@@ -370,11 +375,20 @@ class CustomEnv(gym.Env):
 
         run_id = self.run_id
 
+        debug = False
+
+        #print(json.dumps(res["waitingFor"], indent=2))
+
+        #print(action)
+
         if "options" in res["waitingFor"]:
             # this has to be handled separately bc the options are not really options but all mandatory
             if res["waitingFor"]["title"] == "Initial Research Phase":
+
                 selected_corporation_name = ALL_CORPORATIONS_INDEX_NAME[action[SELECTED_CORPORATION]]
                 available_cash_for_project_cards = CORPORATIONS_STARTING_MC[selected_corporation_name]
+                #print(action[SELECTED_CORPORATION])
+                #print("selected corporation name: ", selected_corporation_name)
 
                 available_cards = res["waitingFor"]["options"][2]["cards"]
                 selected_cards_indices = action[MULTIPLE_SELECTED_CARDS]
@@ -774,6 +788,8 @@ class CustomEnv(gym.Env):
                     amount = min(selected_amount, max)
                     payload = create_amount_response(run_id, amount)
 
+        if debug:
+            print(json.dumps(payload, indent=2))
         res = send_player_input(self.http_connection, which_player.id, payload)
         # from this res create new observation
 
