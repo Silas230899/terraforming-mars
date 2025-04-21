@@ -1,11 +1,12 @@
 import http.client
+import json
 import math
 
 import gymnasium as gym
 from gymnasium import spaces
 import random
 
-from gymnasium.spaces import Box, Discrete, MultiBinary, MultiDiscrete
+from gymnasium.spaces import Box, Discrete, MultiBinary
 from numpy import argmax
 
 from ai_player.HybridActionWrapper import HybridActionWrapper
@@ -211,21 +212,9 @@ class CustomEnv(gym.Env):
 
     def play_all_at_once(self, res_player1, res_player2, res_player3):
         observation_player1 = create_observation_from_res(res_player1)
+        return observation_player1, res_player1
         observation_player2 = create_observation_from_res(res_player2)
         observation_player3 = create_observation_from_res(res_player3)
-
-
-        # action_player2xx, _ = self.policy_model.predict(observation_player2)
-        # print(action_player2xx)
-        # print(type(action_player2xx))
-        # print(action_player2xx[0])
-        # print(len(action_player2xx[0]))
-        # print(action_player2xx[0][0])
-        # env1 = CustomEnv()
-        # wrapped_env = HybridActionWrapper(env1)
-        # umgewandelt = wrapped_env.action(action_player2xx)
-        # print(umgewandelt)
-        # exit(0)
 
         # weil die ergebnisse der spieler nicht voneinander abhängen ist die reihenfolge hier beliebig
         match self.observed_player:
@@ -295,7 +284,7 @@ class CustomEnv(gym.Env):
     def step(self, action):
         # action ausführen
         res = self.normal_turn(action, self.res_of_observed_player, self.observed_player) # this is from observed player
-
+        print(res)
         if res["game"]["phase"] == "drafting":
             res_player1 = get_game(self.http_connection, self.player1.id)
             res_player2 = get_game(self.http_connection, self.player2.id)
@@ -374,6 +363,8 @@ class CustomEnv(gym.Env):
             # this has to be handled separately bc the options are not really options but all mandatory
             if res["waitingFor"]["title"] == "Initial Research Phase":
                 selected_corporation_name = ALL_CORPORATIONS_INDEX_NAME[action[SELECTED_CORPORATION]]
+
+                print(json.dumps(res["waitingFor"],indent=2))
                 available_cash_for_project_cards = CORPORATIONS_STARTING_MC[selected_corporation_name]
 
                 available_cards = res["waitingFor"]["options"][2]["cards"]
@@ -408,6 +399,7 @@ class CustomEnv(gym.Env):
                 payload = create_initial_cards_card_card_card_response(run_id, selected_corporation_name,
                                                                        selected_prelude_cards_names,
                                                                        selected_project_card_names)
+                print(json.dumps(payload, indent=2))
                 #print(json.dumps(payload, indent=2))
             else:  # wenn optionen ganz normal tatsächlich optionen sind
                 available_options = res["waitingFor"]["options"]
