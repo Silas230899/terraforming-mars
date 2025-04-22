@@ -2,8 +2,8 @@ import json
 
 import numpy as np
 
-from mapping_and_constants import *
-from action_observation_names import *
+from ai_player.mapping_and_constants import *
+from ai_player.action_observation_names import *
 
 
 def build_box_i8(value):
@@ -42,6 +42,8 @@ def get_available_project_cards(res):
         res["waitingFor"]["title"]
         if message == "Play project card":
             cards = res["waitingFor"]["cards"]
+        elif message == "Initial Research Phase":
+            cards = res["waitingFor"]["options"][2]["cards"]
     return get_result_array_from_available_cards(cards)
 
 
@@ -61,6 +63,8 @@ def get_available_cards(res):
                   "Select a card to keep and pass the rest to ${0}",
                   "Select card(s) to buy"):
                 cards = res["waitingFor"]["cards"]
+            case "Initial Research Phase":
+                cards = res["waitingFor"]["options"][1]["cards"]
     return get_result_array_from_available_cards(cards)
 
 
@@ -360,7 +364,7 @@ def get_available_corporations(res):
 def get_picked_corporation(res):
     picked_corporation = NONE_CORPORATION_INDEX
     if "pickedCorporationCard" in res and len(res["pickedCorporationCard"]) > 0:
-        picked_corporation = ALL_CORPORATIONS_NAME_INDEX[res["pickedCorporationCard"]["name"]]
+        picked_corporation = ALL_CORPORATIONS_NAME_INDEX[res["pickedCorporationCard"][0]["name"]]
     return build_discrete_i8(picked_corporation)
 
 
