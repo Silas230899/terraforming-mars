@@ -30,6 +30,7 @@ def create_action_from_observation(action_space: spaces.Dict, obs):
         SELECTED_CARD_TO_ADD_2_ANIMALS_TO_INDEX: AVAILABLE_CARDS_TO_ADD_2_ANIMALS_TO,
         SELECTED_CARD_TO_ADD_4_ANIMALS_TO_INDEX: AVAILABLE_CARDS_TO_ADD_4_ANIMALS_TO,
         SELECTED_CARD_TO_ADD_2_ANIMALS_TO_2_INDEX: AVAILABLE_CARDS_TO_ADD_2_ANIMALS_TO_2,
+        SELECTED_AWARD_INDEX: AVAILABLE_AWARDS,
 
         SELECTED_SPACE_INDEX: AVAILABLE_SPACES,
         SELECTED_PLAYER: AVAILABLE_PLAYERS,
@@ -128,7 +129,7 @@ class CustomEnv(gym.Env):
             AVAILABLE_PLAYERS: MultiBinary(NUMBER_PLAYERS),
             PLAYED_CARDS_WITH_ACTIONS: MultiBinary(NUMBER_OF_CARDS),
             AVAILABLE_MILESTONES: MultiBinary(NUMBER_OF_MILESTONES()),
-            AVAILABLE_AWARDS: MultiBinary(NUMBER_OF_AWARDS()),
+            AVAILABLE_AWARDS: MultiBinary(len(AWARDS_STR_INT)),
             AVAILABLE_STANDARD_PROJECTS: MultiBinary(NUMBER_OF_STANDARD_PROJECTS),
 
             # for "Take first action of ${0} corporation"
@@ -156,7 +157,7 @@ class CustomEnv(gym.Env):
             CARD_TO_ADD_MICROBES_TO: Discrete(len(CARDS_MICROBES_CAN_BE_ADDED_TO)),
 
             # "Fund ${0} award"
-            WHAT_AWARD_TO_FUND: Discrete(NUMBER_OF_AWARDS_DISCRETE),
+            WHAT_AWARD_TO_FUND: Discrete(len(AWARDS_STR_INT)),
 
             # Convert ${0} plants into greenery
             HOW_MANY_PLANTS_TO_CONVERT_INTO_GREENERY: Box(0, 8, (1,), np.int8),
@@ -237,7 +238,7 @@ class CustomEnv(gym.Env):
             SELECTED_PLAYER: Discrete(NUMBER_PLAYERS),
             SELECTED_CARD_WITH_ACTION_INDEX: Discrete(NUMBER_OF_CARDS),
             SELECTED_MILESTONE_INDEX: Discrete(NUMBER_OF_MILESTONES()),
-            SELECTED_AWARD_INDEX: Discrete(NUMBER_OF_AWARDS_DISCRETE),
+            SELECTED_AWARD_INDEX: Discrete(len(AWARDS_STR_INT)),
             SELECTED_STANDARD_PROJECT_INDEX: Discrete(NUMBER_OF_STANDARD_PROJECTS),
 
             # Select 2 card(s) to keep
@@ -335,7 +336,8 @@ class CustomEnv(gym.Env):
         # action ausführen
         res = self.normal_turn(action, self.res_of_observed_player,
                                self.observed_player)  # this is from observed player
-        # print(json.dumps(res, indent=2))
+        if "waitingFor" in res: print("1", json.dumps(res["waitingFor"], indent=2))
+        if "game" not in res: print("2", json.dumps(res, indent=2))
         if res["game"]["phase"] == "drafting":
             res_player1 = get_game(self.http_connection, self.player1.id)
             res_player2 = get_game(self.http_connection, self.player2.id)
@@ -351,18 +353,24 @@ class CustomEnv(gym.Env):
             next_player = self.get_current_player(res["players"])  # herausfinden, wer als nächstes dran ist
 
             while next_player != self.observed_player:
-                print(res["game"]["phase"])
+                if res["game"]["phase"] == "drafting":
+                    exit(-4)
                 # die anderen spieler spielen
                 res = get_game(self.http_connection, next_player.id)
+                #if "waitingFor" in res: print("1", json.dumps(res["waitingFor"], indent=2))
                 # print(json.dumps(res, indent=2))
                 observation_other_player = create_observation_from_res(res)
                 action_other_player = create_action_from_observation(self.action_space, observation_other_player)
                 # action_other_player, _ = self.policy_model.predict(observation_other_player)
+                #print(json.dumps(res["waitingFor"]))
                 res = self.normal_turn(action_other_player, res, next_player)
+                #print(res)
                 #print(json.dumps(res, indent=2))
                 # print("players" in res)
                 next_player = self.get_current_player(res["players"])  # herausfinden, wer als nächstes dran ist
 
+            if res["game"]["phase"] == "drafting":
+                exit(-5)
             # now next_player == self.observed_player:
             res = get_game(self.http_connection, next_player.id)
             observation = create_observation_from_res(res)
@@ -432,18 +440,24 @@ class CustomEnv(gym.Env):
                 # die available options müssen noch von den namen her auf die korrekten indizes gemapped werden
                 selected_option_from_all: str = ACTION_OPTIONS_INDEX_NAME[action[SELECTED_ACTION_OPTION_INDEX]]
                 selected_option_index = -1
+                #print("looking for:", selected_option_from_all)
+
                 for idx, option in enumerate(available_options):
-                    if "message" in option["title"]:
-                        name = option["title"]["message"]
-                    else:
-                        name = option["title"]
+                    #print(json.dumps(option, indent=2))
+                    name = option["title"]["message"] if "message" in option["title"] else option["title"]
+                    #print("potential:", name, name == selected_option_from_all)
                     if name == selected_option_from_all:
                         selected_option_index = idx
+                        #print("choose index ", selected_option_index)
                         break
                 selected_option = available_options[selected_option_index]
-
+                #print("index: ", selected_option_index)
+                #print(selected_option)
+                #if selected_option_index == -1:
+                #    exit(-1)
                 action_name = selected_option["title"]["message"] if "message" in selected_option["title"] else \
                     selected_option["title"]
+                print("Action name: ", action_name)
                 match action_name:
                     case "Pass for this generation" | \
                           "End Turn" | \
@@ -543,6 +557,8 @@ class CustomEnv(gym.Env):
                         selected_project_cards = []
                         selected_card_indices = action[MULTIPLE_SELECTED_CARDS]
                         for idx, binary in enumerate(selected_card_indices):
+                            if idx == CARD_NAMES_STR_INT["None"]:
+                                continue
                             if binary == 1:
                                 selected_card_name: str = CARD_NAMES_INT_STR[idx]
                                 selected_project_cards.append(selected_card_name)
@@ -591,7 +607,7 @@ class CustomEnv(gym.Env):
                         available_spaces_ids = selected_option["spaces"]
                         selected_space_index = action[SELECTED_SPACE_INDEX]
                         selected_space_id = str(
-                            selected_space_index + 1)  # TODO maybe "1" is not treated the same as "01"
+                            selected_space_index + 1).zfill(2)  # TODO maybe "1" is not treated the same as "01"
                         payload = create_or_resp_space_space_id(run_id, selected_option_index, selected_space_id)
                     case "Select adjacent player to remove 4 M€ from":
                         available_players_colors = selected_option["players"]
@@ -647,7 +663,7 @@ class CustomEnv(gym.Env):
                       "Select space for special city tile":
                     available_spaces_ids = res["waitingFor"]["spaces"]
                     selected_space_index_from_all = action[SELECTED_SPACE_INDEX]
-                    selected_space_id = str(selected_space_index_from_all + 1)
+                    selected_space_id = str(selected_space_index_from_all + 1).zfill(2)
                     payload = create_space_id_response(run_id, selected_space_id)
                 case "Select player to decrease ${0} production by ${1} step(s)":
                     selected_player_index = action[SELECTED_PLAYER]
@@ -795,9 +811,11 @@ class CustomEnv(gym.Env):
 
         print("payload", payload)
         res = send_player_input(self.http_connection, which_player.id, payload)
+        print("res", res)
         # from this res create new observation
 
         # send_player_input(json.dumps(select_space_data), player.id, http_connection)
+
         return res
 
 
@@ -824,7 +842,7 @@ def calc_payment_for_project_card(action,
     steel_value = current_state["thisPlayer"]["steelValue"]
     available_titanium = current_state["thisPlayer"]["titanium"]
     titanium_value = current_state["thisPlayer"]["titaniumValue"]
-    available_microbes = current_state["waitingFor"]["microbes"]
+    available_microbes = current_state["waitingFor"]["microbes"] if "waitingFor" in current_state and "microbes" in current_state["waitingFor"] else 0
     microbes_value = 2
 
     available_heat -= reserve_heat

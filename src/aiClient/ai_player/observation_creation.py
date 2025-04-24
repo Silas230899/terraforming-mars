@@ -16,6 +16,7 @@ def build_discrete_i8(value):
 
 # uses int16
 def get_result_array_from_available_cards(available_cards):
+    #print("available_cards:", available_cards)
     result = np.zeros(NUMBER_OF_CARDS, dtype=np.int16)
     if len(available_cards) == 0:
         result[CARD_NAMES_STR_INT["None"]] = 1
@@ -37,6 +38,9 @@ def get_available_project_cards(res):
             if message == "Play project card":
                 cards = option["cards"]
                 break
+            if message == "Sell patents":
+                cards = option["cards"]
+                break
     else:
         message = res["waitingFor"]["title"]["message"] if "message" in res["waitingFor"]["title"] else \
         res["waitingFor"]["title"]
@@ -54,14 +58,14 @@ def get_available_cards(res):
         message = res["waitingFor"]["title"]["message"] if "message" in res["waitingFor"]["title"] else \
         res["waitingFor"]["title"]
         match message:
-            case ("Select card to add ${0} ${1}",  # geschenkt
-                  "Select builder card to copy",
-                  "Select 1 card(s) to keep",
-                  "Select card to remove 1 Microbe(s)",
-                  "Select card to remove 1 Animal(s)",
-                  "Select prelude card to play",
-                  "Select a card to keep and pass the rest to ${0}",
-                  "Select card(s) to buy"):
+            case "Select card to add ${0} ${1}" | \
+                  "Select builder card to copy" | \
+                  "Select 1 card(s) to keep" | \
+                  "Select card to remove 1 Microbe(s)" | \
+                  "Select card to remove 1 Animal(s)" | \
+                  "Select prelude card to play" | \
+                  "Select a card to keep and pass the rest to ${0}" | \
+                  "Select card(s) to buy":
                 cards = res["waitingFor"]["cards"]
             case "Initial Research Phase":
                 cards = res["waitingFor"]["options"][1]["cards"]
@@ -126,24 +130,24 @@ def get_available_spaces(res):
         message = res["waitingFor"]["title"]["message"] if "message" in res["waitingFor"]["title"] else \
         res["waitingFor"]["title"]
         match message:
-            case ("Select space for ${0} tile",
-                  "Select space for ocean tile",
-                  "Select space reserved for ocean to place greenery tile",
-                  "Select a space with a steel or titanium bonus",
-                  "Select space adjacent to a city tile",
-                  "Select place next to no other tile for city",
-                  "Select space next to greenery for special tile",
-                  "Select either Tharsis Tholus, Ascraeus Mons, Pavonis Mons or Arsia Mons",
-                  "Select a space with a steel or titanium bonus adjacent to one of your tiles",
-                  "Select space next to at least 2 other city tiles",
-                  "Select a land space to place an ocean tile",
-                  "Select space for city tile",
-                  "Select space for greenery tile",
-                  "Select space for ocean from temperature increase",
-                  "Select space for claim",
-                  "Select space for first ocean",
-                  "Select space for second ocean",
-                  "Select space for special city tile"):
+            case "Select space for ${0} tile" | \
+                  "Select space for ocean tile" | \
+                  "Select space reserved for ocean to place greenery tile" | \
+                  "Select a space with a steel or titanium bonus" | \
+                  "Select space adjacent to a city tile" | \
+                  "Select place next to no other tile for city" | \
+                  "Select space next to greenery for special tile" | \
+                  "Select either Tharsis Tholus, Ascraeus Mons, Pavonis Mons or Arsia Mons" | \
+                  "Select a space with a steel or titanium bonus adjacent to one of your tiles" | \
+                  "Select space next to at least 2 other city tiles" | \
+                  "Select a land space to place an ocean tile" | \
+                  "Select space for city tile" | \
+                  "Select space for greenery tile" | \
+                  "Select space for ocean from temperature increase" | \
+                  "Select space for claim" | \
+                  "Select space for first ocean" | \
+                  "Select space for second ocean" | \
+                  "Select space for special city tile":
                 available_spaces_ids = res["waitingFor"]["spaces"]
     for space_id in available_spaces_ids:
         space_index = int(space_id) - 1
@@ -212,7 +216,7 @@ def get_available_milestones(res):
 
 
 def get_available_awards(res):
-    result = np.zeros(NUMBER_OF_AWARDS(), dtype=np.int8)
+    result = np.zeros(len(AWARDS_STR_INT), dtype=np.int8)
     is_action_option = "options" in res["waitingFor"] and res["waitingFor"]["title"] != "Initial Research Phase"
     if is_action_option:
         available_options = res["waitingFor"]["options"]
@@ -224,6 +228,8 @@ def get_available_awards(res):
                     index_of_award = AWARDS_STR_INT[award["title"]]
                     result[index_of_award] = 1
                 break
+    if sum(result) == 0:
+        result[AWARDS_STR_INT["None"]] = 1
     return result
 
 
@@ -250,7 +256,7 @@ def get_available_standard_projects(res):
         for option in available_options:
             message = option["title"]["message"] if "message" in option["title"] else option["title"]
             if message == "Standard projects":
-                available_standard_projects = option["options"]
+                available_standard_projects = option["cards"]
                 for standard_project in available_standard_projects:
                     if "isDisabled" not in standard_project or (
                             "isDisabled" in standard_project and standard_project["isDisabled"] == "False"):
@@ -265,7 +271,7 @@ def get_available_standard_projects(res):
 def get_resource_to_remove(action_option):
     resource_index = REMOVABLE_RESOURCES_NAMES["None"]
     if action_option:
-        resource_name = action_option["title"]["data"][0]["value"]
+        resource_name = action_option["title"]["data"][1]["value"]
         resource_index = REMOVABLE_RESOURCES_NAMES[resource_name]
     result = build_discrete_i8(resource_index)
     return result
@@ -298,7 +304,7 @@ def get_card_to_add_microbe_to(action_option, index):
 
 
 def get_award_to_fund(action_option, index):
-    award_index = NONE_AWARD_INDEX
+    award_index = AWARDS_STR_INT["None"]
     if action_option:
         award_name = action_option["title"]["data"][index]["value"]
         award_index = AWARDS_STR_INT[award_name]
@@ -487,16 +493,26 @@ def create_observation_from_res(res):
         tags_dict[tag["tag"]] = tag["count"]
     tags_array = list(tags_dict.values())
 
+    #if "waitingFor" not in res:
+        #print(json.dumps(res, indent=2))
+
     is_action_option = "options" in res["waitingFor"] and res["waitingFor"]["title"] != "Initial Research Phase"
+
+    available_standard_projects = get_available_standard_projects(res)
 
     available_action_options = np.zeros(NUMBER_ALL_ACTION_OPTIONS, dtype=np.int8)
     if is_action_option:
         for option in res["waitingFor"]["options"]:
             action_name = option["title"]["message"] if "message" in option["title"] else option["title"]
+            if action_name == "Standard projects":
+                # filter this out as all are disabled
+                if sum(available_standard_projects) == 1 and available_standard_projects[STANDARD_PROJECTS_NAME_INDEX["None"]] == 1:
+                    continue
             index = ACTION_OPTIONS_NAME_INDEX[action_name]
             available_action_options[index] = 1
     else:
         available_action_options[ACTION_OPTIONS_NAME_INDEX["None"]] = 1
+
 
     selected_action_index = SELECTED_ACTION_OPTION_NAME_INDEX["None"]
     if "options" not in res["waitingFor"] or (
@@ -567,13 +583,13 @@ def create_observation_from_res(res):
         PLAYED_CARDS_WITH_ACTIONS: get_available_cards_with_actions(res),
         AVAILABLE_MILESTONES: get_available_milestones(res),
         AVAILABLE_AWARDS: get_available_awards(res),
-        AVAILABLE_STANDARD_PROJECTS: get_available_standard_projects(res),
+        AVAILABLE_STANDARD_PROJECTS: available_standard_projects,
         CORPORATION_TO_TAKE_FIRST_ACTION_OF: get_corporation_to_take_first_action_of(res),
         AMOUNT_OF_PLANTS_TO_REMOVE: get_amount_from_action_option(action_options["Remove ${0} plants from ${1}"], 0),
         PLAYER_TO_REMOVE_PLANTS_FROM: get_player_from_action_option(res, action_options["Remove ${0} plants from ${1}"],
                                                                     1),
         RESOURCE_TO_REMOVE: get_resource_to_remove(action_options["Remove ${0} ${1} from ${2}"]),
-        AMOUNT_OF_RESOURCE_TO_REMOVE: get_amount_from_action_option(action_options["Remove ${0} ${1} from ${2}"], 1),
+        AMOUNT_OF_RESOURCE_TO_REMOVE: get_amount_from_action_option(action_options["Remove ${0} ${1} from ${2}"], 0),
         PLAYER_TO_REMOVE_RESOURCE_FROM: get_player_from_action_option(res, action_options["Remove ${0} ${1} from ${2}"],
                                                                       2),
         AMOUNT_OF_MC_TO_STEAL: get_amount_from_action_option(action_options["Steal ${0} M€ from ${1}"], 0),

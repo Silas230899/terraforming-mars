@@ -71,6 +71,7 @@ AWARDS_INT_STR: Dict[int, str] = {
     2: "Landlord",
     3: "Thermalist",
     4: "Banker",
+    5: "None"
 }
 
 AWARDS_STR_INT = {
@@ -79,11 +80,8 @@ AWARDS_STR_INT = {
     "Landlord": 2,
     "Thermalist": 3,
     "Banker": 4,
+    "None": 5
 }
-
-def NUMBER_OF_AWARDS(): return len(AWARDS_INT_STR)
-NUMBER_OF_AWARDS_DISCRETE = NUMBER_OF_AWARDS() + 1
-NONE_AWARD_INDEX = 5
 
 MILESTONES_INT_STR: Dict[int, str] = {
     0: "Gardener",
@@ -190,7 +188,7 @@ NUMBER_ALL_ACTIONS = len(SELECTED_ACTION_OPTION_NAME_INDEX)  # without action op
 
 ACTION_OPTIONS_NAME_INDEX: Dict[str, int] = {
     "Pass for this generation": 0,
-    "End turn": 1,
+    "End Turn": 1,
     "Convert 8 heat into temperature": 2,
     "Convert 8 plants into greenery": 3,
     "Do nothing": 4,
@@ -251,7 +249,7 @@ ACTION_OPTIONS_NAME_INDEX: Dict[str, int] = {
 
 ACTION_OPTIONS_INDEX_NAME: Dict[int, str] = {
     0: "Pass for this generation",
-    1: "End turn",
+    1: "End Turn",
     2: "Convert 8 heat into temperature",
     3: "Convert 8 plants into greenery",
     4: "Do nothing",
