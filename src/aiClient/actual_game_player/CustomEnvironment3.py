@@ -1,6 +1,7 @@
 import http.client
 import json
 import math
+import time
 
 import gymnasium as gym
 from gymnasium import spaces
@@ -12,7 +13,6 @@ from numpy import argmax
 from ai_player.HybridActionWrapper import HybridActionWrapper
 from ai_player.ppo_stuff import ppo
 from Player import Player
-from ai_player.tfm_settings import settings
 from ai_player.network_related import *
 from ai_player.observation_creation import *
 
@@ -82,12 +82,8 @@ def create_action_from_observation(action_space: spaces.Dict, obs):
     return action
 
 
-class CustomEnv(gym.Env):
+class CustomEnv3(gym.Env):
     http_connection = None
-
-    player1: Player = None
-    player2: Player = None
-    player3: Player = None
 
     observed_player: Player = None
     res_of_observed_player = None
@@ -98,7 +94,10 @@ class CustomEnv(gym.Env):
     action_wrapper: HybridActionWrapper
 
     def __init__(self):
-        super(CustomEnv, self).__init__()
+        super(CustomEnv3, self).__init__()
+
+        self.game_age = 0
+        self.undo_count = 0
 
         self.http_connection = http.client.HTTPConnection("localhost", 8080)
 
@@ -260,150 +259,37 @@ class CustomEnv(gym.Env):
             SELECTED_CORPORATION: Discrete(NUMBER_OF_CORPORATIONS),
         })
 
-    def get_current_player(self, players) -> Player:
-        for player in players:
-            if player["isActive"]:
-                match player["color"]:
-                    case self.player1.color:
-                        return self.player1
-                    case self.player2.color:
-                        return self.player2
-                    case self.player3.color:
-                        return self.player3
-                    case _:
-                        print("error getting current player")
-                        exit(-1)
-
-    def play_all_at_once(self, res_player1, res_player2, res_player3):
-        observation_player1 = create_observation_from_res(res_player1)
-        observation_player2 = create_observation_from_res(res_player2)
-        observation_player3 = create_observation_from_res(res_player3)
-
-        # weil die ergebnisse der spieler nicht voneinander abhängen ist die reihenfolge hier beliebig
-        match self.observed_player:
-            case self.player1:
-                action_player2 = create_action_from_observation(self.action_space, observation_player2)
-                _ = self.normal_turn(action_player2, res_player2, self.player2)
-                action_player3 = create_action_from_observation(self.action_space, observation_player3)
-                _ = self.normal_turn(action_player3, res_player3, self.player3)
-                return observation_player1, res_player1
-            case self.player2:
-                action_player1 = create_action_from_observation(self.action_space, observation_player1)
-                _ = self.normal_turn(action_player1, res_player1, self.player1)
-                action_player3 = create_action_from_observation(self.action_space, observation_player3)
-                _ = self.normal_turn(action_player3, res_player3, self.player3)
-                return observation_player2, res_player2
-            case self.player3:
-                action_player1 = create_action_from_observation(self.action_space, observation_player1)
-                _ = self.normal_turn(action_player1, res_player1, self.player1)
-                action_player2 = create_action_from_observation(self.action_space, observation_player2)
-                _ = self.normal_turn(action_player2, res_player2, self.player2)
-                return observation_player3, res_player3
-
     def reset(self, seed=None, options=None):
         super().reset()
 
-        result = create_game(self.http_connection, json.dumps(settings))
+        res = get_game(self.http_connection, self.observed_player.id)
+        self.res_of_observed_player = res
+        self.game_age = res["game"]["gameAge"]
+        self.undo_count = res["game"]["undoCount"]
 
-        self.player1 = None
-        self.player2 = None
-        self.player3 = None
+        self.run_id = res["runId"]
 
-        self.player1 = Player(result["players"][0]["color"],
-                              result["players"][0]["id"],
-                              result["players"][0]["name"])
-        self.player2 = Player(result["players"][1]["color"],
-                              result["players"][1]["id"],
-                              result["players"][1]["name"])
-        self.player3 = Player(result["players"][2]["color"],
-                              result["players"][2]["id"],
-                              result["players"][2]["name"])
+        observation = create_observation_from_res(res)
 
-        res_player1 = get_game(self.http_connection, self.player1.id)
-        res_player2 = get_game(self.http_connection, self.player2.id)
-        res_player3 = get_game(self.http_connection, self.player3.id)
-
-        self.run_id = res_player1["runId"]  # all players have the same run_id
-
-        self.observed_player = random.choice([self.player1, self.player2, self.player3])
-
-        # für rot: gelb links, grün rechts
-        # für grün: rot links, gelb rechts
-        # für gelb: grün links, rot rechts
-
-        observation, self.res_of_observed_player = self.play_all_at_once(res_player1, res_player2, res_player3)
         return observation, {}
 
     def step(self, action):
         # action ausführen
-        res = self.normal_turn(action, self.res_of_observed_player,
-                               self.observed_player)  # this is from observed player
-        #if "waitingFor" in res: print("1", json.dumps(res["waitingFor"], indent=2))
-        #if "game" not in res: print("2", json.dumps(res, indent=2))
-        if "game" not in res: print(res)
-        if res["game"]["phase"] == "drafting" or res["game"]["phase"] == "research":
-            print(res["game"]["phase"])
-            res_player1 = get_game(self.http_connection, self.player1.id)
-            if res_player1["game"]["phase"] == "end":
-                return None, 1, True, False, {}
-            res_player2 = get_game(self.http_connection, self.player2.id)
-            if res_player2["game"]["phase"] == "end":
-                return None, 1, True, False, {}
-            res_player3 = get_game(self.http_connection, self.player3.id)
-            if res_player3["game"]["phase"] == "end":
-                return None, 1, True, False, {}
+        res = self.normal_turn(action, self.res_of_observed_player, self.observed_player)
+        self.res_of_observed_player = res
+        self.game_age = res["game"]["gameAge"]
+        self.undo_count = res["game"]["undoCount"]
 
-            observation_observed_player, self.res_of_observed_player = self.play_all_at_once(res_player1, res_player2, res_player3)
-            observation = observation_observed_player
-        else:
-            # print("players" in res)
-            next_player = self.get_current_player(res["players"])  # herausfinden, wer als nächstes dran ist
+        # check if its my turn
+        ready = False
+        while not ready:
+            waiting_for = get_waiting_for(self.http_connection, self.observed_player.id, self.game_age, self.undo_count)
+            ready = waiting_for["result"] == "GO"
+            if not ready: time.sleep(1)
 
-            while next_player != self.observed_player:
-                print(res["game"]["phase"])
-                if res["game"]["phase"] == "drafting" or res["game"]["phase"] == "research":
-                    res_player1 = get_game(self.http_connection, self.player1.id)
-                    res_player2 = get_game(self.http_connection, self.player2.id)
-                    res_player3 = get_game(self.http_connection, self.player3.id)
-                    observation, self.res_of_observed_player = self.play_all_at_once(res_player1,
-                                                                                     res_player2,
-                                                                                     res_player3)
-                    res = self.res_of_observed_player
-                    reward = np.random.random()
-                    done = res["game"]["phase"] == "end"
-
-                    return observation, reward, done, False, {}
-                else:
-                    # die anderen spieler spielen
-                    res = get_game(self.http_connection, next_player.id)
-
-                    if res["game"]["phase"] == "end":
-                        return None, 1, True, False, {}
-                    #if "waitingFor" in res: print("1", json.dumps(res["waitingFor"], indent=2))
-                    # print(json.dumps(res, indent=2))
-                    observation_other_player = create_observation_from_res(res)
-                    action_other_player = create_action_from_observation(self.action_space, observation_other_player)
-                    # action_other_player, _ = self.policy_model.predict(observation_other_player)
-                    #print(json.dumps(res["waitingFor"]))
-                    res = self.normal_turn(action_other_player, res, next_player)
-                    #print(res)
-                    #print(json.dumps(res, indent=2))
-                    # print("players" in res)
-
-                if "players" not in res: print(res)
-                next_player = self.get_current_player(res["players"])  # herausfinden, wer als nächstes dran ist
-
-            if res["game"]["phase"] == "drafting":
-                exit(-5)
-            # now next_player == self.observed_player:
-            res = get_game(self.http_connection, next_player.id)
-
-            if res["game"]["phase"] == "end":
-                return None, 1, True, False, {}
-
-            #print(res)
-            observation = create_observation_from_res(res)
-            self.res_of_observed_player = res
+        res = get_game(self.http_connection, self.observed_player.id)
+        self.res_of_observed_player = res
+        observation = create_observation_from_res(res)
 
         reward = np.random.random()
         done = res["game"]["phase"] == "end"
@@ -832,12 +718,12 @@ class CustomEnv(gym.Env):
                     selected_amount = action[AMOUNT_OF_HEAT_PRODUCTION_TO_DECREASE]
                     # min = current_state["waitingFor"]["min"]
                     max = res["waitingFor"]["max"]
-                    amount = min(selected_amount*1, max)
+                    amount = min(selected_amount[0], max)
                     payload = create_amount_response(run_id, amount)
                 case "Select amount of energy to spend":
                     selected_amount = action[AMOUNT_OF_ENERGY_TO_SPEND]
                     max = res["waitingFor"]["max"]
-                    amount = min(selected_amount*1, max)
+                    amount = min(selected_amount[0], max)
                     payload = create_amount_response(run_id, amount)
 
         #print("payload", payload)

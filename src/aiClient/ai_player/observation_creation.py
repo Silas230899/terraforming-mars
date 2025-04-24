@@ -65,7 +65,8 @@ def get_available_cards(res):
                   "Select card to remove 1 Animal(s)" | \
                   "Select prelude card to play" | \
                   "Select a card to keep and pass the rest to ${0}" | \
-                  "Select card(s) to buy":
+                  "Select card(s) to buy" | \
+                  "Select 2 card(s) to keep":
                 cards = res["waitingFor"]["cards"]
             case "Initial Research Phase":
                 cards = res["waitingFor"]["options"][1]["cards"]
@@ -200,7 +201,7 @@ def get_available_cards_with_actions(res):
 
 
 def get_available_milestones(res):
-    result = np.zeros(NUMBER_OF_MILESTONES(), dtype=np.int8)
+    result = np.zeros(len(MILESTONES_STR_INT), dtype=np.int8)
     is_action_option = "options" in res["waitingFor"] and res["waitingFor"]["title"] != "Initial Research Phase"
     if is_action_option:
         available_options = res["waitingFor"]["options"]
@@ -212,6 +213,8 @@ def get_available_milestones(res):
                     index_of_milestone = MILESTONES_STR_INT[milestone["title"]]
                     result[index_of_milestone] = 1
                 break
+    if sum(result) == 0:
+        result[MILESTONES_STR_INT["None"]] = 1
     return result
 
 
@@ -249,7 +252,7 @@ def get_corporation_to_take_first_action_of(res):
 
 
 def get_available_standard_projects(res):
-    result = np.zeros(NUMBER_OF_STANDARD_PROJECTS, dtype=np.int8)
+    result = np.zeros(len(STANDARD_PROJECTS_INDEX_NAME), dtype=np.int8)
     is_action_option = "options" in res["waitingFor"] and res["waitingFor"]["title"] != "Initial Research Phase"
     if is_action_option:
         available_options = res["waitingFor"]["options"]
@@ -493,8 +496,8 @@ def create_observation_from_res(res):
         tags_dict[tag["tag"]] = tag["count"]
     tags_array = list(tags_dict.values())
 
-    #if "waitingFor" not in res:
-        #print(json.dumps(res, indent=2))
+    if "waitingFor" not in res:
+        print(json.dumps(res, indent=2))
 
     is_action_option = "options" in res["waitingFor"] and res["waitingFor"]["title"] != "Initial Research Phase"
 

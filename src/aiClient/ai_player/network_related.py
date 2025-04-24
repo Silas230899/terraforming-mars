@@ -8,6 +8,11 @@ def create_game(http_connection, payload):
     return result
 
 
+def get_waiting_for(http_connection, player_id, game_age, undo_count):
+    http_connection.request("GET", "/api/waitingfor?id=" + player_id + "&gameAge=" + str(game_age) + "&undoCount=" + str(undo_count))
+    response = http_connection.getresponse()
+    return json.loads(response.read().decode())
+
 def send_player_input(http_connection: http.client.HTTPConnection, player_id, payload):
     payload = json.dumps(payload)
     http_connection.request("POST", "/player/input?id=" + player_id, body=payload)

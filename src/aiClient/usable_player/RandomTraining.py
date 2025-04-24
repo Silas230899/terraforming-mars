@@ -16,3 +16,4 @@ if __name__ == '__main__':
     while not done:
         action3 = create_action_from_observation(env.action_space, obs3)
         obs3, reward, done, _, _ = env.step(action3)
+    print("Succesfully done")

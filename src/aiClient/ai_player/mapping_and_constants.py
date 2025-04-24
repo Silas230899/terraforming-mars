@@ -89,6 +89,7 @@ MILESTONES_INT_STR: Dict[int, str] = {
     2: "Terraformer",
     3: "Planner",
     4: "Builder",
+    5: "None"
 }
 
 MILESTONES_STR_INT: Dict[str, int] = {
@@ -97,6 +98,7 @@ MILESTONES_STR_INT: Dict[str, int] = {
     "Terraformer": 2,
     "Planner": 3,
     "Builder": 4,
+    "None": 5
 }
 
 STANDARD_PROJECTS_INDEX_NAME: Dict[int, str] = {
@@ -116,12 +118,6 @@ STANDARD_PROJECTS_NAME_INDEX = {
     "City": 4,
     "None": 5
 }
-
-def NUMBER_OF_MILESTONES(): return len(MILESTONES_INT_STR)
-
-
-NUMBER_OF_STANDARD_PROJECTS = len(STANDARD_PROJECTS_INDEX_NAME)
-
 
 def get_index_of_player_color_by_current_player_color(color_of_player, color_of_current_player):
     color_order = {
