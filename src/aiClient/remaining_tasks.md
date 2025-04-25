@@ -4,6 +4,6 @@
 - [x] Bestimmten wer wann dran ist
 - [ ] Training lokal lauffähig machen
 - [ ] Rewards hinzufügen
-- [ ] Mit zufälligem Modell lauffähig kriegen
+- [x] Mit zufälligem Modell lauffähig kriegen
 - [ ] Auf Slurm lauffähig machen
 - [ ] Trainieren

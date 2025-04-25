@@ -275,9 +275,18 @@ class CustomEnv(gym.Env):
                         exit(-1)
 
     def play_all_at_once(self, res_player1, res_player2, res_player3):
-        observation_player1 = create_observation_from_res(res_player1)
-        observation_player2 = create_observation_from_res(res_player2)
-        observation_player3 = create_observation_from_res(res_player3)
+        observation_player1 = None
+        observation_player2 = None
+        observation_player3 = None
+        try:
+            observation_player1 = create_observation_from_res(res_player1)
+            observation_player2 = create_observation_from_res(res_player2)
+            observation_player3 = create_observation_from_res(res_player3)
+        except:
+            print(res_player1)
+            print(res_player2)
+            print(res_player3)
+            exit(-1)
 
         # weil die ergebnisse der spieler nicht voneinander abhängen ist die reihenfolge hier beliebig
         match self.observed_player:

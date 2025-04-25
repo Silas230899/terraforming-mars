@@ -276,6 +276,11 @@ class CustomEnv3(gym.Env):
     def step(self, action):
         # action ausführen
         res = self.normal_turn(action, self.res_of_observed_player, self.observed_player)
+        print("made step")
+
+        if res["game"]["phase"] == "end":
+            return None, 1, True, False, {}
+
         self.res_of_observed_player = res
         self.game_age = res["game"]["gameAge"]
         self.undo_count = res["game"]["undoCount"]
@@ -285,9 +290,13 @@ class CustomEnv3(gym.Env):
         while not ready:
             waiting_for = get_waiting_for(self.http_connection, self.observed_player.id, self.game_age, self.undo_count)
             ready = waiting_for["result"] == "GO"
-            if not ready: time.sleep(1)
+            if not ready: time.sleep(0.2)
 
         res = get_game(self.http_connection, self.observed_player.id)
+
+        if res["game"]["phase"] == "end":
+            return None, 1, True, False, {}
+
         self.res_of_observed_player = res
         observation = create_observation_from_res(res)
 
