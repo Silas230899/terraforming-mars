@@ -4,16 +4,6 @@ import json
 from ai_player.network_related import create_game
 from ai_player.tfm_settings import settings
 
-def link(uri, label=None):
-    if label is None:
-        label = uri
-    parameters = ''
-
-    # OSC 8 ; params ; URI ST <name> OSC 8 ;; ST
-    escape_mask = '\033]8;{};{}\033\\{}\033]8;;\033\\'
-
-    return escape_mask.format(parameters, uri, label)
-
 if __name__ == '__main__':
     http_connection = http.client.HTTPConnection("localhost", 8080)
 

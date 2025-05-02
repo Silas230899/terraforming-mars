@@ -65,9 +65,9 @@ class CustomEnv(gym.Env):
             AVAILABLE_SPACES: MultiBinary(NUMBER_SPACES),
             AVAILABLE_PLAYERS: MultiBinary(NUMBER_PLAYERS),
             PLAYED_CARDS_WITH_ACTIONS: MultiBinary(NUMBER_OF_CARDS),
-            AVAILABLE_MILESTONES: MultiBinary(NUMBER_OF_MILESTONES()),
-            AVAILABLE_AWARDS: MultiBinary(NUMBER_OF_AWARDS()),
-            AVAILABLE_STANDARD_PROJECTS: MultiBinary(NUMBER_OF_STANDARD_PROJECTS),
+            AVAILABLE_MILESTONES: MultiBinary(len(MILESTONES_STR_INT)),
+            AVAILABLE_AWARDS: MultiBinary(len(AWARDS_STR_INT)),
+            AVAILABLE_STANDARD_PROJECTS: MultiBinary(len(STANDARD_PROJECTS_INDEX_NAME)),
 
             # for "Take first action of ${0} corporation"
             CORPORATION_TO_TAKE_FIRST_ACTION_OF: Discrete(len(CORPORATIONS_WITH_FIRST_ACTION)),
@@ -94,7 +94,7 @@ class CustomEnv(gym.Env):
             CARD_TO_ADD_MICROBES_TO: Discrete(len(CARDS_MICROBES_CAN_BE_ADDED_TO)),
 
             # "Fund ${0} award"
-            WHAT_AWARD_TO_FUND: Discrete(NUMBER_OF_AWARDS_DISCRETE),
+            WHAT_AWARD_TO_FUND: Discrete(len(AWARDS_STR_INT)),
 
             # Convert ${0} plants into greenery
             HOW_MANY_PLANTS_TO_CONVERT_INTO_GREENERY: Box(0, 8, (1,), np.int8),
@@ -110,7 +110,7 @@ class CustomEnv(gym.Env):
             STEPS_TO_DECREASE_PRODUCTION: Box(0, 8, (1,), np.int8),
 
             # Select how to pay for the ${0} standard project
-            WHAT_STANDARD_PROJECT_TO_SELECT_HOW_TO_PAY_FOR: Discrete(NUMBER_OF_STANDARD_PROJECTS),
+            WHAT_STANDARD_PROJECT_TO_SELECT_HOW_TO_PAY_FOR: Discrete(len(STANDARD_PROJECTS_NAME_INDEX)),
 
             # Select amount of heat production to decrease
             MAX_AMOUNT_OF_HEAT_PRODUCTION_TO_DECREASE: Box(0, 50, (1,), np.int8),
@@ -174,9 +174,9 @@ class CustomEnv(gym.Env):
             SELECTED_SPACE_INDEX: Discrete(NUMBER_SPACES),
             SELECTED_PLAYER: Discrete(NUMBER_PLAYERS),
             SELECTED_CARD_WITH_ACTION_INDEX: Discrete(NUMBER_OF_CARDS),
-            SELECTED_MILESTONE_INDEX: Discrete(NUMBER_OF_MILESTONES()),
-            SELECTED_AWARD_INDEX: Discrete(NUMBER_OF_AWARDS_DISCRETE),
-            SELECTED_STANDARD_PROJECT_INDEX: Discrete(NUMBER_OF_STANDARD_PROJECTS),
+            SELECTED_MILESTONE_INDEX: Discrete(len(MILESTONES_STR_INT)),
+            SELECTED_AWARD_INDEX: Discrete(len(AWARDS_STR_INT)),
+            SELECTED_STANDARD_PROJECT_INDEX: Discrete(len(STANDARD_PROJECTS_NAME_INDEX)),
 
             # Select 2 card(s) to keep
             TWO_SELECTED_CARDS_INDICES: MultiBinary(NUMBER_OF_CARDS),
@@ -283,7 +283,7 @@ class CustomEnv(gym.Env):
     def step(self, action):
         # action ausführen
         res = self.normal_turn(action, self.res_of_observed_player, self.observed_player) # this is from observed player
-        print(res)
+        #print(res)
         if res["game"]["phase"] == "drafting":
             res_player1 = get_game(self.http_connection, self.player1.id)
             res_player2 = get_game(self.http_connection, self.player2.id)
@@ -318,40 +318,6 @@ class CustomEnv(gym.Env):
 
     def normal_turn(self, action, res, which_player):
 
-        # res = {
-        #     "waitingFor": {
-        #         "title1": {
-        #             "message": "Select space for ${0} tile"
-        #         },
-        #         "title2": "Select space for ocean tile",
-        #         "options": [
-        #             {
-        #                 "title": "Standard projects"
-        #             },
-        #             {
-        #                 "title": "Pass for this generation"
-        #             },
-        #             {
-        #                 "title": {
-        #                     "message": "Mollo"
-        #                 }
-        #             },
-        #             {
-        #                 "title": "Sell patents",
-        #                 "cards": [
-        #                     {
-        #                         "name": "Testname1",
-        #                         "calculatedCost": 15
-        #                     }
-        #                 ]
-        #             }
-        #         ]
-        #     },
-        #     "thisPlayer": {
-        #         "megaCredits": 15
-        #     }
-        # }
-
         this_player_color = res["thisPlayer"]["color"]
 
         payload = None
@@ -363,7 +329,7 @@ class CustomEnv(gym.Env):
             if res["waitingFor"]["title"] == "Initial Research Phase":
                 selected_corporation_name = ALL_CORPORATIONS_INDEX_NAME[action[SELECTED_CORPORATION]]
 
-                print(json.dumps(res["waitingFor"],indent=2))
+                #print(json.dumps(res["waitingFor"],indent=2))
                 available_cash_for_project_cards = CORPORATIONS_STARTING_MC[selected_corporation_name]
 
                 available_cards = res["waitingFor"]["options"][2]["cards"]
@@ -398,7 +364,7 @@ class CustomEnv(gym.Env):
                 payload = create_initial_cards_card_card_card_response(run_id, selected_corporation_name,
                                                                        selected_prelude_cards_names,
                                                                        selected_project_card_names)
-                print(json.dumps(payload, indent=2))
+                #print(json.dumps(payload, indent=2))
                 #print(json.dumps(payload, indent=2))
             else:  # wenn optionen ganz normal tatsächlich optionen sind
                 available_options = res["waitingFor"]["options"]
