@@ -24,3 +24,5 @@ if __name__ == '__main__':
         action1 = create_action_from_observation(env.action_space, obs1)
         obs1, reward, done, _, _ = env.step(action1)
     print(f"Game has ended successfully. View stats http://localhost:8080/the-end?id={player.id}")
+
+    # $env:PYTHONPATH="E:\Programmieren\WebStorm\terraforming-mars\src\aiClient"
